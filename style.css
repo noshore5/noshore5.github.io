@@ -1,5 +1,5 @@
 body {
-  background: #1a1a1a;
+  background: linear-gradient(to bottom, #23243a 0%, #1a1a1a 60%, #000 100%);
   color: #eaeaea;
   font-family: 'Montserrat', Arial, Helvetica, sans-serif;
   margin: 0;
@@ -84,4 +84,11 @@ footer a {
 }
 footer a:hover {
   color: #1da1f2;
+}
+
+.home-container {
+  text-align: left;
+  margin-left: 8rem;
+  margin-right: 8rem;
+  max-width: none;
 }
