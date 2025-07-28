@@ -1,0 +1,53 @@
+body {
+  background: #111;
+  color: #fff;
+  font-family: 'Inter', Arial, sans-serif;
+  margin: 0;
+  min-height: 100vh;
+}
+nav {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 2rem 3rem 0 3rem;
+}
+nav a {
+  color: #fff;
+  text-decoration: none;
+  margin-left: 2rem;
+  font-size: 1.1rem;
+  font-weight: 400;
+  transition: color 0.2s;
+}
+nav a.active, nav a:hover {
+  color: #fff;
+  font-weight: 700;
+  text-decoration: underline;
+}
+.container {
+  max-width: 900px;
+  margin: 4rem auto 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+h1 {
+  font-size: 3rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+h2 {
+  font-size: 2rem;
+  font-weight: 400;
+  margin-top: 2rem;
+}
+p {
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+}
+footer {
+  text-align: center;
+  color: #888;
+  font-size: 1rem;
+  margin-top: 4rem;
+  padding-bottom: 2rem;
+}
