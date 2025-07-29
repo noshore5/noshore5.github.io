@@ -24,21 +24,126 @@
       <a href="literature.html">Literature</a>
     </div>
   </nav>
-  <div class="container">
-    <h1>Biography</h1>
-    <p>This section contains background information about the creator and contributors to the Coherix project, including academic and professional history.</p>
-    <h2>About</h2>
-    <ul style="text-align:left; max-width:600px; margin:0 auto;">
-      <li>Academic background</li>
-      <li>Professional experience</li>
-      <li>Research interests</li>
-    </ul>
+  <div class="container" style="max-width:900px; margin:0 auto; text-align:left;">
+    <h1 style="text-align:center; margin-bottom:0.5em; font-size:2.7em; letter-spacing:0.03em; font-weight:700; color:#cccccc;">Noah Shore</h1>
+    <div style="display:flex; justify-content:center; margin-bottom:2em; gap:1em;">
+      <button id="cv-tab" class="tab-btn active" style="padding:1em 2.5em; font-size:1.25em; border:none; background:none; color:#cccccc; border-radius:0; margin-right:2px; cursor:pointer; font-weight:600; transition:color 0.2s;">Curriculum Vitae</button>
+      <button id="bio-tab" class="tab-btn" style="padding:1em 2.5em; font-size:1.25em; border:none; background:none; color:#cccccc; border-radius:0; cursor:pointer; font-weight:600; transition:color 0.2s;">Biography</button>
+    </div>
+    <div id="cv-panel" class="tab-panel" style="display:block;">
+      <hr>
+      <h2>Professional Summary</h2>
+      <p>Mathematician and computational scientist with a focus in quantitative analysis, full-stack development, and DevOps workflows. Experienced in building end-to-end data-driven applications—from mathematical modeling visualization to deployment via cloud-native tools. Research background in time-frequency analysis, signal processing, and nonlinear dynamic systems, with practical applications in finance, engineering, and music theory.</p>
+      <hr>
+      <h2>Education</h2>
+      <ul style="list-style:none; padding-left:0;">
+        <li><strong>M.S. Mathematics</strong> <span style="float:right;">University of Galway, 2025</span><br>
+          <em>Research:</em> Dynamic Frequency Decomposition, Wavelet Coherence, Time-Series Signatures<br>
+          <em>Community:</em> Award winning speaker at <em>College of Science and Engineering</em> and <em>School of Mathematical and Statistical Sciences Research and Innovation Days</em><br>
+          <em>Special Interest:</em> Optimization, Patterns in Irish Music
+        </li>
+        <br>
+        <li><strong>B.S. Mathematics</strong> <span style="float:right;">University of North Carolina at Chapel Hill, 2022</span><br>
+          <em>Honors Research:</em> Computational Fluid Dynamics – Implemented solvers for Navier-Stokes equations<br>
+          <em>Relevant Coursework:</em> Machine Learning, Optimization, Numerical Methods, Differential Equations
+        </li>
+      </ul>
+      <hr>
+      <h2>Work Experience</h2>
+      <div style="margin-bottom:1em;">
+        <strong>Computational Modeler</strong> <span style="float:right;">NextPower 360, Jan 2023 – Aug 2024</span>
+        <ul>
+          <li>Modeled electromagnetic properties of wind generators using COMSOL AC/DC modules.</li>
+          <li>Conducted Finite Element Analysis to numerically solve <em>Maxwell's Equations</em> and optimize generator designs.</li>
+          <li>Assisted in prototype development and R&amp;D innovation.</li>
+        </ul>
+      </div>
+      <div style="margin-bottom:1em;">
+        <strong>Machine Learning Instructor</strong> <span style="float:right;">ID Tech Academy, May 2022 – Nov 2022</span>
+        <ul>
+          <li>Designed and led custom ML &amp; Python courses for students (ages 14–20).</li>
+          <li>Taught Neural Networks, Regression Models, Data Wrangling using PyTorch, Pandas, and Scikit-Learn.</li>
+          <li>Created personalized lesson plans for hands-on learning.</li>
+        </ul>
+      </div>
+      <hr>
+      <h2>Technical Skills</h2>
+      <ul>
+        <li><strong>Programming:</strong> Python/PyTorch, Julia, R, MATLAB, Mathematica, SQL, HTML/CSS</li>
+        <li><strong>Machine Learning:</strong> Neural Networks, Optimization, Novel Feature Extraction, Lempel-Ziv Compression</li>
+        <li><strong>Computational Modeling:</strong> FEA, Navier-Stokes Solvers, Time-Frequency Analysis, Maxwell's Equations</li>
+        <li><strong>DevOps &amp; Deployment:</strong> Docker, GitHub Actions, Azure Container Registry, Azure Web Apps</li>
+        <li><strong>Software Tools:</strong> Git, ANSYS Maxwell, AWS Cloud, COMSOL</li>
+      </ul>
+      <hr>
+      <h2>Projects</h2>
+      <div style="margin-bottom:1em;">
+        <strong>Master’s Thesis</strong> <a href="https://github.com/noshore5/Wavelet-Tech" target="_blank" style="color:#4a90e2; font-size:0.95em; margin-left:0.5em;">GitHub Link</a>
+        <ul>
+          <li>Developing time-frequency decomposition methods for analyzing raw recordings of Irish tunes and exploring feature extraction techniques to identify tunes without traditional deep learning models.</li>
+          <li>Expanded use cases for model to generalized time-series signatures by wavelet transform for applications in economic forecasting and electroencephalography cross spectra output.</li>
+        </ul>
+      </div>
+      <div style="margin-bottom:1em;">
+        <strong>Coherix Live Market Analysis</strong> <a href="https://coherix.live/coherixlive.html" target="_blank" style="color:#4a90e2; font-size:0.95em; margin-left:0.5em;">Live App</a>
+        <ul>
+          <li>Building a dashboard for signal spectral decomposition using wavelet coherence across incoming data.</li>
+          <li>Designed a novel backend to perform expensive computations that allow for streaming results in real-time.</li>
+          <li>Outperforms existing coherence implementations by many orders of scale.</li>
+          <li>Containerized application with Docker and deployed to Azure using container registry and web app portal.</li>
+        </ul>
+      </div>
+      <div style="margin-bottom:1em;">
+        <strong>Deep Learning for Image Recognition</strong> <a href="https://github.com/noshore5/Projects/blob/main/TTS/TTS_ML_Project.ipynb" target="_blank" style="color:#4a90e2; font-size:0.95em; margin-left:0.5em;">GitHub Link</a>
+        <ul>
+          <li>Trained multiple image classification models on the MNIST dataset.</li>
+          <li>Implemented Multilayer Perceptron, Random Forest, Logistic Regression, and SVM.</li>
+          <li>Used to formulate lesson plans for machine learning students.</li>
+        </ul>
+      </div>
+      <hr>
+      <h2>Activities</h2>
+      <ul>
+        <li>NCAA Track &amp; Field – Competed for UNC in ACC Championships</li>
+        <li>Competitive Sailing – Crewman for UNC &amp; University of Galway Sailing Teams</li>
+        <li>Musician – Fiddler with TRADSOC (University of Galway) and Carolina Bluegrass Band (UNC Chapel Hill)</li>
+        <li>Maths and Music Research Group - University of Galway Comp-Sci and Math Departments</li>
+      </ul>
+    </div>
+    <div id="bio-panel" class="tab-panel" style="display:none;">
+      <hr>
+      <h2>Biography</h2>
+      <p>“I am the clue-finder, the web-cutter, the stinging fly. I was chosen for the lucky number.
+            I am he that buries his friends alive and drowns them and draws them alive again from the water.
+            I came from the end of a bag, but no bag went over me.
+            I am the friend of bears and the guest of eagles. I am Ring-winner and Luckwearer;
+            and I am Barrel-rider.”</p>
+    </div>
   </div>
   <!-- Footer will be loaded here -->
   <div id="footer-container"></div>
 </body>
 <script src="footer-loader.js"></script>
 <script>
+// Tab switching for CV and Biography
+document.addEventListener('DOMContentLoaded', function() {
+  const cvTab = document.getElementById('cv-tab');
+  const bioTab = document.getElementById('bio-tab');
+  const cvPanel = document.getElementById('cv-panel');
+  const bioPanel = document.getElementById('bio-panel');
+  cvTab.addEventListener('click', function() {
+    cvTab.classList.add('active');
+    bioTab.classList.remove('active');
+    cvPanel.style.display = 'block';
+    bioPanel.style.display = 'none';
+  });
+  bioTab.addEventListener('click', function() {
+    bioTab.classList.add('active');
+    cvTab.classList.remove('active');
+    bioPanel.style.display = 'block';
+    cvPanel.style.display = 'none';
+  });
+});
 // Close menu when clicking outside or resizing
 document.addEventListener('click', function(e) {
   const navLinks = document.querySelector('.nav-links');
