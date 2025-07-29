@@ -2,46 +2,298 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="resources/icon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Literature</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <style>
+    .literature-layout {
+      display: flex;
+      min-height: calc(100vh - 80px);
+      gap: 0;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+    
+    .sidebar {
+      width: 300px;
+      background: rgba(42, 42, 42, 0.8);
+      border-right: 2px solid rgba(68, 68, 68, 0.8);
+      padding: 2rem 0;
+      position: sticky;
+      top: 80px;
+      height: fit-content;
+      max-height: calc(100vh - 80px);
+      overflow-y: auto;
+      backdrop-filter: blur(10px);
+    }
+    
+    .sidebar h3 {
+      color: #ffffff;
+      margin: 0 1.5rem 1.5rem 1.5rem;
+      font-size: 1.2rem;
+      border-bottom: 2px solid rgba(85, 85, 85, 0.8);
+      padding-bottom: 0.5rem;
+    }
+    
+    .sidebar-menu {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .sidebar-menu li {
+      border-bottom: 1px solid rgba(68, 68, 68, 0.6);
+    }
+    
+    .sidebar-menu button {
+      width: 100%;
+      background: none;
+      border: none;
+      color: #cccccc;
+      padding: 1rem 1.5rem;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.95rem;
+      line-height: 1.4;
+    }
+    
+    .sidebar-menu button:hover {
+      background: rgba(58, 58, 58, 0.8);
+      color: #ffffff;
+    }
+    
+    .sidebar-menu button.active {
+      background: rgba(74, 144, 226, 0.8);
+      color: #ffffff;
+    }
+    
+    .main-content {
+      flex: 1;
+      padding: 2rem;
+      background: rgba(26, 26, 26, 0.7);
+      backdrop-filter: blur(10px);
+    }
+    
+    .paper-content {
+      display: none;
+    }
+    
+    .paper-content.active {
+      display: block;
+    }
+    
+    .paper-content h2 {
+      color: #ffffff;
+      margin-bottom: 1rem;
+    }
+    
+    .paper-content p {
+      color: #cccccc;
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+    }
+    
+    .paper-meta {
+      background: rgba(42, 42, 42, 0.8);
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 2rem;
+      border-left: 4px solid #4a90e2;
+      backdrop-filter: blur(5px);
+    }
+    
+    .paper-meta .authors {
+      color: #4a90e2;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+    
+    .paper-meta .journal {
+      color: #999;
+      font-size: 0.9rem;
+    }
+    
+    .pdf-viewer {
+      width: 100%;
+      height: 1100px;
+      border: none;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+    
+    @media (max-width: 768px) {
+      .literature-layout {
+        flex-direction: column;
+        padding: 0 1rem;
+      }
+      
+      .sidebar {
+        width: 100%;
+        position: static;
+        max-height: none;
+      }
+      
+      .main-content {
+        padding: 1rem;
+      }
+    }
+  </style>
 </head>
 <body>
   <nav>
     <a href="index.html" class="home-link">Home</a>
-    <div class="nav-links">
+    <button class="menu-toggle" aria-label="Open menu" onclick="document.querySelector('.nav-links').classList.toggle('open'); this.classList.toggle('open');">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="nav-menu-wrapper">
+      <div class="nav-links">
       <a href="coherix.html">Coherix</a>
       <a href="coherixlive.html">Coherix Live</a>
       <a href="crypto.html">Crypto</a>
       <a href="biography.html">Biography</a>
       <a href="literature.html" class="active">Literature</a>
+      </div>
     </div>
   </nav>
-  <div class="container">
-    <h1>Literature</h1>
-    <p>The Coherix project is a continuation of the methods explored in the following thesis.</p>
-
-    <h2>University of Galway Thesis</h2>
-    <iframe src="https://noshore5.github.io/resources/UniversityofGalwayThesis.pdf" width="100%" height="800" frameborder="0" style="border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);"></iframe>
+  
+  <div class="literature-layout">
+    <!-- Left Sidebar Menu -->
+    <div class="sidebar">
+      <h3>Literature</h3>
+      <ul class="sidebar-menu">
+        <li>
+          <button onclick="showPaper('thesis')" class="active" id="thesis-btn">
+            University of Galway Thesis
+          </button>
+        </li>
+        <li>
+          <button onclick="showPaper('wavelet-coherence')" id="wavelet-coherence-btn">
+            Wavelet Coherence Analysis
+          </button>
+        </li>
+        <li>
+          <button onclick="showPaper('financial-signals')" id="financial-signals-btn">
+            Financial Signal Processing
+          </button>
+        </li>
+        <li>
+          <button onclick="showPaper('fcwt')" id="fcwt-btn">
+            Fast Continuous Wavelet Transform
+          </button>
+        </li>
+      </ul>
+    </div>
     
-    <h2>Additional References</h2>
-    <div style="text-align:center; max-width:600px; margin:2rem auto; line-height:1.8;">
-      Wavelet and time-frequency analysis papers<br>
-      Financial signal processing books<br>
-      Open-source research articles
+    <!-- Main Content Area -->
+    <div class="main-content">
+      <!-- Thesis Paper -->
+      <div id="thesis" class="paper-content active">
+        <h2>University of Galway Thesis</h2>
+        <div class="paper-meta">
+          <div class="authors">Noah Shore</div>
+          <div class="journal">University of Galway, 2025</div>
+        </div>
+        <p>The Coherix project is a continuation of the methods explored in this thesis, which focuses on advanced wavelet coherence techniques for Irish tune identification.</p>
+        <iframe src="https://noshore5.github.io/resources/UniversityofGalwayThesis.pdf" class="pdf-viewer"></iframe>
+      </div>
+      
+      <!-- Wavelet Coherence Paper -->
+      <div id="wavelet-coherence" class="paper-content">
+        <h2>Wavelet Coherence Analysis</h2>
+        <div class="paper-meta">
+          <div class="authors">Torrence, C. & Webster, P.J.</div>
+          <div class="journal">Journal of Climate, 1999</div>
+        </div>
+        <p>A comprehensive introduction to wavelet coherence analysis, providing the theoretical foundation for understanding relationships between time series in the time-frequency domain.</p>
+        <p>This seminal paper introduces the concept of wavelet coherence as a localized correlation coefficient in time-frequency space, allowing for the identification of regions in time-frequency space where two time series co-vary.</p>
+        <div style="background: rgba(42, 42, 42, 0.8); padding: 2rem; border-radius: 8px; text-align: center; color: #999; backdrop-filter: blur(5px);">
+          <p>PDF viewing requires direct link to paper</p>
+          <a href="https://doi.org/10.1175/1520-0442(1999)012<2679:AITWTS>2.0.CO;2" target="_blank" style="color: #4a90e2;">View Paper →</a>
+        </div>
+      </div>
+      
+      <!-- Financial Signals Paper -->
+      <div id="financial-signals" class="paper-content">
+        <h2>Financial Signal Processing</h2>
+        <div class="paper-meta">
+          <div class="authors">Gencay, R., Selcuk, F. & Whitcher, B.</div>
+          <div class="journal">Academic Press, 2001</div>
+        </div>
+        <p>An introduction to wavelets and other filtering methods in finance, covering practical applications of wavelet analysis in financial time series.</p>
+        <p>This comprehensive book covers the application of wavelet transforms to financial data analysis, including denoising, feature extraction, and risk management applications.</p>
+        <div style="background: rgba(42, 42, 42, 0.8); padding: 2rem; border-radius: 8px; text-align: center; color: #999; backdrop-filter: blur(5px);">
+          <p>Reference book - Available through academic publishers</p>
+          <a href="https://www.elsevier.com/books/an-introduction-to-wavelets-and-other-filtering-methods-in-finance-and-economics/gencay/978-0-12-279670-8" target="_blank" style="color: #4a90e2;">View Book →</a>
+        </div>
+      </div>
+      
+      <!-- Fast Continuous Wavelet Transform Paper -->
+      <div id="fcwt" class="paper-content">
+        <h2>Fast Continuous Wavelet Transform</h2>
+        <div class="paper-meta">
+          <div class="authors">S. Chudoba, M. Kostur, et al.</div>
+          <div class="journal">SoftwareX, 2020</div>
+        </div>
+        <p>The Fast Continuous Wavelet Transform (FCWT) is an efficient algorithm for computing the CWT, enabling real-time and large-scale time-frequency analysis. The FCWT library is open source and widely used in scientific computing.</p>
+        <div style="background: rgba(42, 42, 42, 0.8); padding: 2rem; border-radius: 8px; text-align: center; color: #999; backdrop-filter: blur(5px);">
+          <p>Official repository and documentation:</p>
+          <a href="https://github.com/menkefcwt/fcwt" target="_blank" style="color: #4a90e2;">FCWT on GitHub →</a>
+          <br>
+          <a href="https://www.sciencedirect.com/science/article/pii/S2352711020302952" target="_blank" style="color: #4a90e2;">Read the SoftwareX Paper →</a>
+        </div>
+      </div>
     </div>
   </div>
-  <footer>
-    <span>Twenty Twenty-Five &mdash; </span>
-    <a href="https://github.com/noshore5" target="_blank" aria-label="GitHub" style="vertical-align:middle; margin:0 0.5rem;">
-      <svg height="22" width="22" viewBox="0 0 16 16" fill="#eaeaea" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.01.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.11.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.19 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
-    </a>
-    <a href="https://www.linkedin.com/in/noah-shore/" target="_blank" aria-label="LinkedIn" style="vertical-align:middle; margin:0 0.5rem;">
-      <svg height="22" width="22" viewBox="0 0 24 24" fill="#eaeaea" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-10h3v10zm-1.5-11.268c-.966 0-1.75-.784-1.75-1.75s.784-1.75 1.75-1.75 1.75.784 1.75 1.75-.784 1.75-1.75 1.75zm15.5 11.268h-3v-5.604c0-1.337-.025-3.063-1.868-3.063-1.868 0-2.154 1.459-2.154 2.968v5.699h-3v-10h2.881v1.367h.041c.401-.761 1.379-1.563 2.838-1.563 3.036 0 3.597 2 3.597 4.59v5.606z"/></svg>
-    </a>
-  </footer>
+  <!-- Footer will be loaded here -->
+  <div id="footer-container"></div>
+</body>
+<script src="footer-loader.js"></script>
+<script>
+// Paper switching functionality
+function showPaper(paperId) {
+  // Hide all paper content
+  const allPapers = document.querySelectorAll('.paper-content');
+  allPapers.forEach(paper => {
+    paper.classList.remove('active');
+  });
+  
+  // Remove active class from all buttons
+  const allButtons = document.querySelectorAll('.sidebar-menu button');
+  allButtons.forEach(button => {
+    button.classList.remove('active');
+  });
+  
+  // Show selected paper
+  document.getElementById(paperId).classList.add('active');
+  
+  // Add active class to clicked button
+  document.getElementById(paperId + '-btn').classList.add('active');
+}
+
+// Close menu when clicking outside or resizing
+document.addEventListener('click', function(e) {
+  const navLinks = document.querySelector('.nav-links');
+  const menuToggle = document.querySelector('.menu-toggle');
+  if (!menuToggle || !navLinks) return;
+  if (menuToggle.classList.contains('open') && !menuToggle.contains(e.target) && !navLinks.contains(e.target)) {
+    navLinks.classList.remove('open');
+    menuToggle.classList.remove('open');
+  }
+});
+window.addEventListener('resize', function() {
+  const navLinks = document.querySelector('.nav-links');
+  const menuToggle = document.querySelector('.menu-toggle');
+  if (window.innerWidth > 900 && navLinks && menuToggle) {
+    navLinks.classList.remove('open');
+    menuToggle.classList.remove('open');
+  }
+});
+</script>
 </body>
 </html>

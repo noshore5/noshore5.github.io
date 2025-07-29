@@ -2,16 +2,35 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="resources/icon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Coherence Analytics - Home</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <style>
+    .morlets-animation {
+      animation: speed-up 1s infinite linear;
+    }
+    
+    @keyframes speed-up {
+      0% { transform: scale(1); }
+      100% { transform: scale(1); }
+    }
+    
+    .morlets-animation {
+      animation-duration: 0.5s;
+      filter: invert(1);
+    }
+  </style>
 </head>
 <body>
   <nav>
     <a href="index.html" class="home-link active">Home</a>
+    <button class="menu-toggle" aria-label="Open menu" onclick="document.querySelector('.nav-links').classList.toggle('open'); this.classList.toggle('open');">
+      <span></span><span></span><span></span>
+    </button>
     <div class="nav-links">
       <a href="coherix.html">Coherix</a>
       <a href="coherixlive.html">Coherix Live</a>
@@ -22,18 +41,48 @@
   </nav>
   <div class="container home-container">
     <h1>Coherence Analytics</h1>
-    <p>Home page of the Coherix project.</p>
-    <p>To add: <em>Shakespeare quote.</em></p>
+    <p>Wavelet Coherence is a powerful method for analyzing the relationships between time series data using wavelet transforms.
+        While becoming more popular in academic settings to publish research, current implementations are limited to packages in R, MATLAB, or Python.
+        These packages rely on outdated and inefficient transforms on the backend, limiting their use to analysis of small batches of historical data.</p>
+    
+    <div style="width: 100vw; margin-left: calc(-50vw + 50%); margin-right: calc(-50vw + 50%); margin: 2rem calc(-50vw + 50%); text-align: center;">
+      <img src="resources/lkclear.png" alt="Coherence Analysis Visualization" style="width: 100%; max-width: none; height: auto;">
+    </div>
+    
+    <p>The coherix project is focused on broadening the scope of use for wavelet coherence 
+        by optimizing the underlying algorithms and providing a user-friendly interface for
+        industry professionals. Currently, the opus is building a <a href="coherixlive.html">live dashboard</a> for quantitative analysis
+        that displays the lead-lag cycles as they appear from incoming data.</p>
+    <p>The motivations for this project are outlined in the
+         <a href="literature.html">Literature</a> section.</p>
+    
+    <div style="text-align: center; margin: 2rem 0;">
+      <img src="resources/morlets.gif" alt="Morlet Wavelet Analysis Animation" class="morlets-animation" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(253, 253, 253, 0.6);">
+    </div>
   </div>
-  <!-- ...existing code... -->
-  <footer>
-    <span>Twenty Twenty-Five &mdash; </span>
-    <a href="https://github.com/noshore5" target="_blank" aria-label="GitHub" style="vertical-align:middle; margin:0 0.5rem;">
-      <svg height="22" width="22" viewBox="0 0 16 16" fill="#eaeaea" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.01.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.11.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.19 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
-    </a>
-    <a href="https://www.linkedin.com/in/noah-shore/" target="_blank" aria-label="LinkedIn" style="vertical-align:middle; margin:0 0.5rem;">
-      <svg height="22" width="22" viewBox="0 0 24 24" fill="#eaeaea" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-10h3v10zm-1.5-11.268c-.966 0-1.75-.784-1.75-1.75s.784-1.75 1.75-1.75 1.75.784 1.75 1.75-.784 1.75-1.75 1.75zm15.5 11.268h-3v-5.604c0-1.337-.025-3.063-1.868-3.063-1.868 0-2.154 1.459-2.154 2.968v5.699h-3v-10h2.881v1.367h.041c.401-.761 1.379-1.563 2.838-1.563 3.036 0 3.597 2 3.597 4.59v5.606z"/></svg>
-    </a>
-  </footer>
+  <!-- Footer will be loaded here -->
+  <div id="footer-container"></div>
+</body>
+<script src="footer-loader.js"></script>
+<script>
+document.addEventListener('click', function(e) {
+  const navLinks = document.querySelector('.nav-links');
+  const menuToggle = document.querySelector('.menu-toggle');
+  if (!menuToggle || !navLinks) return;
+  if (menuToggle.classList.contains('open') && !menuToggle.contains(e.target) && !navLinks.contains(e.target)) {
+    navLinks.classList.remove('open');
+    menuToggle.classList.remove('open');
+  }
+});
+window.addEventListener('resize', function() {
+  const navLinks = document.querySelector('.nav-links');
+  const menuToggle = document.querySelector('.menu-toggle');
+  if (window.innerWidth > 900 && navLinks && menuToggle) {
+    navLinks.classList.remove('open');
+    menuToggle.classList.remove('open');
+  }
+});
+
+</script>
 </body>
 </html>

@@ -1,3 +1,12 @@
+/* Inline links in text */
+a:not(.home-link):not(.nav-link):not(.app-button):not(.footer a) {
+  color: #fff !important;
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+a:not(.home-link):not(.nav-link):not(.app-button):not(.footer a):hover {
+  color: #fff !important;
+}
 body {
   background: linear-gradient(to bottom, #23243a 0%, #1a1a1a 60%, #000 100%);
   color: #eaeaea;
@@ -10,13 +19,108 @@ nav {
   justify-content: space-between;
   align-items: center;
   padding: 2rem 3rem 0 3rem;
+  position: relative;
 }
+.menu-toggle {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 44px;
+  height: 44px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-left: 1rem;
+  z-index: 20;
+}
+.menu-toggle span {
+  display: block;
+  width: 28px;
+  height: 3px;
+  margin: 5px 0;
+  background: #eaeaea;
+  border-radius: 2px;
+  transition: 0.3s;
+}
+.menu-toggle.open span:nth-child(1) {
+  transform: translateY(8px) rotate(45deg);
+}
+.menu-toggle.open span:nth-child(2) {
+  opacity: 0;
+}
+.menu-toggle.open span:nth-child(3) {
+  transform: translateY(-8px) rotate(-45deg);
+}
+
 nav .home-link {
   margin-right: auto;
 }
 nav .nav-links {
-  display: flex;
+  display: none;
   gap: 2rem;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-16px);
+  right: 0;
+  left: auto;
+  align-items: flex-end;
+  transition: opacity 0.35s cubic-bezier(0.4,0,0.2,1), transform 0.35s cubic-bezier(0.4,0,0.2,1), max-height 0.3s;
+}
+/* Only show menu when hovering over the hamburger, the menu itself, or when open (for mobile JS) */
+.nav-menu-wrapper:hover .nav-links,
+.nav-menu-wrapper:focus-within .nav-links,
+.nav-links.open {
+  display: flex !important;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+nav .nav-links {
+  flex-direction: column;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: auto;
+  background: #18181a;
+  align-items: flex-end;
+  gap: 0;
+  max-height: 0;
+  overflow: hidden;
+  min-width: 220px;
+  width: auto;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  z-index: 10;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  /* transition moved above */
+}
+/* Only expand when hamburger hovered/focused or open */
+.menu-toggle:hover + .nav-links,
+.menu-toggle:focus + .nav-links,
+.nav-links.open {
+  max-height: 400px;
+  padding: 1rem 1.5rem 1rem 0;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+nav .nav-links a {
+  margin: 0.5rem 1.5rem 0.5rem 0;
+  font-size: 1.2rem;
+  width: auto;
+  display: block;
+}
+
+@media (max-width: 900px) {
+  .container {
+    max-width: 98vw;
+    padding: 1rem;
+  }
+  nav {
+    flex-wrap: wrap;
+    padding: 1.2rem 1rem 0 1rem;
+  }
 }
 nav a {
   color: #eaeaea;
