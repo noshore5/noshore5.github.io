@@ -165,7 +165,7 @@
   <div class="literature-layout">
     <!-- Left Sidebar Menu -->
     <div class="sidebar">
-      <h3>Literature</h3>
+      <h3><a href="#" id="overview-link" style="color:inherit; text-decoration:underline; cursor:pointer;">Literature</a></h3>
       <ul class="sidebar-menu">
         <li>
           <button onclick="showPaper('thesis')" class="active" id="thesis-btn">
@@ -192,29 +192,48 @@
     
     <!-- Main Content Area -->
     <div class="main-content">
+      <!-- Overview Section -->
+      <div id="overview" class="paper-content active">
+        <h2>Literature Overview</h2>
+        <p>This section provides references and resources for wavelet coherence, time-frequency analysis, and related signal processing methods. 
+      </div>
       <!-- Thesis Paper -->
-      <div id="thesis" class="paper-content active">
-        <h2>University of Galway Thesis</h2>
+      <div id="thesis" class="paper-content">
+        <h2>Wavelet-Based Time-Frequency
+            Fingerprinting for Feature Extraction of
+            Traditional Irish Music</h2>
         <div class="paper-meta">
           <div class="authors">Noah Shore</div>
           <div class="journal">University of Galway, 2025</div>
         </div>
-        <p>The Coherix project is a continuation of the methods explored in this thesis, which focuses on advanced wavelet coherence techniques for Irish tune identification.</p>
+        <p>The Coherix project is a continuation of the methods explored in this thesis,
+             which focuses on advanced wavelet coherence techniques for Irish tune identification.</p>
         <iframe src="https://noshore5.github.io/resources/UniversityofGalwayThesis.pdf" class="pdf-viewer"></iframe>
       </div>
       
       <!-- Wavelet Coherence Paper -->
       <div id="wavelet-coherence" class="paper-content">
-        <h2>Wavelet Coherence Analysis</h2>
+        <h2>Interdecadal Changes in the ENSO-Monsoon System</h2>
         <div class="paper-meta">
           <div class="authors">Torrence, C. & Webster, P.J.</div>
           <div class="journal">Journal of Climate, 1999</div>
         </div>
-        <p>A comprehensive introduction to wavelet coherence analysis, providing the theoretical foundation for understanding relationships between time series in the time-frequency domain.</p>
-        <p>This seminal paper introduces the concept of wavelet coherence as a localized correlation coefficient in time-frequency space, allowing for the identification of regions in time-frequency space where two time series co-vary.</p>
+            <p>
+                This seminal paper introduces the concept of wavelet coherence as a localized 
+                correlation coefficient in time-frequency space. Torrence and Webster developed 
+                this method to track chaotic interactions in monsoon systems influenced by El Niño
+                 over multiple decades, enabling the identification of regions in time-frequency space 
+                 where two time series co-vary.
+            </p>
+        <div style="background: rgba(42, 42, 42, 0.8); padding: 2rem; border-radius: 8px; color: #ccc; backdrop-filter: blur(5px); margin-bottom:1.5rem; text-align:left;">
+          <strong>Abstract:</strong><br>
+          The El Niño–Southern Oscillation (ENSO) and Indian monsoon are shown to have undergone significant interdecadal changes in variance and coherency over the last 125 years. Wavelet analysis is applied to indexes of equatorial Pacific sea surface temperature (Niño3 SST), the Southern Oscillation index, and all-India rainfall. Time series of 2–7-yr variance indicate intervals of high ENSO–monsoon variance (1875–1920 and 1960–90) and an interval of low variance (1920–60). The ENSO–monsoon variance also contains a modulation of ENSO–monsoon amplitudes on a 12–20-yr timescale.<br><br>
+          The annual-cycle (1 yr) variance time series of Niño3 SST and Indian rainfall is negatively correlated with the interannual ENSO signal. The 1-yr variance is larger during 1935–60, suggesting a negative correlation between annual-cycle variance and ENSO variance on interdecadal timescales.<br><br>
+          The method of wavelet coherency is applied to the ENSO and monsoon indexes. The Niño3 SST and Indian rainfall are found to be highly coherent, especially during intervals of high variance. The Niño3 SST and Indian rainfall are approximately 180° out of phase and show a gradual increase in phase difference versus Fourier period. All of the results are shown to be robust with respect to different datasets and analysis methods.
+        </div>
         <div style="background: rgba(42, 42, 42, 0.8); padding: 2rem; border-radius: 8px; text-align: center; color: #999; backdrop-filter: blur(5px);">
           <p>PDF viewing requires direct link to paper</p>
-          <a href="https://doi.org/10.1175/1520-0442(1999)012<2679:AITWTS>2.0.CO;2" target="_blank" style="color: #4a90e2;">View Paper →</a>
+          <a href="https://www.scirp.org/reference/referencespapers?referenceid=2046721" target="_blank" style="color: #4a90e2;">View Paper →</a>
         </div>
       </div>
       
@@ -237,15 +256,12 @@
       <div id="fcwt" class="paper-content">
         <h2>Fast Continuous Wavelet Transform</h2>
         <div class="paper-meta">
-          <div class="authors">S. Chudoba, M. Kostur, et al.</div>
-          <div class="journal">SoftwareX, 2020</div>
+          <div class="authors">Lukas P. A. Arts & Egon. L. van den Broek</div>
+          <div class="journal">Nature Computational Science, 2022</div>
         </div>
-        <p>The Fast Continuous Wavelet Transform (FCWT) is an efficient algorithm for computing the CWT, enabling real-time and large-scale time-frequency analysis. The FCWT library is open source and widely used in scientific computing.</p>
+        <p>The fast continuous wavelet transformation (fCWT) enables real-time, high-quality, and noise-resistant time–frequency analysis. This method is described in the following Nature Computational Science article.</p>
         <div style="background: rgba(42, 42, 42, 0.8); padding: 2rem; border-radius: 8px; text-align: center; color: #999; backdrop-filter: blur(5px);">
-          <p>Official repository and documentation:</p>
-          <a href="https://github.com/menkefcwt/fcwt" target="_blank" style="color: #4a90e2;">FCWT on GitHub →</a>
-          <br>
-          <a href="https://www.sciencedirect.com/science/article/pii/S2352711020302952" target="_blank" style="color: #4a90e2;">Read the SoftwareX Paper →</a>
+          <a href="https://www.nature.com/articles/s43588-021-00183-z" target="_blank" style="color: #4a90e2; font-size:1.1em; font-weight:500;">Read the Nature Computational Science Paper →</a>
         </div>
       </div>
     </div>
@@ -262,19 +278,29 @@ function showPaper(paperId) {
   allPapers.forEach(paper => {
     paper.classList.remove('active');
   });
-  
   // Remove active class from all buttons
   const allButtons = document.querySelectorAll('.sidebar-menu button');
   allButtons.forEach(button => {
     button.classList.remove('active');
   });
-  
   // Show selected paper
   document.getElementById(paperId).classList.add('active');
-  
-  // Add active class to clicked button
-  document.getElementById(paperId + '-btn').classList.add('active');
+  // Add active class to clicked button if not overview
+  if (paperId !== 'overview') {
+    document.getElementById(paperId + '-btn').classList.add('active');
+  }
 }
+
+// Make 'Literature' at the top clickable for overview
+document.addEventListener('DOMContentLoaded', function() {
+  var overviewLink = document.getElementById('overview-link');
+  if (overviewLink) {
+    overviewLink.addEventListener('click', function(e) {
+      e.preventDefault();
+      showPaper('overview');
+    });
+  }
+});
 
 // Close menu when clicking outside or resizing
 document.addEventListener('click', function(e) {
