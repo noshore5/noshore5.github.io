@@ -1,0 +1,126 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="resources/icon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Performance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<style>
+  .performance-invert-img {
+    filter: invert(1);
+    box-shadow: 0 4px 24px rgba(253, 252, 252, 0.95) !important;
+  }
+  .performance-img-row {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 2.5vw;
+    margin: 2em 0;
+  }
+  .performance-img-col {
+    flex: 1 1 0;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+  <nav>
+    <a href="index.html" class="home-link">Home</a>
+    <button class="menu-toggle" aria-label="Open menu" onclick="document.querySelector('.nav-links').classList.toggle('open'); this.classList.toggle('open');">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="nav-links">
+      <a href="coherix.html">Coherix</a>
+      <a href="coherixlive.html">Coherix Live</a>
+      <a href="crypto.html">Crypto</a>
+      <a href="performance.html" class="active">Performance</a>
+      <a href="biography.html">Biography</a>
+      <a href="literature.html">Literature</a>
+    </div>
+  </nav>
+  <div class="container" style="max-width:900px; margin:0 auto; text-align:left;">
+    <h1 style="text-align:center; margin-bottom:0.5em; font-size:2.7em; letter-spacing:0.03em; font-weight:700; color:#cccccc;">Performance</h1>
+    <p style="font-size:1.1em;">In 2022, researchers P.A. Arts and L. van den Broek published
+         the <em>Fast Continuous Wavelet Transform</em> (fCWT) algorithm, with dramatically
+          positive ramifications for wavelet transform computation. The fCWT enables Coherix by 
+          scaling down the amount of compute time
+            required for long signals, focusing on the inverse Fourier transform step in
+             the FFT-based implementation of the wavelet transform.</p>
+    <p style="font-size:1.1em;">To give an overly brief technical summary of what is going 
+        on in the background, this efficient algorithm caches precomputed look-up tables of 
+        the iFFT and can apply strategic downsampling to the time-frequency complex matrix prior 
+        to the scale dependent operations, allowing large-scale reductions in overall 
+        computational complexity. A comprehensive explanation of the fCWT algorithm can be found
+         in its <a href="https://www.nature.com/articles/s43588-021-00183-z" target="_blank" rel="noopener">original publication</a> in <em>Nature Computational Science</em>.</p>
+
+    <div class="performance-img-row">
+      <div class="performance-img-col">
+        <img src="resources/scalesvram.png" alt="Memory usage vs frequency resolution" class="performance-invert-img" style="width:100%; max-width:420px; height:auto; border-radius:8px; margin-bottom:1.5em;">
+      </div>
+      <div class="performance-img-col">
+        <img src="resources/sampsvram.png" alt="Efficiency comparison in memory usage" class="performance-invert-img" style="width:100%; max-width:420px; height:auto; border-radius:8px; margin-bottom:1.5em;">
+      </div>
+    </div>
+    <div style="text-align:center; margin-top:-1em; margin-bottom:2em;">
+      <p style="font-size:0.95em; color:#aaa; display:inline-block; max-width:700px;">Efficiency comparison in memory usage. Left: increasing frequency resolution. Right: increasing number of samples. Legend: <span style="color:#ff7f0e; font-weight:bold;">■</span> Our model, <span style="color:#1f77b4; font-weight:bold;">■</span> PyCWT benchmark.</p>
+    </div>
+
+    <p style="font-size:1.1em;">To illustrate the savings realized by these techniques, 
+        two signals consisting of pure noise are generated at an 8000 Hz sampling rate. 
+        Coherence matrices are then produced using Coherix in parallel with the PyCWT
+         library's wavelet coherence transform
+         (WCT) method, which serves as a benchmark for comparison. the efficiency
+           in both domains (time and frequency) is of interest, so we run two experiments.
+           The first figure
+            shows how increasing resolution in the frequency and time domains affects the
+             memory usage. The next figure shows the same two experiments with the
+              memory metric exchanged for compute time, which is where we see the most significant
+            savings.</p>
+
+    <div class="performance-img-row">
+      <div class="performance-img-col">
+        <img src="resources/scalesvtime.png" alt="Processing time vs frequency resolution" class="performance-invert-img" style="width:100%; max-width:420px; height:auto; border-radius:8px; margin-bottom:1.5em;">
+      </div>
+      <div class="performance-img-col">
+        <img src="resources/sampsvtime.png" alt="Efficiency comparison in process time" class="performance-invert-img" style="width:100%; max-width:420px; height:auto; border-radius:8px; margin-bottom:1.5em;">
+      </div>
+    </div>
+    <div style="text-align:center; margin-top:-1em; margin-bottom:2em;">
+      <p style="font-size:0.95em; color:#aaa; display:inline-block; max-width:700px;">Efficiency comparison in process time. Left: increasing frequency resolution. Right: increasing number of samples. Legend: <span style="color:#ff7f0e; font-weight:bold;">■</span> Our model, <span style="color:#1f77b4; font-weight:bold;">■</span> PyCWT benchmark.</p>
+    </div>
+
+    <p style="font-size:1.1em;">These results closely replicate the performance findings in the original fCWT publication, showing the large portion of coherence computation being consumed by the supporting wavelet transforms. Additionally, the step-wise behavior observed when increasing signal duration is a well documented phenomena in FFT based implementations, which are most efficient at transforming signals whose input lengths are 2<sup>n</sup>, n ∈ ℕ. As a result, such algorithms will pad signals to the next power of 2.</p>
+
+    
+  </div>
+  <!-- Footer will be loaded here -->
+  <div id="footer-container"></div>
+  <script src="footer-loader.js"></script>
+  <script>
+  // Close menu when clicking outside or resizing
+  document.addEventListener('click', function(e) {
+    const navLinks = document.querySelector('.nav-links');
+    const menuToggle = document.querySelector('.menu-toggle');
+    if (!menuToggle || !navLinks) return;
+    if (menuToggle.classList.contains('open') && !menuToggle.contains(e.target) && !navLinks.contains(e.target)) {
+      navLinks.classList.remove('open');
+      menuToggle.classList.remove('open');
+    }
+  });
+  window.addEventListener('resize', function() {
+    const navLinks = document.querySelector('.nav-links');
+    const menuToggle = document.querySelector('.menu-toggle');
+    if (window.innerWidth > 900 && navLinks && menuToggle) {
+      navLinks.classList.remove('open');
+      menuToggle.classList.remove('open');
+    }
+  });
+  </script>
+</body>
+</html>
