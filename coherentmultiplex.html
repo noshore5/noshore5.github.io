@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coherent Multiplex</title>
+  <link rel="icon" type="image/png" href="resources/icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav>
+    <a href="index.html" class="home-link">Home</a>
+    <button class="menu-toggle" aria-label="Open menu" onclick="document.querySelector('.nav-links').classList.toggle('open'); this.classList.toggle('open');">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="nav-links">
+      <a href="coherix.html">Coherix</a>
+      <a href="coherixlive.html">Coherix Live</a>
+      <a href="coherentmultiplex.html" class="active">Coherent Multiplex</a>
+      <a href="performance.html">Performance</a>
+      <a href="biography.html">Biography</a>
+      <a href="literature.html">Literature</a>
+    </div>
+  </nav>
+  <div class="container" style="max-width:900px; margin:0 auto; text-align:center;">
+    <h1>Coherent Multiplex</h1>
+    <p>This page provides access to the Coherent Multiplex dashboard.</p>
+    <button style="padding:1em 2em; font-size:1.2em; border-radius:8px; background:#4a90e2; color:#fff; border:none; cursor:pointer; margin-top:2em;" onclick="window.open('https://coherent-multiplex-g6cgcugacrhrcaa3.westus-01.azurewebsites.net/', '_blank')">Open Coherent Multiplex Dashboard</button>
+  </div>
+  <div id="footer-container"></div>
+  <script src="footer-loader.js"></script>
+</body>
+</html>
