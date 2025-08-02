@@ -27,8 +27,49 @@
   </nav>
   <div class="container" style="max-width:900px; margin:0 auto; text-align:center;">
     <h1>Coherent Multiplex</h1>
-    <p>This page provides access to the Coherent Multiplex dashboard.</p>
-    <button style="padding:1em 2em; font-size:1.2em; border-radius:8px; background:#4a90e2; color:#fff; border:none; cursor:pointer; margin-top:2em;" onclick="window.open('https://coherent-multiplex-g6cgcugacrhrcaa3.westus-01.azurewebsites.net/', '_blank')">Open Coherent Multiplex Dashboard</button>
+    <div style="text-align:left; margin:0 auto; max-width:800px; font-size:1.15em; background:#222; color:#eee; border-radius:12px; box-shadow:0 2px 16px #000a; padding:2em;">
+      <p>A sophisticated real-time signal analysis
+         and visualization platform that combines advanced signal processing 
+         with living graph-network based interfaces. The app procedurally generates synthetic signals,
+          analyzes their relationships using multiple metrics, 
+          and presents the results through dynamic visualizations.</p>
+      <h3 style="color:#4a90e2; font-size:1.1em;">Core Functionality</h3>
+      <ul style="margin-left:1em;">
+        <li><strong>Signal Generation & Processing:</strong> Generates synthetic
+            signals (labeled A-H) with multiple sine wave components, random frequencies, 
+            phases, and amplitudes. All features are procedurally generated and include
+            dynamic envelope shaping, time-varying noise, random coherent relationships (10% pairs), and signal dropouts.
+            Uses the <a href="https://fftw.org/" target="_blank" style="color:#97b7db; text-decoration:underline;"><em>Fastest Fourier Transform in the West</em></a> C subroutine for high-performance
+            FFT computation.</li>
+        <li><strong>Advanced Analysis:</strong> Wavelet coherence analysis 
+            (powered by <a href="literature.html#fcwt" style="color:#97b7db; text-decoration:underline;">fCWT</a>), 
+            phase relationships, and cosine similarity for frequency spectra.
+             Identifies related signals and valid analysis regions.</li>
+        <li><strong>Real-time Streaming:</strong> Python and C backends stream live data via SSE,
+             updating every second with new signal, FFT, and coherence results. Maintains
+             a 256-point rolling buffer.</li>
+      </ul>
+      <h3 style="color:#4a90e2; font-size:1.1em;">Visualization Features</h3>
+      <ul style="margin-left:1em;">
+        <li><strong>Time Domain:</strong> Real-time visual of signals with
+             color-coded traces.</li>
+        <li><strong>Frequency Domain:</strong> Live frequency magnitude spectra for each signal.</li>
+        <li><strong>Network Graph:</strong> Javascript-powered interactive graph showing
+             signal relationships with dynamic edges.</li>
+        <li><strong>Coherence Heatmap:</strong> Scientific visualization of wavelet coherence
+             with phase arrows to show lead-lag.</li>
+        <li><strong>Similarity Panel:</strong> Live display of cosine similarity metrics between all
+             signal pairs.</li>
+      </ul>
+      <h3 style="color:#4a90e2; font-size:1.1em;">Deployment & Scientific Applications</h3>
+      <ul style="margin-left:1em;">
+        <li><strong>Docker & Cloud:</strong> Containerized with Python 3.11-slim, scientific dependencies,
+             multi-worker Gunicorn, Azure Web App support, and automated integration and deployment.</li>
+        <li><strong>Applications:</strong> Wavelet coherence research, real-time multi-channel visualization,
+             wavelet analysis education, network topology visualization, and phase relationship studies.</li>
+      </ul>
+    </div>
+    <button style="padding:1em 2em; font-size:1.2em; border-radius:8px; background:#4a90e2; color:#fff; border:none; cursor:pointer; margin-top:2em;" onclick="window.open('https://coherent-multiplex-g6cgcugacrhrcaa3.westus-01.azurewebsites.net/', '_blank')">Launch Coherent Multiplex</button>
   </div>
   <div id="footer-container"></div>
   <script src="footer-loader.js"></script>
