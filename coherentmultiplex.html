@@ -9,6 +9,16 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 <body>
   <nav>
@@ -27,51 +37,297 @@
   </nav>
   <div class="container" style="max-width:900px; margin:0 auto; text-align:center;">
     <h1>Coherent Multiplex</h1>
-    <div style="text-align:left; margin:0 auto; max-width:800px; font-size:1.15em; background:#222; color:#eee; border-radius:12px; box-shadow:0 2px 16px #000a; padding:2em;">
-      <p>A sophisticated real-time signal analysis
-         and visualization platform that combines advanced signal processing 
-         with living graph-network based interfaces. The app procedurally generates synthetic signals,
-          analyzes their relationships using multiple metrics, 
-          and presents the results through dynamic visualizations.</p>
-      <h3 style="color:#4a90e2; font-size:1.1em;">Core Functionality</h3>
-      <ul style="margin-left:1em;">
-        <li><strong>Signal Generation & Processing:</strong> Generates synthetic
-            signals (labeled A-H) with multiple sine wave components, random frequencies, 
-            phases, and amplitudes. All features are procedurally generated and include
-            dynamic envelope shaping, time-varying noise, random coherent relationships (10% pairs), and signal dropouts.
-            Uses the <a href="https://fftw.org/" target="_blank" style="color:#97b7db; text-decoration:underline;"><em>Fastest Fourier Transform in the West</em></a> C subroutine for high-performance
-            FFT computation.</li>
-        <li><strong>Advanced Analysis:</strong> Wavelet coherence analysis 
-            (powered by <a href="literature.html#fcwt" style="color:#97b7db; text-decoration:underline;">fCWT</a>), 
-            phase relationships, and cosine similarity for frequency spectra.
-             Identifies related signals and valid analysis regions.</li>
-        <li><strong>Real-time Streaming:</strong> Python and C backends stream live data via SSE,
-             updating every second with new signal, FFT, and coherence results. Maintains
-             a 256-point rolling buffer.</li>
-      </ul>
-      <h3 style="color:#4a90e2; font-size:1.1em;">Visualization Features</h3>
-      <ul style="margin-left:1em;">
-        <li><strong>Time Domain:</strong> Real-time visual of signals with
-             color-coded traces.</li>
-        <li><strong>Frequency Domain:</strong> Live frequency magnitude spectra for each signal.</li>
-        <li><strong>Network Graph:</strong> Javascript-powered interactive graph showing
-             signal relationships with dynamic edges.</li>
-        <li><strong>Coherence Heatmap:</strong> Scientific visualization of wavelet coherence
-             with phase arrows to show lead-lag.</li>
-        <li><strong>Similarity Panel:</strong> Live display of cosine similarity metrics between all
-             signal pairs.</li>
-      </ul>
-      <h3 style="color:#4a90e2; font-size:1.1em;">Deployment & Scientific Applications</h3>
-      <ul style="margin-left:1em;">
-        <li><strong>Docker & Cloud:</strong> Containerized with Python 3.11-slim, scientific dependencies,
-             multi-worker Gunicorn, Azure Web App support, and automated integration and deployment.</li>
-        <li><strong>Applications:</strong> Wavelet coherence research, real-time multi-channel visualization,
-             wavelet analysis education, network topology visualization, and phase relationship studies.</li>
-      </ul>
+    <div style="display:flex; justify-content:center; gap:2em; margin-bottom:2em;">
+      <button id="tab-overview" class="tab-btn active" style="padding:0.7em 2em; font-size:1.1em; border-radius:8px; background:transparent; color:#fff; border:none; cursor:pointer;">Overview</button>
+      <button id="tab-whitepaper" class="tab-btn" style="padding:0.7em 2em; font-size:1.1em; border-radius:8px; background:transparent; color:#fff; border:none; cursor:pointer;">Whitepaper</button>
     </div>
-    <button style="padding:1em 2em; font-size:1.2em; border-radius:8px; background:#4a90e2; color:#fff; border:none; cursor:pointer; margin-top:2em;" onclick="window.open('https://coherent-multiplex-g6cgcugacrhrcaa3.westus-01.azurewebsites.net/', '_blank')">Launch Coherent Multiplex</button>
+    <button style="padding:1em 2em; font-size:1.2em; border-radius:8px; background:#4a90e2; color:#fff; border:none; cursor:pointer; margin-bottom:2em;" onclick="window.open('https://coherent-multiplex-g6cgcugacrhrcaa3.westus-01.azurewebsites.net/', '_blank')">Launch Coherent Multiplex</button>
+    <div id="overview-content" class="tab-content" style="display:block;">
+      <div style="text-align:left; margin:0 auto; max-width:800px; font-size:1.15em; background:#222; color:#eee; border-radius:12px; box-shadow:0 2px 16px #000a; padding:2em;">
+        <p>A sophisticated real-time signal analysis
+           and visualization platform that combines advanced signal processing 
+           with living graph-network based interfaces. The app procedurally generates synthetic signals,
+            analyzes their relationships using multiple metrics, 
+            and presents the results through dynamic visualizations.</p>
+        <h3 style="color:#4a90e2; font-size:1.1em;">Core Functionality</h3>
+        <ul style="margin-left:1em;">
+          <li><strong>Signal Generation & Processing:</strong> Generates synthetic
+              signals (labeled A-H) with multiple sine wave components, random frequencies, 
+              phases, and amplitudes. All features are procedurally generated and include
+              dynamic envelope shaping, time-varying noise, random coherent relationships (10% pairs), and signal dropouts.
+              Uses the <a href="https://fftw.org/" target="_blank" style="color:#97b7db; text-decoration:underline;"><em>Fastest Fourier Transform in the West</em></a> C subroutine for high-performance
+              FFT computation.</li>
+          <li><strong>Advanced Analysis:</strong> Wavelet coherence analysis 
+              (powered by <a href="literature.html#fcwt" style="color:#97b7db; text-decoration:underline;">fCWT</a>), 
+              phase relationships, and cosine similarity for frequency spectra.
+               Identifies related signals and valid analysis regions.</li>
+          <li><strong>Real-time Streaming:</strong> Python and C backends stream live data via SSE,
+               updating every second with new signal, FFT, and coherence results. Maintains
+               a 256-point rolling buffer.</li>
+        </ul>
+        <h3 style="color:#4a90e2; font-size:1.1em;">Visualization Features</h3>
+        <ul style="margin-left:1em;">
+          <li><strong>Time Domain:</strong> Real-time visual of signals with
+               color-coded traces.</li>
+          <li><strong>Frequency Domain:</strong> Live frequency magnitude spectra for each signal.</li>
+          <li><strong>Network Graph:</strong> Javascript-powered interactive graph showing
+               signal relationships with dynamic edges.</li>
+          <li><strong>Coherence Heatmap:</strong> Scientific visualization of wavelet coherence
+               with phase arrows to show lead-lag.</li>
+          <li><strong>Similarity Panel:</strong> Live display of cosine similarity metrics between all
+               signal pairs.</li>
+        </ul>
+        <h3 style="color:#4a90e2; font-size:1.1em;">Deployment & Scientific Applications</h3>
+        <ul style="margin-left:1em;">
+          <li><strong>Docker & Cloud:</strong> Containerized with Python 3.11-slim, scientific dependencies,
+               multi-worker Gunicorn, Azure Web App support, and automated integration and deployment.</li>
+          <li><strong>Applications:</strong> Wavelet coherence research, real-time multi-channel visualization,
+               wavelet analysis education, network topology visualization, and phase relationship studies.</li>
+        </ul>
+      </div>
+    </div>
+    <div id="whitepaper-content" class="tab-content" style="display:none;">
+      <div style="text-align:left; margin:0 auto; max-width:800px; font-size:1.08em; background:#222; color:#eee; border-radius:12px; box-shadow:0 2px 16px #000a; padding:2em;">
+        <style>
+          #whitepaper-content h4 {
+            color: #e2b84a;
+          }
+        </style>
+        <h2 style="color:#4a90e2;">Coherent Multiplex: Real-Time Signal Coherence Analysis and Feature Extraction Platform</h2>
+        <h3 style="color:#4a90e2;">Abstract</h3>
+        <p><em>The Coherent Multiplex is a real-time signal analysis and visualization platform designed to identify and monitor coherent relationships among multiple time series signals. By combining fast Fourier analysis, wavelet coherence, and interactive graph representations, the Multiplex enables efficient exploration of dynamic interactions in live signals. This whitepaper introduces the system architecture, core methodology, current prototyping efforts, and potential applications in research, trading, and live monitoring. Possibilities and goals for future directions with the Multiplex are also discussed.</em></p>
+        <h3 style="color:#4a90e2;">Introduction</h3>
+        <p>Understanding and employing wavelet coherence between signals is becoming increasingly popular in fields like neuroscience, finance, geophysics, and communications, where uncovering relationships between signals can reveal underlying mechanisms and patterns. Conventional approaches to coherence analysis are limited to high-level programming languages, run outdated transforms, and are incapable of handling high-volumes or real-time data streams efficiently. The Coherent Multiplex overcomes these challenges by offering a rapid and scalable solution for live coherence tracking, allowing users to explore frequency- and time-dependent interactions with greater speed and precision.</p>
+        <p>By leveraging advanced algorithms and optimized computing frameworks in the <a href="https://fftw.org/" target="_blank" style="color:#97b7db; text-decoration:underline;">Fastest Fourier Transform in the West (FFTW)</a> and the <a href="literature.html#fcwt" style="color:#97b7db; text-decoration:underline;">Fast Continuous Wavelet Transform (FCWT)</a>, the Multiplex significantly reduces the processing time required for coherence analysis, making it suitable for real-time and large-scale applications. This innovation, combined with the living multilayered network architecture, will enable researchers and industry professionals to efficiently monitor and investigate dynamic signal relationships as they evolve, supporting new opportunities in data-driven decision making and responsive system design across diverse scientific and industrial domains.</p>
+        <h3 style="color:#4a90e2;">System Overview</h3>
+        <ul>
+          <li><strong>Signal Ingestion:</strong> Flexible APIs and device connections for diverse data sources.</li>
+          <li><strong>Real-Time Spectral Transform Compute:</strong> Fast Fourier transforms for immediate spectral insight.</li>
+          <li><strong>Multilayered Graph Network:</strong> Nodes represent signals, edges represent coherence/similarity.</li>
+          <li><strong>Pairwise Cosine Similarity Analysis:</strong> Quantifies spectral alignment between signals.</li>
+          <li><strong>Selective Wavelet Coherence:</strong> Time-frequency resolution of dynamic interactions using CWT.</li>
+          <li><strong>Interactive Dashboard:</strong> Time-domain plots, FFT spectra, network graphs, and heatmaps with live updates.</li>
+        </ul>
+        <h3 style="color:#4a90e2;">Technical Outline</h3>
+        <h4>Incoming Data</h4>
+        <p>A live signal can be represented as a real-valued function of time:</p>
+        <div style="background:#181818; color:#fff; padding:0.5em 1em; border-radius:6px; margin:0.5em 0;">
+$$x(t): \mathbb{R} \rightarrow \mathbb{R}$$
+        </div>
+        <p>where $x(t)$ is defined only up to the present moment $t_0$:</p>
+        <div style="background:#181818; color:#fff; padding:0.5em 1em; border-radius:6px; margin:0.5em 0;">
+$$x(t), \quad \text{for } t \leq t_0$$
+        </div>
+        <p>A continuous-time signal $x(t)$ sampled at a frequency $f_s$ (in Hz) becomes:</p>
+        <div style="background:#181818; color:#fff; padding:0.5em 1em; border-radius:6px; margin:0.5em 0;">
+$$x[n] = x\left( \frac{n}{f_s} \right), \quad n \in \mathbb{Z}$$
+        </div>
+        <p>where $f_s$ is the sampling frequency (samples per second), and $n$ is the discrete time index. For the real-time processing employed by the Multiplex, a finite-length buffer is defined:</p>
+        <div style="background:#181818; color:#fff; padding:0.5em 1em; border-radius:6px; margin:0.5em 0;">
+$$X[n] = \{ x[n - N + 1],\, x[n - N + 2], \dotsc,\, x[n] \}$$
+        </div>
+        <p>where $N$ is the window size.</p>
+        <p>Multiple signals are indexed by $i \in\{1, \dotsc, M\}$, each with its own discrete-time sequence and buffer $X_i[n]$. By aligning our signals in an <em>M</em>-dimensional vector, the full datastream is represented in the $N \times M$ matrix <em>D</em>:</p>
+        <div style="background:#181818; color:#fff; border-radius:6px; padding:1em; font-size:0.95em; overflow-x:auto;">
+$$D = \begin{bmatrix}
+x_1[n - N + 1] & x_1[n - N + 2] & \cdots & x_1[n] \\
+x_2[n - N + 1] & x_2[n - N + 2] & \cdots & x_2[n] \\
+\vdots & \vdots & \ddots & \vdots \\
+x_M[n - N + 1] & x_M[n - N + 2] & \cdots & x_M[n] \\
+\end{bmatrix}$$
+        </div>
+        <h4>Frequency Domain</h4>
+        <p>To analyze the spectral properties of each signal, a discrete Fourier transform (DFT) is applied row-wise to the data matrix $D$. For a discrete-time signal $X_i[n]$, its DFT over the window of size $N$ is defined as:</p>
+        <div style="background:#181818; color:#fff; padding:0.5em 1em; border-radius:6px; margin:0.5em 0;">
+$$f_i[k] = \sum_{n=0}^{N-1} X_i[n] \cdot e^{-\text{i} 2\pi \frac{kn}{N}}, \quad k = 0, 1, \dotsc, N-1$$
+        </div>
+        <p>where $f_i[k]$ represents the complex frequency component at bin $k$, and i is the imaginary unit. This transform yields a frequency-domain representation of each signal, capturing its harmonic content within the sliding buffer. The entire frequency-domain data across all $M$ signals is represented by the matrix $F \in \mathbb{C}^{M \times N}$, where:</p>
+        <div style="background:#181818; color:#fff; border-radius:6px; padding:1em; font-size:0.95em; overflow-x:auto;">
+$$F = \begin{bmatrix}
+f_1[0] & f_1[1] & \cdots & f_1[N-1] \\
+f_2[0] & f_2[1] & \cdots & f_2[N-1] \\
+\vdots & \vdots & \ddots & \vdots \\
+f_M[0] & f_M[1] & \cdots & f_M[N-1]
+\end{bmatrix}$$
+        </div>
+        <p>Each row corresponds to a signal's frequency spectrum, and each column represents a particular frequency bin across all signals.</p>
+        <p>As long as the incoming signal data is real-valued, the Fourier values will exhibit <em>Hermitian symmetry</em>, meaning:</p>
+        <div style="background:#181818; color:#fff; padding:0.5em 1em; border-radius:6px; margin:0.5em 0;">
+$$X[k] = \overline{X[N - k]}, \quad k = 1, 2, \dotsc, N-1$$
+        </div>
+        <p>where $\overline{X[\cdot]}$ denotes the complex conjugate. This symmetry implies that the frequency components for positive frequencies uniquely determine those for negative frequencies, allowing the Fourier transform of a real signal to be fully represented by the first $L = \left\lfloor \frac{N}{2} \right\rfloor + 1$ frequency bins (including the zero-frequency and, if $N$ is even, the Nyquist frequency). Exploiting this property, matrix $F$ can be safely reduced to $F_r \in \mathbb{C}^{M \times L}$.</p>
+        <h4>Cosine Similarity</h4>
+        <p>To identify signal pairs with similar spectral profiles, Coherent Multiplex computes the pairwise cosine similarity between rows of the reduced frequency matrix $F_r \in \mathbb{C}^{M}$. Given two complex-valued frequency vectors $f_i$ and $f_j$, their cosine similarity is defined as:</p>
+        <div style="background:#181818; color:#fff; padding:0.5em 1em; border-radius:6px; margin:0.5em 0;">
+$$s(i,j) = \frac{|\langle f_i, f_j \rangle|}{\|f_i\| \cdot \|f_j\|}$$
+        </div>
+        <p>where $\langle f_i, f_j \rangle$ denotes the complex inner product:</p>
+        <div style="background:#181818; color:#fff; padding:0.5em 1em; border-radius:6px; margin:0.5em 0;">
+$$\langle f_i, f_j \rangle = \sum_{l=0}^{L-1} f_i[l] \cdot \overline{f_j[l]}$$
+        </div>
+        <p>and $\|f_i\|$ is the Euclidean norm:</p>
+        <div style="background:#181818; color:#fff; padding:0.5em 1em; border-radius:6px; margin:0.5em 0;">
+$$\|f_i\| = \sqrt{\sum_{l=0}^{L} |f_i[l]|^2}$$
+        </div>
+        <p>This metric yields a real-valued similarity score between 0 and 1, where 1 indicates perfect spectral alignment. The resulting vector of similarities is defined as:</p>
+        <div style="background:#181818; color:#fff; padding:0.5em 1em; border-radius:6px; margin:0.5em 0;">
+$$S = [s_1, s_2, \dotsc, s_p]$$
+        </div>
+        <p>where $p = \binom{M}{2}$ is the number of unique unordered signal pairs.</p>
+        <h4>Exploratory Network</h4>
+        <p>The similarity vector $S$ is used to construct a fully connected graph to represent the relationships among the $M$ signals. Each signal corresponds to a node in the network, and every pair of nodes $(i, j)$ is connected by an edge weighted by the cosine similarity score $s(i,j)$.</p>
+        <p>Formally, the network $G = (V, E, W)$ is defined as follows:</p>
+        <div style="background:#181818; color:#fff; padding:0.5em 1em; border-radius:6px; margin:0.5em 0;">
+$$G = (V, E, W)$$
+        </div>
+        <div style="text-align:center; margin:1em 0;">
+          <svg width="340" height="340" viewBox="0 0 340 340" style="background:#181818; border-radius:8px; box-shadow:0 2px 12px #000a;">
+            <g>
+              <!-- Draw edges -->
+              <g stroke="#e2b84a" stroke-width="1" opacity="0.5">
+                <!-- All pairs (i < j) -->
+                <line x1="170" y1="40" x2="270" y2="90" />
+                <line x1="170" y1="40" x2="310" y2="170" />
+                <line x1="170" y1="40" x2="270" y2="250" />
+                <line x1="170" y1="40" x2="170" y2="300" />
+                <line x1="170" y1="40" x2="70" y2="250" />
+                <line x1="170" y1="40" x2="30" y2="170" />
+                <line x1="170" y1="40" x2="70" y2="90" />
+                <!-- Node 2 edges -->
+                <line x1="270" y1="90" x2="310" y2="170" />
+                <line x1="270" y1="90" x2="270" y2="250" />
+                <line x1="270" y1="90" x2="170" y2="300" />
+                <line x1="270" y1="90" x2="70" y2="250" />
+                <line x1="270" y1="90" x2="30" y2="170" />
+                <line x1="270" y1="90" x2="70" y2="90" />
+                <!-- Node 3 edges -->
+                <line x1="310" y1="170" x2="270" y2="250" />
+                <line x1="310" y1="170" x2="170" y2="300" />
+                <line x1="310" y1="170" x2="70" y2="250" />
+                <line x1="310" y1="170" x2="30" y2="170" />
+                <line x1="310" y1="170" x2="70" y2="90" />
+                <!-- Node 4 edges -->
+                <line x1="270" y1="250" x2="170" y2="300" />
+                <line x1="270" y1="250" x2="70" y2="250" />
+                <line x1="270" y1="250" x2="30" y2="170" />
+                <line x1="270" y1="250" x2="70" y2="90" />
+                <!-- Node 5 edges -->
+                <line x1="170" y1="300" x2="70" y2="250" />
+                <line x1="170" y1="300" x2="30" y2="170" />
+                <line x1="170" y1="300" x2="70" y2="90" />
+                <!-- Node 6 edges -->
+                <line x1="70" y1="250" x2="30" y2="170" />
+                <line x1="70" y1="250" x2="70" y2="90" />
+                <!-- Node 7 edges -->
+                <line x1="30" y1="170" x2="70" y2="90" />
+              </g>
+              <!-- Draw nodes -->
+              <g>
+                <circle cx="170" cy="40" r="16" fill="#4a90e2" stroke="#fff" stroke-width="2" />
+                <circle cx="270" cy="90" r="16" fill="#4a90e2" stroke="#fff" stroke-width="2" />
+                <circle cx="310" cy="170" r="16" fill="#4a90e2" stroke="#fff" stroke-width="2" />
+                <circle cx="270" cy="250" r="16" fill="#4a90e2" stroke="#fff" stroke-width="2" />
+                <circle cx="170" cy="300" r="16" fill="#4a90e2" stroke="#fff" stroke-width="2" />
+                <circle cx="70" cy="250" r="16" fill="#4a90e2" stroke="#fff" stroke-width="2" />
+                <circle cx="30" cy="170" r="16" fill="#4a90e2" stroke="#fff" stroke-width="2" />
+                <circle cx="70" cy="90" r="16" fill="#4a90e2" stroke="#fff" stroke-width="2" />
+              </g>
+            </g>
+          </svg>
+          <div style="color:#aaa; font-size:0.95em; margin-top:0.5em;">Example 8-node graph.</div>
+        </div>
+        <ul>
+          <li>$V = \{1, 2, \dotsc, M\}$ is the set of nodes, each representing a signal.</li>
+          <li>$E = \{(i, j) \mid i, j \in V, i \neq j\}$ is the set of edges connecting every distinct pair of nodes.</li>
+          <li>$W: E \to [0,1]$ assigns weights to edges, where $W(i,j) = s(i,j)$ is the cosine similarity between signals $i$ and $j$.</li>
+        </ul>
+        <p>This weighted network layer encodes the spectral similarity structure among signals, enabling subsequent layer construction.</p>
+        <h4>Wavelet Coherence</h4>
+        <p>To uncover time-localized, frequency-specific relationships between signals, the Coherent Multiplex contains a second, sparse layer where the edges represent <em>wavelet coherence</em>.</p>
+        <p>To compute coherence, wavelet transform arrays must be constructed for participating nodes. Given a signal $x$, the wavelet transform is computed as:</p>
+        <div style="background:#181818; color:#fff; padding:0.5em 1em; border-radius:6px; margin:0.5em 0;">
+$$W_x(t, s) = \sum_{n=0}^{N-1} x[n] \cdot \psi^* \left( \frac{n - t}{s} \right)$$
+        </div>
+        <p>where $\psi$ is a complex-valued mother wavelet, $s$ is the scale parameter (related to frequency), $t$ is the time index, and $\psi^*$ denotes the complex conjugate.</p>
+        <p>The wavelet coherence between signals $x_i$ and $x_j$ is then defined as:</p>
+        <div style="background:#181818; color:#fff; padding:0.5em 1em; border-radius:6px; margin:0.5em 0;">
+$$C_{ij}(t, s) = \frac{\left| S\left( W_i(t, s) \cdot \overline{W_j(t, s)} \right) \right|^2}
+{S\left( |W_i(t, s)|^2 \right) \cdot S\left( |W_j(t, s)|^2 \right)}$$
+        </div>
+        <p>where $S(\cdot)$ is a smoothing operator in both time and scale, and the result satisfies $0 \leq C_{ij}(t, s) \leq 1$. Edges of this layer are constructed and decay based on the corresponding edge's power from the previous exploratory layer.</p>
+        <h3 style="color:#4a90e2;">Prototyping</h3>
+        <h4>Signal Simulation</h4>
+        <p>Incoming data is procedurally generated to show signals that come in and out of covariance. 8 input signals are synthesized as linear combinations of sine waves with randomized amplitudes, frequencies, and phases. This emulates the complex, non-stationary behavior of real-world signals. Coherence is artificially introduced between selected pairs by sharing frequency components or phase structure at randomized intervals.</p>
+        <div style="text-align:center; margin:1em 0;">
+          <img src="resources/sigs.PNG" alt="Signals A-H are color coded for easy tracking." style="max-width:100%; border-radius:8px; box-shadow:0 2px 12px #000a;">
+          <div style="color:#aaa; font-size:0.95em; margin-top:0.5em;">Signals A-H are color coded for easy tracking.</div>
+        </div>
+        <h4>Buffering and FFT Analysis</h4>
+        <p>For each update, the FFT is computed using a fast backend with pre-aligned reusable memory buffers. This implementation imports the FFTW C subroutine, which will enable scaling up. The magnitude spectra of the FFT results are extracted and used to compute pairwise cosine similarity. This provides a first-pass screening of potentially coherent signal pairs based on their frequency-domain peaks.</p>
+        <div style="text-align:center; margin:1em 0;">
+          <img src="resources/freqs.PNG" alt="FFT magnitude spectra of each signal at a given time step." style="max-width:100%; border-radius:8px; box-shadow:0 2px 12px #000a;">
+          <div style="color:#aaa; font-size:0.95em; margin-top:0.5em;">FFT magnitude spectra of each signal at a given time step. Pairwise cosine similarities are computed between rows.</div>
+        </div>
+        <h4>Graph Construction</h4>
+        <p>A fully connected network is made to represent the 8 signals as nodes, and the edges between nodes are weighted by the cosine similarity between the corresponding signals' frequency-domain vectors. This network serves as the first layer of analysis, allowing visualization of potential coherence relationships and identification of candidate pairs for further analysis.</p>
+        <div style="text-align:center; margin:1em 0;">
+          <img src="resources/graph.PNG" alt="Cosine similarity graph. Nodes represent signals; edge weights represent similarity. All possible pairs are connected." style="max-width:100%; border-radius:8px; box-shadow:0 2px 12px #000a;">
+          <div style="color:#aaa; font-size:0.95em; margin-top:0.5em;">Cosine similarity graph. Nodes represent signals; edge weights represent similarity. All possible pairs are connected.</div>
+        </div>
+        <h4>Wavelet Coherence</h4>
+        <p>For deeper analysis in time and frequency relationships, wavelet coherence is selectively computed between the pair exhibiting the highest similarity at each update. Transform arrays are efficiently computed via the FCWT algorithm for each signal, and coherence is evaluated in the time-frequency domain. Visualizations in this implementation include phase arrows indicating lead/lag relationships but ignore the cone of influence, which masks regions that are unreliable.</p>
+        <div style="text-align:center; margin:1em 0;">
+          <img src="resources/coh.PNG" alt="Wavelet coherence analysis between selected signal pairs. High-coherence regions and phase relationships are visible." style="max-width:100%; border-radius:8px; box-shadow:0 2px 12px #000a;">
+          <div style="color:#aaa; font-size:0.95em; margin-top:0.5em;">Wavelet coherence analysis between selected signal pairs. High-coherence regions and phase relationships are visible.</div>
+        </div>
+        <h3 style="color:#4a90e2;">Applications</h3>
+        <p>Though originally developed for examining multi-decade correlations between the El Niño-Southern Oscillation and monsoon activity in South Asia, wavelet coherence has been applied broadly across numerous domains. Applications with interest in these time-frequency relationships include economics, neuroscience, mechanical and electrical engineering and bio-medical signals.</p>
+        <p>In economics, wavelet coherence analysis is widely used to investigate the dynamic relationships between financial time series, such as stock indices, exchange rates, and macroeconomic indicators. By allowing researchers to examine correlations at different time scales and periods, wavelet coherence has enabled the identification of transient co-movements and structural changes in markets that may not be visible through traditional methods.</p>
+        <p>In neuroscience, wavelet coherence provides a powerful tool for exploring the synchronization and functional connectivity between different regions of the brain. For example, it has been applied to electroencephalogram (EEG) and magnetoencephalogram (MEG) data to detect time-varying patterns of coherence between neural signals, helping to identify underlying mechanisms for cognitive processes, brain disorders, and responses to stimuli. Coherence is also used to examine correlations across physiological processes such as heart rate and respiration, enabling detection of abnormal patterns and assessment of disease impacts.</p>
+        <p>In all of these fields, coherence is studied by first selecting signals of interest from a large pool. EEG for research will regularly employ 128 - 512 nodes in high-density mappings. The NYSE National platform continuously updates the prices of over 8000 listed securities. Traditional coherence implementations would never be considered as methods of extraction for the entire corpus. The Coherent Multiplex is capable of executing these computations at scale, and is highly optimized for performance. The model can be tuned to accommodate hardware, and the most recent prototype is hosted smoothly on a basic dual-core, 3.5 GB RAM cloud platform.</p>
+        <h3 style="color:#4a90e2;">Future Work</h3>
+        <p>The Multiplex architecture described in this whitepaper can be summarized as heuristics for distinguishing signal pairings worthy of deeper analysis at a given time. The "heuristics" and "deeper analysis" in this case refer specifically to FFT, cosine similarity, and wavelet coherence, though this can be appended or substituted depending on the goal. If scale-independency is not necessary for the object of study, the <em>cross-wavelet</em> transform can be substituted in for coherence. A different metric could be used to determine the edge powers in the graph, supposing the spectral content is not the object of interest in the incoming signals.</p>
+        <p>Additional layers, both sequential and non-sequential, will be appended to the multiplex. Wavelet coherence can be calculated alongside traditional metrics like macro trends for high-powered edges in the graph, giving a more complete extraction of possible features. Additionally, subsequent layers with trained convolution neural networks will be added for automated analysis and description of the coherence readings.</p>
+        <h3 style="color:#4a90e2;">References</h3>
+        <ul style="font-size:0.98em; color:#bbb;">
+          <li>Frigo, M. & Johnson, S. G. (2005). <em>The Design and Implementation of FFTW3</em>. Proceedings of the IEEE, 93(2), 216–231.</li>
+          <li>Grinsted, A., Moore, J. C., & Jevrejeva, S. (2004). <em>Application of the cross wavelet transform and wavelet coherence to geophysical time series</em>. Nonlinear Processes in Geophysics, 11(5/6), 561–566.</li>
+          <li>Torrence, C. & Compo, G. P. (1998). <em>A Practical Guide to Wavelet Analysis</em>. Bulletin of the American Meteorological Society, 79(1), 61–78.</li>
+          <li>Arts, L.P.A., van den Broek, E.L. (2022). <em>The fast continuous wavelet transformation (fCWT) for real-time, high-quality, noise-resistant time–frequency analysis.</em> Nat Comput Sci 2, 47–58.</li>
+        </ul>
+      </div>
+    </div>
   </div>
   <div id="footer-container"></div>
   <script src="footer-loader.js"></script>
+<script>
+// Tab switching functionality
+document.addEventListener('DOMContentLoaded', function() {
+  var tabOverview = document.getElementById('tab-overview');
+  var tabWhitepaper = document.getElementById('tab-whitepaper');
+  var overviewContent = document.getElementById('overview-content');
+  var whitepaperContent = document.getElementById('whitepaper-content');
+  tabOverview.addEventListener('click', function() {
+    tabOverview.classList.add('active');
+    tabWhitepaper.classList.remove('active');
+    overviewContent.style.display = 'block';
+    whitepaperContent.style.display = 'none';
+    tabOverview.style.background = 'transparent';
+    tabOverview.style.color = '#fff';
+    tabWhitepaper.style.background = 'transparent';
+    tabWhitepaper.style.color = '#fff';
+  });
+  tabWhitepaper.addEventListener('click', function() {
+    tabWhitepaper.classList.add('active');
+    tabOverview.classList.remove('active');
+    overviewContent.style.display = 'none';
+    whitepaperContent.style.display = 'block';
+    tabWhitepaper.style.background = 'transparent';
+    tabWhitepaper.style.color = '#fff';
+    tabOverview.style.background = 'transparent';
+    tabOverview.style.color = '#fff';
+  });
+});
+</script>
 </body>
 </html>
