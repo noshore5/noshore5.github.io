@@ -303,25 +303,25 @@ $$C_{ij}(t, s) = \frac{\left| S\left( W_i(t, s) \cdot \overline{W_j(t, s)} \righ
         <h4>Signal Simulation</h4>
         <p>Incoming data is procedurally generated to show signals that come in and out of covariance. 8 input signals are synthesized as linear combinations of sine waves with randomized amplitudes, frequencies, and phases. This emulates the complex, non-stationary behavior of real-world signals. Coherence is artificially introduced between selected pairs by sharing frequency components or phase structure at randomized intervals.</p>
         <div style="text-align:center; margin:1em 0;">
-          <img src="resources/sigs.PNG" alt="Signals A-H are color coded for easy tracking." style="max-width:100%; border-radius:8px; box-shadow:0 2px 12px #000a;">
+          <img src="resources/sigs.png" alt="Signals A-H are color coded for easy tracking." style="max-width:100%; border-radius:8px; box-shadow:0 2px 12px #000a;">
           <div style="color:#aaa; font-size:0.95em; margin-top:0.5em;">Signals A-H are color coded for easy tracking.</div>
         </div>
         <h4>Buffering and FFT Analysis</h4>
         <p>For each update, the FFT is computed using a fast backend with pre-aligned reusable memory buffers. This implementation imports the FFTW C subroutine, which will enable scaling up. The magnitude spectra of the FFT results are extracted and used to compute pairwise cosine similarity. This provides a first-pass screening of potentially coherent signal pairs based on their frequency-domain peaks.</p>
         <div style="text-align:center; margin:1em 0;">
-          <img src="resources/freqs.PNG" alt="FFT magnitude spectra of each signal at a given time step." style="max-width:100%; border-radius:8px; box-shadow:0 2px 12px #000a;">
+          <img src="resources/freqs.png" alt="FFT magnitude spectra of each signal at a given time step." style="max-width:100%; border-radius:8px; box-shadow:0 2px 12px #000a;">
           <div style="color:#aaa; font-size:0.95em; margin-top:0.5em;">FFT magnitude spectra of each signal at a given time step. Pairwise cosine similarities are computed between rows.</div>
         </div>
         <h4>Graph Construction</h4>
         <p>A fully connected network is made to represent the 8 signals as nodes, and the edges between nodes are weighted by the cosine similarity between the corresponding signals' frequency-domain vectors. This network serves as the first layer of analysis, allowing visualization of potential coherence relationships and identification of candidate pairs for further analysis.</p>
         <div style="text-align:center; margin:1em 0;">
-          <img src="resources/graph.PNG" alt="Cosine similarity graph. Nodes represent signals; edge weights represent similarity. All possible pairs are connected." style="max-width:100%; border-radius:8px; box-shadow:0 2px 12px #000a;">
+          <img src="resources/graph.png" alt="Cosine similarity graph. Nodes represent signals; edge weights represent similarity. All possible pairs are connected." style="max-width:100%; border-radius:8px; box-shadow:0 2px 12px #000a;">
           <div style="color:#aaa; font-size:0.95em; margin-top:0.5em;">Cosine similarity graph. Nodes represent signals; edge weights represent similarity. All possible pairs are connected.</div>
         </div>
         <h4>Wavelet Coherence</h4>
         <p>For deeper analysis in time and frequency relationships, wavelet coherence is selectively computed between the pair exhibiting the highest similarity at each update. Transform arrays are efficiently computed via the FCWT algorithm for each signal, and coherence is evaluated in the time-frequency domain. Visualizations in this implementation include phase arrows indicating lead/lag relationships but ignore the cone of influence, which masks regions that are unreliable.</p>
         <div style="text-align:center; margin:1em 0;">
-          <img src="resources/coh.PNG" alt="Wavelet coherence analysis between selected signal pairs. High-coherence regions and phase relationships are visible." style="max-width:100%; border-radius:8px; box-shadow:0 2px 12px #000a;">
+          <img src="resources/coh.png" alt="Wavelet coherence analysis between selected signal pairs. High-coherence regions and phase relationships are visible." style="max-width:100%; border-radius:8px; box-shadow:0 2px 12px #000a;">
           <div style="color:#aaa; font-size:0.95em; margin-top:0.5em;">Wavelet coherence analysis between selected signal pairs. High-coherence regions and phase relationships are visible.</div>
         </div>
         <h3 style="color:#4a90e2;">Applications</h3>
