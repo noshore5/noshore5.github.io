@@ -15,6 +15,20 @@
       tex: {
         inlineMath: [['$', '$'], ['\\(', '\\)']],
         displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      },
+      options: {
+        menuOptions: {
+          settings: {
+            assistiveMml: true
+          }
+        }
+      },
+      chtml: {
+        scale: 0.9,
+        minScale: 0.5,
+        matchFontHeight: false,
+        displayAlign: 'center',
+        displayIndent: '0em'
       }
     };
   </script>
@@ -87,10 +101,40 @@
       </div>
     </div>
     <div id="whitepaper-content" class="tab-content" style="display:none;">
-      <div style="text-align:left; margin:0 auto; max-width:800px; font-size:1.08em; background:#222; color:#eee; border-radius:12px; box-shadow:0 2px 16px #000a; padding:2em;">
+      <div style="position:relative; text-align:left; margin:0 auto; max-width:800px; font-size:1.08em; background:#222; color:#eee; border-radius:12px; box-shadow:0 2px 16px #000a; padding:2em;">
+        <a href="resources/CMPX_whitepaper.pdf" target="_blank" style="position:absolute; top:1em; right:2em; color:#e2b84a; background:#181818; border-radius:6px; padding:0.5em 1.2em; text-decoration:none; font-weight:500; font-size:1em; box-shadow:0 2px 8px #000a;">Download PDF</a>
         <style>
           #whitepaper-content h4 {
             color: #e2b84a;
+          }
+          /* Mobile-friendly math styling */
+          @media (max-width: 768px) {
+            .MathJax {
+              font-size: 0.9em !important;
+            }
+            mjx-container[display="true"] {
+              overflow-x: auto;
+              overflow-y: hidden;
+              max-width: 100%;
+            }
+            mjx-container {
+              line-height: 1.2;
+            }
+            /* Ensure math blocks don't overflow */
+            div[style*="background:#181818"] {
+              overflow-x: auto;
+              white-space: nowrap;
+              padding: 0.5em 0.8em !important;
+            }
+          }
+          @media (max-width: 480px) {
+            .MathJax {
+              font-size: 0.8em !important;
+            }
+            div[style*="background:#181818"] {
+              padding: 0.4em 0.6em !important;
+              font-size: 0.85em !important;
+            }
           }
         </style>
         <h2 style="color:#4a90e2;">Coherent Multiplex: Real-Time Signal Coherence Analysis and Feature Extraction Platform</h2>
