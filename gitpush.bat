@@ -32,4 +32,4 @@ git push origin main
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 echo Git push complete.
-pause
+
