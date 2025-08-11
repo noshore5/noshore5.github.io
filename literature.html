@@ -7,8 +7,16 @@
   <title>Literature</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <style>
+    .nav-links a {
+      text-decoration: none;
+    }
+    .nav-links a.active {
+      text-decoration: underline;
+    }
+  </style>
   <style>
     .literature-layout {
       display: flex;
@@ -152,22 +160,8 @@
   </style>
 </head>
 <body>
-  <nav>
-    <a href="index.html" class="home-link">Home</a>
-    <button class="menu-toggle" aria-label="Open menu" onclick="document.querySelector('.nav-links').classList.toggle('open'); this.classList.toggle('open');">
-      <span></span><span></span><span></span>
-    </button>
-    <div class="nav-menu-wrapper">
-      <div class="nav-links">
-      <a href="coheriqs.html">CoherIQs</a>
-      <a href="coheriqslive.html">CoherIQs Live</a>
-      <a href="coherentmultiplex.html">Coherent Multiplex</a>
-      <a href="performance.html">Performance</a>
-      <a href="biography.html">Biography</a>
-      <a href="literature.html" class="active">Literature</a>
-      </div>
-    </div>
-  </nav>
+  <!-- Menu will be loaded here -->
+  <div id="menu-container"></div>
   
   <div class="literature-layout">
     <!-- Left Sidebar Menu -->
@@ -303,6 +297,7 @@
   <!-- Footer will be loaded here -->
   <div id="footer-container"></div>
 </body>
+<script src="menu-loader.js"></script>
 <script src="footer-loader.js"></script>
 <script>
 // Paper switching functionality

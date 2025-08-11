@@ -34,20 +34,8 @@
   </style>
 </head>
 <body>
-  <nav>
-    <a href="index.html" class="home-link active">Home</a>
-    <button class="menu-toggle" aria-label="Open menu" onclick="document.querySelector('.nav-links').classList.toggle('open'); this.classList.toggle('open');">
-      <span></span><span></span><span></span>
-    </button>
-    <div class="nav-links">
-      <a href="coheriqs.html">CoherIQs</a>
-      <a href="coheriqslive.html">CoherIQs Live</a>
-      <a href="coherentmultiplex.html">Coherent Multiplex</a>
-      <a href="performance.html">Performance</a>
-      <a href="biography.html">Biography</a>
-      <a href="literature.html">Literature</a>
-    </div>
-  </nav>
+  <!-- Menu will be loaded here -->
+  <div id="menu-container"></div>
   <div class="container home-container" style="max-width:900px; margin:0 auto; text-align:center;">
     <h1>CoherIQs</h1>
     <p style="max-width:700px; margin:0 auto 1em auto; text-align:center; font-size:1.2em;min-height:100px;">Originally developed for examining scale-dependent correlations between the El Nino-Southern 
@@ -84,26 +72,7 @@
   <!-- Footer will be loaded here -->
   <div id="footer-container"></div>
 </body>
+<script src="menu-loader.js"></script>
 <script src="footer-loader.js"></script>
-<script>
-document.addEventListener('click', function(e) {
-  const navLinks = document.querySelector('.nav-links');
-  const menuToggle = document.querySelector('.menu-toggle');
-  if (!menuToggle || !navLinks) return;
-  if (menuToggle.classList.contains('open') && !menuToggle.contains(e.target) && !navLinks.contains(e.target)) {
-    navLinks.classList.remove('open');
-    menuToggle.classList.remove('open');
-  }
-});
-window.addEventListener('resize', function() {
-  const navLinks = document.querySelector('.nav-links');
-  const menuToggle = document.querySelector('.menu-toggle');
-  if (window.innerWidth > 900 && navLinks && menuToggle) {
-    navLinks.classList.remove('open');
-    menuToggle.classList.remove('open');
-  }
-});
-
-</script>
 </body>
 </html>
