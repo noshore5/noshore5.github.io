@@ -79,7 +79,8 @@ const ENVIRONMENT_CONFIG = {
       enableAnalytics: true
     },
     claude: {
-      useDirectAPI: true  // Try direct API in production too if key available
+      useDirectAPI: false,  // Use Vercel function instead of direct API
+      proxyEndpoint: '/api/claude'  // Vercel function endpoint
     },
     performance: {
       timeoutMs: 15000
@@ -87,15 +88,15 @@ const ENVIRONMENT_CONFIG = {
   },
   
   github_pages: {
-    // GitHub Pages specific config - no backend available
+    // GitHub Pages with Vercel function
     claude: {
-      useDirectAPI: true,  // Must use direct API since no backend
-      proxyEndpoint: null, // No proxy available on GitHub Pages
-      fallbackMode: true   // Enable fallback responses when API not available
+      useDirectAPI: false,  // Use Vercel function proxy
+      proxyEndpoint: 'https://your-vercel-app.vercel.app/api/claude', // Update with your Vercel URL
+      fallbackMode: false   // Disable fallback since we have API access
     },
     features: {
       enableOfflineMode: true,
-      debugMode: true  // Enable debug to see what's happening
+      debugMode: false
     }
   }
 };

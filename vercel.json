@@ -1,0 +1,24 @@
+{
+  "functions": {
+    "api/claude.js": {
+      "runtime": "@vercel/node"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/claude",
+      "destination": "/api/claude.js"
+    }
+  ],
+  "github": {
+    "silent": true
+  },
+  "build": {
+    "env": {
+      "NODE_ENV": "production"
+    }
+  },
+  "env": {
+    "CLAUDE_API_KEY": "@claude_api_key"
+  }
+}

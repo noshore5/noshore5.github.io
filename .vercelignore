@@ -1,0 +1,24 @@
+# Ignore everything except API functions
+*
+!api/
+!package.json
+!vercel.json
+
+# Specifically ignore static files
+*.html
+*.css
+*.js
+*.png
+*.jpg
+*.gif
+*.svg
+*.ico
+*.md
+resources/
+claude_utils/
+TeX/
+Apps/
+Chq_agents/
+
+# But keep the API directory
+!api/**
