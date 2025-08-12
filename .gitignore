@@ -12,6 +12,7 @@ npm-debug.log*
 # Local configuration files with API keys
 claude_utils/config_local.js
 config_local.js
+shakespeare_quotes.txt
 
 # Python cache
 __pycache__/
