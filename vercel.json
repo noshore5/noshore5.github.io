@@ -17,8 +17,5 @@
     "env": {
       "NODE_ENV": "production"
     }
-  },
-  "env": {
-    "CLAUDE_API_KEY": "@claude_api_key"
   }
 }
