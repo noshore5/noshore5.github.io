@@ -1,7 +1,7 @@
 {
   "functions": {
     "api/claude.js": {
-      "runtime": "@vercel/node"
+      "runtime": "@vercel/node@18.x"
     }
   },
   "rewrites": [
@@ -9,13 +9,5 @@
       "source": "/api/claude",
       "destination": "/api/claude.js"
     }
-  ],
-  "github": {
-    "silent": true
-  },
-  "build": {
-    "env": {
-      "NODE_ENV": "production"
-    }
-  }
+  ]
 }
