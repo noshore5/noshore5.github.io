@@ -74,5 +74,30 @@
 </body>
 <script src="menu-loader.js"></script>
 <script src="footer-loader.js"></script>
+<!-- Claude Assistant -->
+<script>
+  // Load config and conditionally load local config in development
+  window.CLAUDE_FALLBACK = true;
+  console.log('Loading Claude Assistant...');
+</script>
+<script src="claude_utils/config.js" onerror="console.log('Config not loaded, using defaults')"></script>
+<script>
+  // Only try to load local config in development
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    const script = document.createElement('script');
+    script.src = 'claude_utils/config_local.js';
+    script.onerror = function() {
+      console.log('Local config not found - using default configuration');
+    };
+    script.onload = function() {
+      console.log('Local config loaded for development');
+    };
+    document.head.appendChild(script);
+  } else {
+    console.log('Production environment - skipping local config');
+  }
+</script>
+<script src="claude_utils/claude-utils.js" onerror="console.log('Claude utils not loaded, using fallback')"></script>
+<script src="claude-loader.js" onerror="console.log('Claude loader not loaded')"></script>
 </body>
 </html>
