@@ -208,8 +208,67 @@ function addClaudeUIFunctionality() {
     const messageDiv = document.createElement('div');
     messageDiv.className = `claude-message claude-${sender}`;
     
-    const messageContent = document.createElement('p');
-    messageContent.textContent = message;
+    const messageContent = document.createElement('div');
+    
+    // For Claude messages, parse markdown and render math
+    if (sender === 'claude') {
+      console.log('Original Claude message:', message);
+      
+      // Pre-process the message to ensure proper LaTeX formatting
+      let processedMessage = message;
+      
+      // Check if marked (markdown parser) is available
+      if (typeof marked !== 'undefined') {
+        // Configure marked to preserve math
+        marked.setOptions({
+          breaks: true,
+          gfm: true,
+          sanitize: false
+        });
+        
+        // Parse markdown but preserve math blocks
+        processedMessage = marked.parse(processedMessage);
+        console.log('Parsed markdown content:', processedMessage);
+      } else {
+        // Fallback: basic formatting without markdown parser
+        processedMessage = processedMessage
+          // Convert **bold** to <strong>
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          // Convert *italic* to <em>
+          .replace(/\*(.*?)\*/g, '<em>$1</em>')
+          // Convert line breaks to <br>
+          .replace(/\n/g, '<br>')
+          // Convert numbered lists
+          .replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>')
+          // Convert bullet points
+          .replace(/^[-*]\s+(.+)$/gm, '<li>$1</li>')
+          // Wrap consecutive list items in <ol> or <ul>
+          .replace(/(<li>.*<\/li>)/gs, function(match) {
+            // Simple list wrapping - check if numbered or bulleted
+            if (message.match(/^\d+\./m)) {
+              return '<ol>' + match + '</ol>';
+            } else {
+              return '<ul>' + match + '</ul>';
+            }
+          });
+        
+        console.log('Formatted message (fallback):', processedMessage);
+      }
+      
+      messageContent.innerHTML = processedMessage;
+    } else {
+      // For user messages, escape HTML but preserve line breaks
+      const escapedMessage = message
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/\n/g, '<br>');
+      
+      messageContent.innerHTML = escapedMessage;
+    }
+    
     messageDiv.appendChild(messageContent);
     
     // Add page suggestions if provided
@@ -233,6 +292,32 @@ function addClaudeUIFunctionality() {
     
     messages.appendChild(messageDiv);
     messages.scrollTop = messages.scrollHeight;
+    
+    // Process MathJax with the same configuration as coherentmultiplex page
+    if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+      console.log('Triggering MathJax rendering for new message...');
+      
+      // Ensure MathJax processes the new content with same settings
+      MathJax.typesetPromise([messageDiv]).then(() => {
+        console.log('✅ MathJax rendering completed for new message');
+        // Force a re-layout to ensure proper display
+        messageDiv.style.display = 'none';
+        messageDiv.offsetHeight; // Trigger reflow
+        messageDiv.style.display = '';
+      }).catch((err) => {
+        console.warn('❌ MathJax rendering error:', err);
+      });
+    } else {
+      console.warn('⚠️ MathJax not available for rendering');
+      // Fallback: try to detect and manually format simple math
+      const mathElements = messageDiv.querySelectorAll('span, p, div');
+      mathElements.forEach(el => {
+        if (el.textContent.includes('e^') || el.textContent.includes('π') || el.textContent.includes('∑')) {
+          el.style.fontFamily = 'serif';
+          el.style.fontStyle = 'italic';
+        }
+      });
+    }
   }
   
   // Update status display
@@ -423,7 +508,7 @@ function addClaudeUIStyles() {
     
     .claude-message p {
       margin: 0 0 8px 0;
-      line-height: 1.5;
+      line-height: 1.6;
       font-size: 14px;
     }
     
@@ -440,13 +525,88 @@ function addClaudeUIStyles() {
       max-width: 80%;
     }
     
-    .claude-claude p {
-      background: #f3f4f6;
-      color: #374151;
-      padding: 8px 12px;
+    .claude-claude {
+      text-align: left;
+    }
+    
+    .claude-claude > div {
+      background: #f8fafc;
+      color: #1e293b;
+      padding: 12px 16px;
       border-radius: 12px 12px 12px 4px;
       display: inline-block;
-      max-width: 80%;
+      max-width: 90%;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      line-height: 1.6;
+    }
+    
+    /* Enhanced formatting for Claude responses */
+    .claude-claude h1, .claude-claude h2, .claude-claude h3 {
+      margin: 16px 0 8px 0;
+      font-weight: 600;
+      color: #0f172a;
+    }
+    
+    .claude-claude h1 { font-size: 18px; }
+    .claude-claude h2 { font-size: 16px; }
+    .claude-claude h3 { font-size: 15px; }
+    
+    .claude-claude ul, .claude-claude ol {
+      margin: 8px 0;
+      padding-left: 20px;
+    }
+    
+    .claude-claude li {
+      margin: 4px 0;
+      line-height: 1.5;
+    }
+    
+    .claude-claude strong {
+      font-weight: 600;
+      color: #0f172a;
+    }
+    
+    .claude-claude em {
+      font-style: italic;
+      color: #475569;
+    }
+    
+    .claude-claude code {
+      background: #e2e8f0;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      color: #dc2626;
+    }
+    
+    .claude-claude pre {
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 12px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 8px 0;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+    }
+    
+    .claude-claude blockquote {
+      border-left: 4px solid #3b82f6;
+      margin: 8px 0;
+      padding: 8px 12px;
+      background: #eff6ff;
+      color: #1e40af;
+      border-radius: 0 4px 4px 0;
+    }
+    
+    /* Mathematical notation styling */
+    .claude-claude .MathJax {
+      font-size: 1.1em !important;
+    }
+    
+    .claude-claude .MathJax_Display {
+      margin: 12px 0 !important;
     }
     
     .claude-system p {

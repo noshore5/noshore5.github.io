@@ -17,19 +17,21 @@
       text-decoration: underline;
     }
   </style>
-  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script>
     window.MathJax = {
       tex: {
         inlineMath: [['$', '$'], ['\\(', '\\)']],
-        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true,
+        processEnvironments: true
       },
       options: {
         menuOptions: {
           settings: {
             assistiveMml: true
           }
-        }
+        },
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
       },
       chtml: {
         scale: 0.9,
@@ -100,7 +102,7 @@
     <div id="whitepaper-content" class="tab-content" style="display:none;">
       <div style="position:relative; text-align:left; margin:0 auto; max-width:800px; font-size:1.08em; background:#222; color:#eee; border-radius:12px; box-shadow:0 2px 16px #000a; padding:2em;">
         <a href="resources/CMPX_whitepaper.pdf" target="_blank" style="position:absolute; top:1em; right:2em; color:#e2b84a; background:#181818; border-radius:6px; padding:0.5em 1.2em; text-decoration:none; font-weight:500; font-size:1em; box-shadow:0 2px 8px #000a;">Download PDF</a>
-        
+
         <style>
           #whitepaper-content h4 {
             color: #e2b84a;
