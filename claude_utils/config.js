@@ -92,12 +92,12 @@ const ENVIRONMENT_CONFIG = {
     claude: {
       useDirectAPI: false,  // Use Vercel function proxy
       proxyEndpoint: 'https://noshore5-github-io.vercel.app/api/claude', // Point to your Vercel deployment
-      fallbackMode: true   // Enable fallback mode to disable API calls
+      fallbackMode: false   // Enable API calls now that Vercel should be working
     },
     features: {
       enableOfflineMode: true,
-      enableClaudeAssistant: false,  // Temporarily disable Claude
-      debugMode: true  // Enable debug to see what's happening
+      enableClaudeAssistant: true,  // Re-enable Claude
+      debugMode: true  // Keep debug enabled to monitor
     }
   }
 };
