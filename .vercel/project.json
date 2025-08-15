@@ -1,0 +1,9 @@
+{
+  "projectId": "noshore5-github-io",
+  "orgId": "team_your-team-id",
+  "settings": {
+    "buildCommand": null,
+    "outputDirectory": null,
+    "installCommand": "echo 'No install needed'"
+  }
+}
