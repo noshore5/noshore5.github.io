@@ -1,4 +1,7 @@
 {
+  "buildCommand": null,
+  "outputDirectory": null,
+  "installCommand": "echo 'No dependencies to install'",
   "headers": [
     {
       "source": "/api/(.*)",
