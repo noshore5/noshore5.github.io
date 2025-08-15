@@ -69,7 +69,7 @@ const ENVIRONMENT_CONFIG = {
     },
     claude: {
       useDirectAPI: false,  // Use Vercel function even in development
-      proxyEndpoint: 'https://noshore5-github-io.vercel.app/api/claude'
+      proxyEndpoint: '/api/claude'  // Use relative path for local development
     }
   },
   
@@ -91,12 +91,12 @@ const ENVIRONMENT_CONFIG = {
     // GitHub Pages with Vercel function
     claude: {
       useDirectAPI: false,  // Use Vercel function proxy
-      proxyEndpoint: 'https://noshore5-github-io.vercel.app/api/claude', // Your working Vercel URL
+      proxyEndpoint: '/api/claude', // Use relative path - will resolve to current domain
       fallbackMode: false   // Disable fallback since we have API access
     },
     features: {
       enableOfflineMode: true,
-      debugMode: false
+      debugMode: true  // Enable debug to see what's happening
     }
   }
 };

@@ -4,23 +4,33 @@
  */
 
 module.exports = async function handler(req, res) {
-  // Enable CORS for your domain
+  // Enable CORS for all origins (you can restrict this later)
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
 
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return res.status(200).end();
   }
 
   // Only allow POST requests
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    console.log(`Method not allowed: ${req.method}`);
+    return res.status(405).json({ 
+      error: 'Method not allowed',
+      allowedMethods: ['POST'],
+      receivedMethod: req.method
+    });
   }
 
   try {
+    console.log('Received request:', {
+      method: req.method,
+      headers: req.headers,
+      body: req.body ? 'present' : 'missing'
+    });
+
     const { question, contextData = {} } = req.body;
 
     if (!question) {
@@ -30,8 +40,11 @@ module.exports = async function handler(req, res) {
     // Get API key from environment variable
     const apiKey = process.env.CLAUDE_API_KEY;
     if (!apiKey) {
+      console.error('CLAUDE_API_KEY environment variable not set');
       return res.status(500).json({ error: 'API key not configured' });
     }
+
+    console.log('Making request to Claude API...');
 
     // Build the prompt with context
     const systemPrompt = `You are an AI assistant for the CoherIQs website. 
