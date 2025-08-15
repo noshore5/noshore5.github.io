@@ -2,15 +2,12 @@
   "name": "coheriqs-serverless",
   "version": "1.0.0",
   "description": "Serverless functions for CoherIQs website",
-  "main": "index.js",
+  "main": "api/claude.js",
   "scripts": {
-    "dev": "vercel dev",
-    "deploy": "vercel --prod",
-    "build": "echo 'No build step required for serverless functions'"
+    "dev": "vercel dev"
   },
   "engines": {
     "node": ">=18.0.0"
-  },
-  "packageManager": "npm@9.0.0"
+  }
 }
 
