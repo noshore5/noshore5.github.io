@@ -78,6 +78,16 @@
       text-decoration: underline;
     }
     
+    /* Value Proposition */
+    .value-prop {
+      font-size: 1.1rem;
+      color: #3498db;
+      font-weight: 500;
+      margin-top: -0.5rem;
+      margin-bottom: 2rem;
+      letter-spacing: 0.3px;
+    }
+    
     /* Tab Styles */
     .tab-container {
       max-width: 900px;
@@ -85,7 +95,7 @@
     }
     
     .tab-nav {
-      display: flex; /* Make tab navigation visible again */
+      display: flex;
       border-bottom: 2px solid #e0e0e0;
       margin-bottom: 2rem;
       justify-content: center;
@@ -97,7 +107,7 @@
       padding: 1rem 2rem;
       font-size: 1.1rem;
       cursor: pointer;
-      color: #999; /* Lighter default color */
+      color: #999;
       border-bottom: 3px solid transparent;
       transition: all 0.3s ease;
       font-family: 'Montserrat', sans-serif;
@@ -105,14 +115,14 @@
     }
     
     .tab-button:hover {
-      color: #666; /* Lighter hover color */
-      background-color: transparent; /* Remove hover background */
+      color: #666;
+      background-color: transparent;
     }
     
     .tab-button.active {
-      color: #555; /* Lighter active color */
+      color: #555;
       border-bottom-color: #3498db;
-      background-color: transparent; /* Remove active background */
+      background-color: transparent;
     }
     
     .tab-content {
@@ -124,21 +134,137 @@
       display: block;
     }
     
+    /* Intro Tab Content */
+    .intro-hero {
+      max-width: 700px;
+      margin: 0 auto 2em auto;
+      text-align: center;
+      font-size: 1.3em;
+      line-height: 1.6;
+    }
+    
+    .eeg-header {
+      color: #527394;
+      margin-bottom: 1rem;
+      margin-top: 2rem;
+    }
+    
+    .eeg-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    
+    .eeg-item {
+      text-align: center;
+    }
+    
+    .eeg-image {
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .eeg-caption {
+      margin-top: 1rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+      color: #aaa;
+      font-weight: 400;
+    }
+    
+    .eeg-caption.primary {
+      color: #3498db;
+    }
+    
+    .graph-link {
+      display: block;
+      text-align: center;
+      margin: 2rem 0;
+    }
+    
+    .graph-image {
+      width: 400px;
+      max-width: 90vw;
+      height: auto;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+    }
+    
+    .morlets-image {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(253, 253, 253, 0.6);
+    }
+    
+    /* Background Tab Content */
+    .background-intro {
+      max-width: 700px;
+      margin: 0 auto 1em auto;
+      text-align: center;
+      font-size: 1.2em;
+      color: #e0e0e0;
+    }
+    
+    .background-context {
+      max-width: 700px;
+      margin: 0 auto 2em auto;
+      text-align: center;
+      font-size: 1.08em;
+      color: #e0e0e0;
+    }
+    
+    .background-wide-image {
+      position: relative;
+      left: 50%;
+      right: 50%;
+      width: 100vw;
+      margin-left: -50vw;
+      margin-right: -50vw;
+      overflow: hidden;
+      text-align: center;
+      margin-top: 2rem;
+      margin-bottom: 2rem;
+      padding: 0;
+    }
+    
+    .background-wide-image img {
+      width: 100vw;
+      min-width: 100vw;
+      max-width: none;
+      height: auto;
+      display: block;
+      margin: 0;
+      object-fit: cover;
+    }
+    
+    .background-main {
+      max-width: 900px;
+      margin: 0 auto 1.5em auto;
+      text-align: center;
+      font-size: 1.05em;
+      color: #e0e0e0;
+    }
+    
+    .background-footer {
+      max-width: 700px;
+      margin: 0 auto 2rem auto;
+      text-align: center;
+      font-size: 1.05em;
+      color: #e0e0e0;
+    }
+    
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
   </style>
   <style>
-    .morlets-animation {
-      animation: speed-up 1s infinite linear;
-    }
-    
-    @keyframes speed-up {
-      0% { transform: scale(1); }
-      100% { transform: scale(1); }
-    }
-    
     .morlets-animation {
       animation-duration: 0.5s;
       filter: invert(1);
@@ -150,6 +276,7 @@
   <div id="menu-container"></div>
   <div class="container home-container" style="max-width:900px; margin:0 auto; text-align:center;">
     <h1>CoherIQs</h1>
+    <div class="value-prop">Enterprise-Grade Wavelet Coherence Analysis for Real-Time Signal Processing</div>
         
     <!-- Tab Navigation -->
     <div class="tab-container">
@@ -160,29 +287,28 @@
       
       <!-- Intro Tab Content -->
       <div id="intro-tab" class="tab-content active">
-        <p style="max-width:700px; margin:0 auto 2em auto; text-align:center; font-size:1.3em; line-height: 1.6;">
-          Welcome to <strong>CoherIQs</strong> - We are exploring the practical applications of Wavelet Coherence analysis. 
-          We have published an <a href="https://ieeexplore.ieee.org/document/11259104">IEEE Xplore</a> article on our approach, which can be found in the <a href="literature.html">Literature</a> section.
+        <p class="intro-hero">
+          <strong>CoherIQs</strong> delivers wavelet coherence analysis as a production-ready platform. 
+          Our approach is validated in an <a href="https://ieeexplore.ieee.org/document/11259104">IEEE Xplore</a> publication, detailed in our <a href="literature.html">Literature</a> section.
         </p>
         
         <!-- Graph Network Picture -->
-        <div style="text-align: center; margin: 2rem 0;">
+        <div class="graph-link">
           <a href="coherentmultiplex.html">
-            <img src="resources/graph.png" alt="Signal Relationship Graph" style="width:400px; max-width:90vw; height:auto; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.18);">
+            <img src="resources/graph.png" alt="Signal Relationship Graph" class="graph-image">
           </a>
         </div>
         
-        <div style="margin: 2rem 0;">
-          <h3 style="color: #527394; margin-bottom: 1rem;">EEG Visualization</h3>
-          <div style="display: grid; grid-template-columns: 1fr; gap: 2rem; max-width: 900px; margin: 0 auto;">
-            <div style="text-align: center;">
-              <img src="resources/SP1.png" alt="Signal Processing Feature 1" style="width: 100%; max-width: 100%; height: auto; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-              <h4 style="color: #3498db; margin-top: 1rem; margin-bottom: 0.5rem;">Our latest work:
-                 Bringing advanced wavelet decomposition techniques to EEG data.</h4>
+        <div>
+          <h3 class="eeg-header">Advanced EEG Signal Processing</h3>
+          <div class="eeg-grid">
+            <div class="eeg-item">
+              <img src="resources/SP1.png" alt="Signal Processing Feature 1" class="eeg-image">
+              <h4 class="eeg-caption primary">Adaptive Wavelet Decomposition for EEG Analysis</h4>
             </div>
-            <div style="text-align: center;">
-              <img src="resources/SP2.png" alt="Signal Processing Feature 2" style="width: 100%; max-width: 100%; height: auto; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-              <h4 style="color: #e74c3c; margin-top: 1rem; margin-bottom: 0.5rem;"></h4>
+            <div class="eeg-item">
+              <img src="resources/SP2.png" alt="Signal Processing Feature 2" class="eeg-image">
+              <h4 class="eeg-caption">Real-Time Coherence Computation</h4>
             </div>
           </div>
         </div>
@@ -190,41 +316,35 @@
   <!-- Coherent Multiplex CTA removed -->
         
         <div style="text-align: center; margin: 2rem 0;">
-          <img src="resources/morlets.gif" alt="Morlet Wavelet Analysis Animation" class="morlets-animation" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(253, 253, 253, 0.6);">
+          <img src="resources/morlets.gif" alt="Morlet Wavelet Analysis Animation" class="morlets-animation eeg-image">
         </div>
       </div>
       
       <!-- Background Tab Content -->
       <div id="background-tab" class="tab-content">
-        <p style="max-width:700px; margin:0 auto 1em auto; text-align:center; font-size:1.2em; color: #e0e0e0;">
-          Originally developed for examining scale-dependent correlations between the El Niño-Southern 
-          Oscillation and tropical storms in India, <strong>wavelet coherence</strong> is
-          a powerful method for analyzing lead-lag relationships
-          embedded in time series data using wavelet transforms.
+        <p class="background-intro">
+          <strong>Wavelet coherence</strong> determines lead-lag relationships in time series data across multiple scales—
+          originally proven on El Niño-Southern Oscillation and tropical Indian storm correlations.
         </p>
 
-        <p style="max-width:700px; margin:0 auto 2em auto; text-align:center; font-size:1.08em; color: #e0e0e0;">
-          While becoming more popular in academic settings to publish research, current coherence implementations
-          are limited to dependencies within R, MATLAB, or Python environments.
-          These packages rely on outdated and inefficient transforms on the backend, 
-          limiting their use to analysis of small batches of historical data.
+        <p class="background-context">
+          Existing implementations are constrained to R, MATLAB, or Python with dated, inefficient algorithms.
+          CoherIQs eliminates these bottlenecks with optimized computation for production data analysis.
         </p>
 
         <!-- Wide inline image appears here (spans viewport width) -->
-        <div style="position:relative; left:50%; right:50%; width:100vw; margin-left:-50vw; margin-right:-50vw; overflow:hidden; text-align:center; margin-top: 2rem; margin-bottom: 2rem; padding: 0;">
-          <img src="resources/lkclear.png" alt="Coherence Analysis Visualization" style="width:100vw; min-width:100vw; max-width:none; height:auto; display:block; margin:0; object-fit:cover;">
+        <div class="background-wide-image">
+          <img src="resources/lkclear.png" alt="Coherence Analysis Visualization">
         </div>
 
-        <p style="max-width:900px; margin:0 auto 1.5em auto; text-align:center; font-size:1.05em; color: #e0e0e0;">
-          The CoherIQs project is focused on broadening the scope of use for wavelet coherence 
-          by optimizing the underlying algorithms and providing a user-friendly interface for
-          industry professionals. Currently, the opus is centered around the <a href="coherentmultiplex.html">Coherent Multiplex</a>,
-          a live dashboard for selective computation and visualization of wavelet coherence in real-time.
+        <p class="background-main">
+          CoherIQs delivers optimized algorithms and professional-grade tools for industry. 
+          Our flagship product, the <a href="coherentmultiplex.html">Coherent Multiplex</a>,
+          enables real-time wavelet coherence computation and visualization at scale.
         </p>
 
-        <p style="max-width:700px; margin:0 auto 2rem auto; text-align:center; font-size:1.05em; color: #e0e0e0;">
-          Background on wavelet coherence analysis and its applications in finance and
-          economics can be found in the <a href="literature.html">Literature</a> section.
+        <p class="background-footer">
+          Explore applications in finance and economics in our <a href="literature.html">Literature</a> section.
         </p>
       </div>
     </div>

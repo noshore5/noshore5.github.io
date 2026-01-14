@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <link rel="icon" type="image/png" href="resources/icon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Biography</title>
+  <title>About Us</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
@@ -22,131 +22,37 @@
   <!-- Menu will be loaded here -->
   <div id="menu-container"></div>
   <div class="container" style="max-width:900px; margin:0 auto; text-align:left;">
-    <h1 style="text-align:center; margin-bottom:0.5em; font-size:2.7em; letter-spacing:0.03em; font-weight:700; color:#cccccc;">Noah Shore</h1>
-    <div style="display:flex; justify-content:center; margin-bottom:2em; gap:1em;">
-      <button id="cv-tab" class="tab-btn active" style="padding:1em 2.5em; font-size:1.25em; border:none; background:none; color:#cccccc; border-radius:0; margin-right:2px; cursor:pointer; font-weight:600; transition:color 0.2s;">Curriculum Vitae</button>
-      <button id="bio-tab" class="tab-btn" style="padding:1em 2.5em; font-size:1.25em; border:none; background:none; color:#cccccc; border-radius:0; cursor:pointer; font-weight:600; transition:color 0.2s;">Biography</button>
-    </div>
-    <div id="cv-panel" class="tab-panel" style="display:block;">
-      <hr>
-      <h2>Professional Summary</h2>
-      <p>Mathematician and computational scientist with a focus in quantitative analysis, 
-        full-stack development, and DevOps workflows. Experienced in building end-to-end data-driven
-         applications, from mathematical modeling visualization to deployment via cloud-native tools.
-          Research background in time-frequency analysis, signal processing, and nonlinear 
-          dynamic systems, with practical applications in finance, engineering, and music theory.</p>
-      <hr>
-      <h2>Education</h2>
-      <ul style="list-style:none; padding-left:0;">
-        <li><strong>M.S. Mathematics</strong> <span style="float:right;">University of Galway, 2025</span><br>
-          <em>Research:</em> Dynamic Frequency Decomposition, Wavelet Coherence, Time-Series Signatures<br>
-          <em>Community:</em> Award winning speaker at <em>College of Science and Engineering</em> and <em>School of Mathematical and Statistical Sciences Research and Innovation Days</em><br>
-          <em>Special Interest:</em> Optimization, Patterns in Irish Music
-        </li>
-        <br>
-        <li><strong>B.S. Mathematics</strong> <span style="float:right;">University of North Carolina at Chapel Hill, 2022</span><br>
-          <em>Honors Research:</em> Computational Fluid Dynamics – Implemented solvers for Navier-Stokes equations<br>
-          <em>Relevant Coursework:</em> Machine Learning, Optimization, Numerical Methods, Differential Equations
-        </li>
-      </ul>
-      <hr>
-      <h2>Work Experience</h2>
-      <div style="margin-bottom:1em;">
-        <strong>Computational Modeler</strong> <span style="float:right;">NextPower 360, Jan 2023 – Aug 2024</span>
-        <ul>
-          <li>Modeled electromagnetic properties of wind generators using COMSOL AC/DC modules.</li>
-          <li>Conducted Finite Element Analysis to numerically solve <em>Maxwell's Equations</em> and optimize generator designs.</li>
-          <li>Assisted in prototype development and R&amp;D innovation.</li>
-        </ul>
-      </div>
-      <div style="margin-bottom:1em;">
-        <strong>Machine Learning Instructor</strong> <span style="float:right;">ID Tech Academy, May 2022 – Nov 2022</span>
-        <ul>
-          <li>Designed and led custom ML &amp; Python courses for students (ages 14–20).</li>
-          <li>Taught Neural Networks, Regression Models, Data Wrangling using PyTorch, Pandas, and Scikit-Learn.</li>
-          <li>Created personalized lesson plans for hands-on learning.</li>
-        </ul>
-      </div>
-      <hr>
-      <h2>Technical Skills</h2>
-      <ul>
-        <li><strong>Programming:</strong> Python/PyTorch, Julia, R, MATLAB, Mathematica, SQL, HTML/CSS</li>
-        <li><strong>Machine Learning:</strong> Neural Networks, Optimization, Novel Feature Extraction, Lempel-Ziv Compression</li>
-        <li><strong>Computational Modeling:</strong> FEA, Navier-Stokes Solvers, Time-Frequency Analysis, Maxwell's Equations</li>
-        <li><strong>DevOps &amp; Deployment:</strong> Docker, GitHub Actions, Azure Container Registry, Azure Web Apps</li>
-        <li><strong>Software Tools:</strong> Git, ANSYS Maxwell, AWS Cloud, COMSOL</li>
-      </ul>
-      <hr>
-      <h2>Projects</h2>
-      <div style="margin-bottom:1em;">
-        <strong>Master’s Thesis</strong> <a href="https://github.com/noshore5/Wavelet-Tech" target="_blank" style="color:#4a90e2; font-size:0.95em; margin-left:0.5em;">GitHub Link</a>
-        <ul>
-          <li>Developing time-frequency decomposition methods for analyzing raw recordings of Irish tunes and exploring feature extraction techniques to identify tunes without traditional deep learning models.</li>
-          <li>Expanded use cases for model to generalized time-series signatures by wavelet transform for applications in economic forecasting and electroencephalography cross spectra output.</li>
-        </ul>
-      </div>
-      <div style="margin-bottom:1em;">
-        <strong>CoherIQs Live Market Analysis</strong> <a href="https://CoherIQs.com/coheriqslive.html" target="_blank" style="color:#4a90e2; font-size:0.95em; margin-left:0.5em;">Live App</a>
-        <ul>
-          <li>Building a dashboard for signal spectral decomposition using wavelet coherence across incoming data.</li>
-          <li>Designed a novel backend to perform expensive computations that allow for streaming results in real-time.</li>
-          <li>Outperforms existing coherence implementations by many orders of scale.</li>
-          <li>Containerized application with Docker and deployed to Azure using container registry and web app portal.</li>
-        </ul>
-      </div>
-      <div style="margin-bottom:1em;">
-        <strong>Deep Learning for Image Recognition</strong> <a href="https://github.com/noshore5/Projects/blob/main/TTS/TTS_ML_Project.ipynb" target="_blank" style="color:#4a90e2; font-size:0.95em; margin-left:0.5em;">GitHub Link</a>
-        <ul>
-          <li>Trained multiple image classification models on the MNIST dataset.</li>
-          <li>Implemented Multilayer Perceptron, Random Forest, Logistic Regression, and SVM.</li>
-          <li>Used to formulate lesson plans for machine learning students.</li>
-        </ul>
-      </div>
-      <hr>
-      <h2>Activities</h2>
-      <ul>
-        <li>NCAA Track &amp; Field – Competed for UNC in ACC Championships</li>
-        <li>Competitive Sailing – Crewman for UNC &amp; University of Galway Sailing Teams</li>
-        <li>Musician – Fiddler with TRADSOC (University of Galway) and Carolina Bluegrass Band (UNC Chapel Hill)</li>
-        <li>Maths and Music Research Group - University of Galway Comp-Sci and Math Departments</li>
-      </ul>
-    </div>
-    <div id="bio-panel" class="tab-panel" style="display:none;">
-      <hr>
-      <h2>Biography</h2>
-      <img src="resources/posterphoto.jpg" alt="Noah Shore" style="float:left; width:420px; max-width:80vw; margin:0 2.5em 2em 0; border-radius:18px; box-shadow:0 8px 32px rgba(0,0,0,0.32); object-fit:cover;">
+    <h1 style="text-align:center; margin-bottom:2em; font-size:2.7em; letter-spacing:0.03em; font-weight:700; color:#cccccc;">About Us</h1>
+    
+    <!-- Jerry Swan Biography -->
+    <div style="margin-bottom:4em;">
+      <h2 style="font-size:1.8em; color:#3498db; margin-bottom:1em;">Jerry Swan</h2>
+      <img src="resources/jerry.avif" alt="Jerry Swan" style="float:left; width: 200px; max-width:80vw; margin:0 2.5em 2em 0; border-radius:18px; box-shadow:0 8px 32px rgba(0,0,0,0.32); object-fit:cover;">
       <p style="margin-top:0;">
-        I grew up in the Blue Ridge Mountains of Asheville, North Carolina, where I was a
-        triple state champion and state MVP in high school track and field. I began my undergraduate studies at UNC Chapel Hill, where I ran track and studied
-        biology and chemistry before taking time away from university to serve with AmeriCorps
-        in San Jose, California. There, I worked for a year and a half at a public school,
-        an experience that deepened my interest in education and allowed me
-        to connect with students from diverse backgrounds.
-      </p>
+Jerry is Co-Founder at CoherIQs. His research interests include artificial intelligence, program synthesis, metaheuristic optimization and group theory. His abiding interest is the creation of safe and human-centred AI, which is the topic of his recent book, "The Road to General Intelligence". 
+</p>
+      <p> 
+Jerry serves on the editorial board of the Springer Nature journal, "AI Perspectives & Advances". He has published over 100 papers on mathematics, computer science and AI in international journals and conferences. He obtained his PhD in pure mathematics from Nottingham in 2006 and, following 15 years in academia, now holds an honorary fellowship at York. 
+</p>
       <p>
-        I returned to UNC to pursue mathematics, working on computational fluid dynamics
-        through undergraduate research. I also performed on the fiddle with the Carolina Bluegrass
-        Band and sailed with the university’s intercollegiate sailing team.
-        During my studies, I taught machine learning and Python to high school students,
-        allowing me to design custom courses and create lesson plans.
-        This experience developed my personal philosophy of education, which emphasizes
-        explainability and epistemological priors.
+Before becoming an academic, he worked in industry as a systems architect and software company owner. He has lectured and presented his research worldwide, and has been running international workshops and tutorials on the automated design of algorithms for over a decade.
       </p>
+    </div>
+    
+    <hr style="margin:3em 0;">
+    
+    <!-- Noah Shore Biography -->
+    <div>
+      <h2 style="font-size:1.8em; color:#3498db; margin-bottom:1em;">Noah Shore</h2>
+      <img src="resources/posterphoto.jpg" alt="Noah Shore" style="float:left; width:300px; max-width:80vw; margin:0 2.5em 2em 0; border-radius:18px; box-shadow:0 8px 32px rgba(0,0,0,0.32); object-fit:cover;">
+      <p style="margin-top:0;">
+Noah is a mathematician and computational scientist focused on applying advanced signal processing and machine learning techniques to complex non-stationary signals. He grew up in Asheville, North Carolina, and began his studies at the University of North Carolina at Chapel Hill, where he competed for the track and field team and performed with the Carolina Bluegrass Band while completing a degree in mathematics with undergraduate research in computational fluid dynamics.
+</p>
       <p>
-        After graduating, I worked as a computational modeler at a wind energy startup, where I
-        modeled electromagnetic properties of wind generators using COMSOL Multiphysics and conducted
-        Finite Element Analysis to showcase designs.
-      </p>
+He has worked as a computational modeler in the wind energy sector, applying finite element methods and electromagnetic modeling, and has taught machine learning and Python, designing custom curricula with an emphasis on explainability and first-principles reasoning.
+</p>
       <p>
-        My curiosity and love of exploration have taken me to over 50 countries across Europe,
-        Southeast Asia, Africa, and Latin America. Most recently, I completed a research master’s degree at the University of Galway in Ireland,
-        where I won awards for my research presentations. I also published my thesis on <a href="https://arxiv.org/abs/2508.00479" target="_blank" style="color:#4a90e2; text-decoration:underline;">arXiv</a>.
-      </p>
-      <p>
-        I am enthusiastic about leveraging mathematics, scientific computation, and machine learning
-        to automate complex processes. My current focus is on developing innovative strategies through
-        my CoherIQs projects, where I aim to bridge advanced research with practical applications
-        in quantitative analysis and econometrics.
+He recently completed a research master's degree at the University of Galway in Ireland, receiving awards for research presentations and publishing research on IEEE. He is a co-founder of CoherIQs, where he develops real-time coherence-based analytical tools for quantitative and econometric applications.
       </p>
     </div>
   </div>
@@ -155,26 +61,5 @@
 </body>
 <script src="menu-loader.js"></script>
 <script src="footer-loader.js"></script>
-<script>
-// Tab switching for CV and Biography
-document.addEventListener('DOMContentLoaded', function() {
-  const cvTab = document.getElementById('cv-tab');
-  const bioTab = document.getElementById('bio-tab');
-  const cvPanel = document.getElementById('cv-panel');
-  const bioPanel = document.getElementById('bio-panel');
-  cvTab.addEventListener('click', function() {
-    cvTab.classList.add('active');
-    bioTab.classList.remove('active');
-    cvPanel.style.display = 'block';
-    bioPanel.style.display = 'none';
-  });
-  bioTab.addEventListener('click', function() {
-    bioTab.classList.add('active');
-    cvTab.classList.remove('active');
-    bioPanel.style.display = 'block';
-    cvPanel.style.display = 'none';
-  });
-});
-</script>
 </body>
 </html>

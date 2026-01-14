@@ -50,7 +50,7 @@ async function loadMenu() {
             <a href="coheriqslive.html">CoherIQs Live</a>
             <a href="coherentmultiplex.html">Coherent Multiplex</a>
             <a href="performance.html">Performance</a>
-            <a href="biography.html">Biography</a>
+            <a href="biography.html">About Us</a>
             <a href="literature.html">Literature</a>
           </div>
         </nav>
