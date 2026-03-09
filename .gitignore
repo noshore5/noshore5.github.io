@@ -8,6 +8,7 @@ npm-debug.log*
 .env.development.local
 .env.test.local
 .env.production.local
+.venv
 
 # Local configuration files with API keys
 claude_utils/config_local.js

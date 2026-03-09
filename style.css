@@ -14,11 +14,45 @@ body {
   margin: 0;
   min-height: 100vh;
 }
+
+/* Logo Header */
+.logo-header {
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem 3rem 0 3rem;
+  background: linear-gradient(180deg, rgba(35,36,58,0.8) 0%, rgba(26,26,26,0) 100%);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.logo-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.logo-link:hover {
+  transform: scale(1.05);
+  filter: brightness(1.1);
+}
+
+.site-logo {
+  max-height: 60px;
+  width: auto;
+  display: block;
+  filter: drop-shadow(0 4px 12px rgba(52, 152, 219, 0.15));
+  transition: filter 0.3s ease;
+}
+
+.logo-link:hover .site-logo {
+  filter: drop-shadow(0 6px 20px rgba(52, 152, 219, 0.3));
+}
+
 nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 2rem 3rem 0 3rem;
+  padding: 1.5rem 3rem 0 3rem;
   position: relative;
 }
 .menu-toggle {
@@ -120,6 +154,12 @@ nav .nav-links a {
   nav {
     flex-wrap: wrap;
     padding: 1.2rem 1rem 0 1rem;
+  }
+  .logo-header {
+    padding: 1rem 1rem 0.5rem 1rem;
+  }
+  .site-logo {
+    max-height: 50px;
   }
 }
 nav a {
