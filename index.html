@@ -283,14 +283,11 @@
       <div class="tab-nav">
         <button class="tab-button active" onclick="openTab(event, 'intro-tab')">Intro</button>
         <button class="tab-button" onclick="openTab(event, 'background-tab')">Background</button>
+        <button class="tab-button" onclick="openTab(event, 'architectures-tab')">Architectures</button>
       </div>
       
       <!-- Intro Tab Content -->
       <div id="intro-tab" class="tab-content active">
-        <p class="intro-hero">
-          <strong>CoherIQs</strong> delivers wavelet coherence analysis as a production-ready platform. 
-          Our approach is validated in an <a href="https://ieeexplore.ieee.org/document/11259104">IEEE Xplore</a> publication, detailed in our <a href="literature.html">Literature</a> section.
-        </p>
         
         <!-- Graph Network Picture -->
         <div class="graph-link">
@@ -337,15 +334,28 @@
           <img src="resources/lkclear.png" alt="Coherence Analysis Visualization">
         </div>
 
-        <p class="background-main">
-          CoherIQs delivers optimized algorithms and professional-grade tools for industry. 
-          Our flagship product, the <a href="coherentmultiplex.html">Coherent Multiplex</a>,
-          enables real-time wavelet coherence computation and visualization at scale.
-        </p>
-
         <p class="background-footer">
           Explore applications in finance and economics in our <a href="literature.html">Literature</a> section.
         </p>
+      </div>
+      
+      <!-- Architectures Tab Content -->
+      <div id="architectures-tab" class="tab-content">
+        <p class="background-intro">
+          Brain activity during a left-hand motor imagery task, visualised as a network. Each particle travelling between electrodes represents a phase relationship at a specific frequency, that has been extracted by wavelet coherence within a specified timestamp.
+        </p>
+        
+        
+        <div class="eeg-grid">
+          <div class="eeg-item">
+            <img src="resources/left_hand.gif" alt="Left Hand Signal Analysis" class="eeg-image">
+            <h4 class="eeg-caption">Left Hand Motor Cortex Activity</h4>
+          </div>
+          <div class="eeg-item">
+            <img src="resources/right_hand.gif" alt="Right Hand Signal Analysis" class="eeg-image">
+            <h4 class="eeg-caption">Right Hand Motor Cortex Activity</h4>
+          </div>
+        </div>
       </div>
     </div>
   </div>
