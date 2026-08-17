@@ -51,7 +51,6 @@ async function loadMenu() {
             <a href="/research.html">Research</a>
             <a href="/notes.html">Notes</a>
             <a href="/literature.html">Publications</a>
-            <a href="/performance.html">Performance</a>
             <a href="/biography.html">About</a>
           </div>
         </nav>
