@@ -97,9 +97,12 @@
         non-confounded result on the harder problem &mdash; predicting the <strong>preictal</strong>
         (pre-seizure) window &mdash; on single-subject, leave-one-seizure-out evaluation: mean roc_auc
         0.882, hit rate 6/7, with one fold in clinically-interesting territory (auc_pr 0.956, false
-        alarms/hr 1.2) and others weak to near-chance. Single-subject, patient-specific evaluation only;
-        no chance-baseline significance test yet; decision threshold untuned. Suggestive, not validated
-        &mdash; see <a href="notes.html">Notes</a> for the full writeup. On standard motor-imagery
+        alarms/hr 1.2) and others weak to near-chance. A label-permutation null control and two
+        leakage-risk checks (fold-boundary exclusion, SPH warn-zone boundary) all came back clean &mdash;
+        real roc_auc 0.882 vs. a shuffled-label null at 0.491, chance. Still single-subject,
+        patient-specific evaluation only, and decision threshold is untuned; cross-patient generalization
+        is untested. Suggestive, not yet validated beyond this one subject &mdash; see
+        <a href="notes.html">Notes</a> for the full writeup. On standard motor-imagery
         benchmark tasks, the architecture currently trails EEGNet by a small margin &mdash; the working
         hypothesis is that the model spends representational capacity on time-ordering information that
         isn't especially useful for motor-imagery classification specifically, even though it matters for
@@ -118,7 +121,7 @@
         This project builds directly on wavelet coherence methods I developed in earlier work,
         including a peer-reviewed real-time wavelet coherence architecture (IEEE ISPA 2025) and my
         M.S. thesis on wavelet-based time-frequency fingerprinting &mdash; see
-        <a href="literature.html">Literature</a> for both.
+        <a href="literature.html">Publications</a> for both.
       </p>
     </div>
   </div>

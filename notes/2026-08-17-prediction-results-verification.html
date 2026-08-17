@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="../resources/icon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checking whether the prediction results are real — Noah Shore</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .nav-links a { text-decoration: none; }
+    .nav-links a.active { text-decoration: underline; }
+    .post {
+      max-width: 800px;
+      margin: 0 auto 3rem auto;
+      text-align: left;
+    }
+    .post-meta {
+      color: #888;
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+    .post h1 {
+      font-size: 1.9rem;
+      text-align: center;
+      color: #eaeaea;
+      margin-bottom: 0.25rem;
+    }
+    .post p { font-size: 1.02rem; line-height: 1.65; color: #ddd; }
+    .post h2 { color: #cccccc; font-size: 1.15rem; margin-top: 2rem; }
+    .post code {
+      background: rgba(255,255,255,0.08);
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      font-size: 0.92em;
+    }
+    .callout {
+      background: rgba(42, 42, 42, 0.7);
+      border-left: 4px solid #4a6583;
+      border-radius: 6px;
+      padding: 1rem 1.5rem;
+      margin: 1.5rem 0;
+      color: #ccc;
+      font-size: 0.98rem;
+    }
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-bottom: 2rem;
+      color: #7aa5d6 !important;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 0.92rem;
+    }
+    th, td {
+      padding: 0.5rem 0.7rem;
+      text-align: right;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      color: #ccc;
+    }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: #eaeaea; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div id="menu-container"></div>
+  <div class="container" style="max-width:900px; margin:0 auto;">
+    <a href="../notes.html" class="back-link">&larr; All notes</a>
+    <div class="post">
+      <h1>Checking whether the prediction results are real: two leakage claims and a label-permutation control</h1>
+      <p class="post-meta">2026-08-17 &middot; EEG seizure prediction, preictal window</p>
+
+      <p>
+        Follow-on to the <a href="2026-08-17-prediction-mode-oom-fix-and-results.html">first trustworthy
+        prediction-mode results</a> (mean roc_auc 0.882, hit rate 6/7). Strong results on a first real pass
+        at a task existing models handle poorly invited a second round of scrutiny rather than acceptance:
+        an external critique raised two concrete leakage-risk claims about the pipeline, checked directly
+        against the real code and real data; separately, a label-permutation null control was added to test
+        whether the model is learning anything at all, independent of either leakage claim.
+      </p>
+
+      <h2>Two leakage claims, checked against real code and real data</h2>
+      <p>
+        Claim 1: does fold-boundary exclusion actually remove a held-out seizure's full preictal lead-up
+        from every other fold's training set, not just its ictal period? Claim 2: is the SPH warn-zone
+        boundary airtight, such that no window straddling the preictal/warn-zone edge can slip into the
+        positive class? Both were checked by independent recomputation against the built dataset's own
+        per-window metadata and the real fold-construction code, not by re-reading source and trusting it.
+      </p>
+      <p>
+        The first attempt at Claim 1 was itself buggy: an initial version compared window start/end times
+        against seizure onset across the entire dataset regardless of recording. That produced thousands of
+        apparent leaks per fold. Root cause: window timestamps are relative to their own recording's start,
+        not a shared clock, so two unrelated recordings both having a window at recording-relative
+        <code>start=2000s</code> means nothing. Fixed by restricting the comparison to windows from the same
+        recording as the held-out seizure, which is what the check was meant to test.
+      </p>
+      <table>
+        <tr><th>fold</th><th>seizure</th><th>same-recording in train</th><th>time-overlap leak in train</th><th>result</th></tr>
+        <tr><td>0</td><td>1_03_0</td><td>0</td><td>0</td><td>PASS</td></tr>
+        <tr><td>1</td><td>1_04_0</td><td>0</td><td>0</td><td>PASS</td></tr>
+        <tr><td>2</td><td>1_15_0</td><td>0</td><td>0</td><td>PASS</td></tr>
+        <tr><td>3</td><td>1_16_0</td><td>0</td><td>0</td><td>PASS</td></tr>
+        <tr><td>4</td><td>1_18_0</td><td>0</td><td>0</td><td>PASS</td></tr>
+        <tr><td>5</td><td>1_21_0</td><td>0</td><td>0</td><td>PASS</td></tr>
+        <tr><td>6</td><td>1_26_0</td><td>0</td><td>0</td><td>PASS</td></tr>
+      </table>
+      <p>
+        Claim 1 confirmed true, and the mechanism is stronger than the minimum required: the test mask is
+        computed at whole-recording granularity, not by targeting the preictal range specifically, so the
+        entire held-out recording &mdash; preictal, ictal, and postictal windows alike &mdash; is excluded
+        from every other fold's training set. Claim 2 also confirmed true: 0 of 654 positive windows overlap
+        their seizure's SPH warn zone across all 7 seizures. Exclusion is computed independently of the
+        positive-label condition and given strict precedence in the final label assignment, so a window
+        straddling the preictal/warn-zone boundary is always dropped, never labeled positive.
+      </p>
+      <div class="callout">
+        Neither leakage mechanism raised by the critique is present in the current code. This rules out two
+        specific, plausible failure modes; it doesn't by itself validate the results overall &mdash; that's
+        what the null control below is for.
+      </div>
+
+      <h2>Label-permutation null control</h2>
+      <p>
+        A new <code>--shuffle-labels</code> flag shuffles the label array globally right after dataset
+        construction &mdash; class balance preserved exactly, positive/negative assignment turned into pure
+        noise &mdash; then runs the identical downstream pipeline: same fold construction, same per-fold
+        train-only subsampling, same classifier, same everything except which windows are labeled positive.
+        Results write to a separate <code>results/prediction_shuffled_control/</code> directory so a
+        null-control run can never be mistaken for a real one. Verified at smoke scale first (roc_auc
+        collapsed to 0.531, at chance) before running for real, matched exactly to the real run's
+        configuration.
+      </p>
+      <table>
+        <tr><th>seizure</th><th>real auc_pr</th><th>null auc_pr</th><th>ratio</th></tr>
+        <tr><td>03</td><td>0.520</td><td>0.044</td><td>11.8&times;</td></tr>
+        <tr><td>04</td><td>0.295</td><td>0.042</td><td>7.0&times;</td></tr>
+        <tr><td>15</td><td>0.677</td><td>0.046</td><td>14.7&times;</td></tr>
+        <tr><td>16</td><td>0.956</td><td>0.052</td><td>18.4&times;</td></tr>
+        <tr><td>18</td><td>0.187</td><td>0.037</td><td>5.1&times;</td></tr>
+        <tr><td>21</td><td>0.003</td><td>0.043</td><td>n/a &mdash; see below</td></tr>
+        <tr><td>26</td><td>0.124</td><td>0.038</td><td>3.3&times;</td></tr>
+      </table>
+      <p>
+        Mean roc_auc: real 0.882 vs. null 0.491 (textbook chance). Mean average_precision: real 0.395 vs.
+        null 0.043 (~9&times;).
+      </p>
+      <div class="callout">
+        Seizure 21's row isn't a real counter-example. <code>n_preictal=3</code> prints identically in both
+        runs because that count is read from metadata untouched by the shuffle, but the auc_pr itself is
+        computed against however many shuffled-positive windows actually landed in that fold's test set,
+        which is 77, not 3 &mdash; a global permutation of 654 positives across 15,912 windows puts roughly
+        77 into any ~1,878-window test slice by base rate. So real (n=3, high-variance) auc_pr=0.003 and
+        null (n=77, stable) auc_pr=0.043 aren't a fair comparison in either direction; both numbers are
+        legitimate, they're just answering different-precision questions. Every other fold's n_preictal
+        (89&ndash;113) is large enough that this issue doesn't apply.
+      </div>
+      <p>
+        Six of seven folds show a clean, consistent real-vs-null gap (3&times;&ndash;18&times;), and the
+        aggregate roc_auc sits almost exactly on the 0.5 chance line for the null while the real run holds
+        at 0.882 &mdash; solid evidence the real run's signal isn't a pipeline artifact, on top of, not
+        instead of, the two leakage mechanisms ruled out above.
+      </p>
+
+      <h2>Open items</h2>
+      <p>
+        Decision threshold is still untuned. Everything so far remains single-subject, patient-specific
+        leave-one-seizure-out &mdash; the easier end of seizure prediction; the null control rules out "no
+        real signal at all," not "this generalizes beyond chb01." A stricter complementary check &mdash; a
+        circular time-shift control, where the signal stays the same but seizure-onset alignment is
+        randomized instead of the labels &mdash; was discussed but not built; it would rule out a narrower
+        failure mode (the model keying on some arbitrarily-timed window shape rather than genuine
+        seizure-onset proximity) that label-shuffling alone doesn't fully address.
+      </p>
+    </div>
+  </div>
+  <div id="footer-container"></div>
+</body>
+<script src="../menu-loader.js"></script>
+<script src="../footer-loader.js"></script>
+</html>

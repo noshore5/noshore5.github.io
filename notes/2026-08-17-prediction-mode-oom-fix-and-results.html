@@ -187,9 +187,14 @@
         Decision threshold is untuned &mdash; every false-alarm number above is read off the default
         class-weight-skewed cutoff; sweeping it is a plausible cheap lever, not yet tried. Everything so
         far is single-subject, patient-specific leave-one-seizure-out &mdash; the easier end of seizure
-        prediction; cross-patient generalization is untested. No chance-baseline significance test built
-        yet, so results here are suggestive, not validated. Prediction-mode hyperparameters are still a
+        prediction; cross-patient generalization is untested. Prediction-mode hyperparameters are still a
         straight copy of detection's tuned numbers, with no prediction-specific tuning done.
+      </p>
+      <p>
+        <em>Update:</em> a chance-baseline significance test and two specific leakage-risk claims raised by
+        an external critique were checked directly against the real code and real data &mdash; see
+        <a href="2026-08-17-prediction-results-verification.html">Checking whether the prediction results
+        are real</a>.
       </p>
     </div>
   </div>
