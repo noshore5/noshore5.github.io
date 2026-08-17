@@ -120,6 +120,40 @@
       font-size: 0.85rem;
       margin-right: 0.75rem;
     }
+
+    .eeg-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    @media (min-width: 700px) {
+      .eeg-grid.two-col { grid-template-columns: 1fr 1fr; }
+    }
+    .eeg-item { text-align: center; }
+    .eeg-image {
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .eeg-caption {
+      margin-top: 1rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+      color: #aaa;
+      font-weight: 400;
+    }
+    .morlets-animation {
+      animation-duration: 0.5s;
+      filter: invert(1);
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(253, 253, 253, 0.6);
+    }
   </style>
 </head>
 <body>
@@ -144,6 +178,21 @@
         <div class="diagram-caption">Dense-edge graph neural network + GRU architecture for EEG seizure prediction — full writeup &rarr;</div>
       </div>
     </a>
+
+    <div class="section-heading">Visualizations</div>
+    <div class="eeg-grid two-col" style="margin-bottom: 2rem;">
+      <div class="eeg-item">
+        <img src="resources/left_hand.gif" alt="Left Hand Signal Analysis" class="eeg-image">
+        <h4 class="eeg-caption">Left Hand Motor Cortex Activity</h4>
+      </div>
+      <div class="eeg-item">
+        <img src="resources/right_hand.gif" alt="Right Hand Signal Analysis" class="eeg-image">
+        <h4 class="eeg-caption">Right Hand Motor Cortex Activity</h4>
+      </div>
+    </div>
+    <div style="text-align: center; margin-bottom: 3rem;">
+      <img src="resources/morlets.gif" alt="Morlet Wavelet Analysis Animation" class="morlets-animation">
+    </div>
 
     <div class="section-heading">From the Notes</div>
     <div class="notes-list">
