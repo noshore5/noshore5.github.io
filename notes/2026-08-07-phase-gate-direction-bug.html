@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="../resources/icon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The phase-gate direction bug — Noah Shore</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <script>
+    window.MathJax = { tex: { inlineMath: [['\\(', '\\)'], ['$', '$']] } };
+  </script>
+  <style>
+    .nav-links a { text-decoration: none; }
+    .nav-links a.active { text-decoration: underline; }
+    .post {
+      max-width: 760px;
+      margin: 0 auto 3rem auto;
+      text-align: left;
+    }
+    .post-meta {
+      color: #888;
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+    .post h1 {
+      font-size: 2.1rem;
+      text-align: center;
+      color: #eaeaea;
+      margin-bottom: 0.25rem;
+    }
+    .post p { font-size: 1.05rem; line-height: 1.7; color: #ddd; }
+    .post h2 { color: #cccccc; font-size: 1.3rem; margin-top: 2.25rem; }
+    .post code {
+      background: rgba(255,255,255,0.08);
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      font-size: 0.92em;
+    }
+    .post pre {
+      background: rgba(20,20,20,0.85);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      font-size: 0.92em;
+      line-height: 1.5;
+    }
+    .callout {
+      background: rgba(42, 42, 42, 0.7);
+      border-left: 4px solid #4a6583;
+      border-radius: 6px;
+      padding: 1rem 1.5rem;
+      margin: 1.5rem 0;
+      color: #ccc;
+      font-size: 0.98rem;
+    }
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-bottom: 2rem;
+      color: #7aa5d6 !important;
+    }
+  </style>
+</head>
+<body>
+  <div id="menu-container"></div>
+  <div class="container" style="max-width:900px; margin:0 auto;">
+    <a href="../notes.html" class="back-link">&larr; All notes</a>
+    <div class="post">
+      <h1>The phase-gate direction bug: reported, "fixed," then reverted</h1>
+      <p class="post-meta">2026-08-07 &middot; EEG seizure prediction, dense-edge GNN</p>
+
+      <p>
+        This is a story about a "bug fix" that made things worse, and what it took to figure out why.
+      </p>
+
+      <p>
+        The model gates messages between electrode pairs by phase relationship: for a given pair of
+        channels, an edge only "fires" &mdash; contributes a message to the graph &mdash; if the coherence
+        between them exceeds a threshold and the phase delta exceeds a separate threshold. The original
+        code looked like this:
+      </p>
+      <pre><code>gate = (coh > threshold) & (phase > phase_threshold)</code></pre>
+
+      <p>
+        This was flagged as looking one-sided: it only catches a phase relationship in one rotational
+        direction. The reasoning was that the sign of the phase angle determines which channel is
+        "source" and which is "destination," so a one-sided gate should be silently dropping half of
+        the real relationships. The fix looked obvious &mdash; make it symmetric:
+      </p>
+      <pre><code>gate = (coh > threshold) & (phase.abs() > phase_threshold)</code></pre>
+
+      <p>
+        Event counts roughly doubled with this change (about 2,470 events/trial one-sided, versus
+        about 4,890 two-sided, across 8 real trials), and an initial accuracy check looked consistent
+        with historical baselines. It seemed like a real bug fix with no downside.
+      </p>
+
+      <h2>Then it got slower and scored worse</h2>
+      <p>
+        When the model was run at the actual working thresholds (not the looser ones used for the quick
+        sanity check), both training time and accuracy got worse after the change. That was the signal
+        to stop trusting the numbers and re-derive the actual math instead of just re-running it.
+      </p>
+
+      <p>
+        Every channel pair is represented as two directed edges &mdash; one for i&rarr;j, one for j&rarr;i.
+        The cross-spectrum between the two channels' wavelet transforms is:
+      </p>
+      <pre><code>xwt_real = src_r*dst_r + src_i*dst_i     (symmetric under src/dst swap)
+xwt_imag = src_i*dst_r - src_r*dst_i     (antisymmetric under src/dst swap)</code></pre>
+
+      <p>
+        Swapping which channel is source and which is destination &mdash; going from edge i&rarr;j to edge
+        j&rarr;i &mdash; is exactly a conjugation: <code>xwt(j&rarr;i) = conj(xwt(i&rarr;j))</code>. Smoothing is
+        applied identically and linearly to both directed copies, so that relationship survives
+        smoothing intact. The consequence: <code>phase(j&rarr;i) = -phase(i&rarr;j)</code> and
+        <code>coherence(i&rarr;j) = coherence(j&rarr;i)</code>, always, for every pair, at every
+        time/frequency cell.
+      </p>
+
+      <div class="callout">
+        That means the original one-sided gate was already directionally correct by construction.
+        For a given pair, either i&rarr;j fires (<code>phase &gt; +threshold</code>) or j&rarr;i fires
+        (<code>phase &lt; -threshold</code>, since <code>phase(j&rarr;i) = -phase(i&rarr;j)</code>) &mdash; the
+        two conditions are mutually exclusive by sign. Exactly one directed edge fires per real phase
+        relationship, and <em>which one</em> fires is what encodes the source/destination direction.
+        The symmetric (<code>.abs()</code>) version breaks this: it's true for <strong>both</strong>
+        directed edges whenever the pair has a strong phase relationship in either direction, so instead
+        of picking a direction it fires both at once &mdash; doubling event volume with duplicate,
+        contradictory-direction edges feeding into the graph.
+      </div>
+
+      <p>
+        The gate was reverted to its original one-sided form, with a comment left in the code explaining
+        why it's correct, rather than a bug.
+      </p>
+
+      <h2>Verifying it two ways</h2>
+      <p>
+        Re-running at the real working thresholds with the reverted gate gave the best single-subject
+        result logged for that setup so far (mean accuracy 0.854, up from 0.836 under the two-sided
+        version at looser thresholds).
+      </p>
+      <p>
+        More convincingly, the actual numbers were traced on one real trial. For one channel pair, at the
+        time/frequency cell where their coherence peaked: <code>phase(i&rarr;j) = +0.241094 rad</code>,
+        <code>phase(j&rarr;i) = -0.241094 rad</code> &mdash; summing to exactly zero &mdash; and
+        <code>coherence(i&rarr;j) = coherence(j&rarr;i) = 0.999934</code>, matching exactly. The one-sided
+        gate fired correctly on i&rarr;j and correctly did not fire on j&rarr;i at that cell. Scanning
+        every time/frequency cell for that pair across the whole trial: i&rarr;j fired on 1,089 cells,
+        j&rarr;i fired on 534 cells, and <strong>zero</strong> cells fired on both &mdash; full mutual
+        exclusivity, confirmed empirically, not just algebraically.
+      </p>
+
+      <h2>Takeaway</h2>
+      <p>
+        The instinct that triggered this &mdash; "this looks one-sided, that's probably a bug" &mdash; was
+        reasonable on its face, and the initial "fix" even looked validated by a quick accuracy check.
+        What actually caught it was refusing to accept a regression as noise, and going back to the
+        underlying complex-analysis identity instead of just re-running experiments. The event-count
+        and accuracy numbers alone would never have explained <em>why</em> it broke; the conjugate-symmetry
+        argument did.
+      </p>
+    </div>
+  </div>
+  <div id="footer-container"></div>
+</body>
+<script src="../menu-loader.js"></script>
+<script src="../footer-loader.js"></script>
+</html>

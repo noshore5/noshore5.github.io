@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="resources/icon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Research — Noah Shore</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .nav-links a { text-decoration: none; }
+    .nav-links a.active { text-decoration: underline; }
+    .research-body {
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: left;
+    }
+    .research-body p { font-size: 1.05rem; line-height: 1.65; color: #ddd; }
+    .research-body h2 {
+      color: #cccccc;
+      font-size: 1.4rem;
+      margin-top: 2.5rem;
+    }
+    .status-note {
+      background: rgba(42, 42, 42, 0.7);
+      border-left: 4px solid #4a6583;
+      border-radius: 6px;
+      padding: 1.25rem 1.5rem;
+      margin: 1.5rem 0;
+      color: #ccc;
+      font-size: 0.98rem;
+    }
+    .diagram-full {
+      max-width: 100%;
+      margin: 2rem 0;
+      text-align: center;
+    }
+    .diagram-full img {
+      width: 100%;
+      height: auto;
+      border-radius: 10px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+      background: #fafafa;
+    }
+    .diagram-caption {
+      margin-top: 0.75rem;
+      font-size: 0.9rem;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="menu-container"></div>
+  <div class="container" style="max-width:900px; margin:0 auto;">
+    <h1 style="text-align:center; margin-bottom:0.5em; font-size:2.7em; letter-spacing:0.03em; font-weight:700; color:#cccccc;">Research</h1>
+
+    <div class="research-body">
+      <p>
+        Since 2025 I've been leading a small independent research team (myself and two collaborators)
+        building a machine learning architecture for EEG-based epileptic seizure prediction. The core
+        idea: use complex-valued wavelet coherence between electrode-channel pairs as edge features in
+        a graph neural network, so the model can represent lead/lag phase relationships &mdash; i.e. how
+        seizure activity actually propagates across the electrode array &mdash; rather than treating each
+        channel independently. A GRU models how that graph evolves over time.
+      </p>
+
+      <h2>Architecture</h2>
+      <p>
+        The diagram below is a direct read of the code path actually instantiated for training
+        &mdash; <code>SparseEvidenceGNNCore</code>'s forward pass under the <code>dense_edge_gru</code>
+        config: a dilated Conv1d channel encoder running alongside a coherence/event lane (cross-wavelet
+        transform &rarr; cone-of-influence masking and surrogate significance &rarr; smoothing/downsampling
+        &rarr; a per-edge GRU), which merge and pass through a message network, destination-node
+        aggregation, and a final classifier.
+      </p>
+      <div class="diagram-full" style="background:#fafafa; border-radius:10px; overflow:hidden;">
+        <iframe id="arch-frame" src="resources/architecture-diagram.html" style="width:100%; border:none; display:block;" title="SparseEvidenceGNNCore architecture diagram"></iframe>
+      </div>
+      <script>
+        (function() {
+          var f = document.getElementById('arch-frame');
+          function resize() {
+            try {
+              f.style.height = f.contentWindow.document.body.scrollHeight + 'px';
+            } catch (e) {}
+          }
+          f.addEventListener('load', resize);
+          window.addEventListener('resize', resize);
+        })();
+      </script>
+
+      <h2>Where things stand</h2>
+      <div class="status-note">
+        The model classifies active seizure state well. Current work is extending it to predict the
+        <strong>preictal</strong> (pre-seizure) period, which is the harder and more clinically useful
+        problem. On standard motor-imagery benchmark tasks, the architecture currently trails EEGNet by
+        a small margin &mdash; my working hypothesis is that the model spends representational capacity on
+        time-ordering information that isn't especially useful for motor-imagery classification
+        specifically, even though it matters for seizure propagation. That's an open thread, not a
+        finished result.
+      </div>
+
+      <h2>Devlog</h2>
+      <p>
+        I keep detailed session notes as I work through this &mdash; debugging stories, ablations, dead
+        ends, and the occasional real bug. A few are written up on the <a href="notes.html">Notes</a>
+        page.
+      </p>
+
+      <h2>Background</h2>
+      <p>
+        This project builds directly on wavelet coherence methods I developed in earlier work,
+        including a peer-reviewed real-time wavelet coherence architecture (IEEE ISPA 2025) and my
+        M.S. thesis on wavelet-based time-frequency fingerprinting &mdash; see
+        <a href="literature.html">Publications</a> for both.
+      </p>
+    </div>
+  </div>
+  <div id="footer-container"></div>
+</body>
+<script src="menu-loader.js"></script>
+<script src="footer-loader.js"></script>
+</html>

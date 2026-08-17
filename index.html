@@ -4,396 +4,177 @@
   <meta charset="UTF-8">
   <link rel="icon" type="image/png" href="resources/icon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CoherIQs - Home</title>
+  <title>Noah Shore</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
-  
-  <!-- MathJax for LaTeX math rendering -->
-  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-  
-  <!-- Markdown parser for Claude responses -->
-  <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
-  
-  <script>
-    window.MathJax = {
-      tex: {
-        inlineMath: [['\\(', '\\)'], ['$', '$']],
-        displayMath: [['\\[', '\\]'], ['$$', '$$']],
-        processEscapes: true,
-        processEnvironments: true,
-        packages: {'[+]': ['ams', 'newcommand', 'configmacros']},
-        macros: {
-          R: "\\mathbb{R}",
-          C: "\\mathbb{C}",
-          N: "\\mathbb{N}",
-          Z: "\\mathbb{Z}",
-          Q: "\\mathbb{Q}",
-          F: "\\mathcal{F}",
-          W: "\\mathcal{W}",
-          psi: "\\psi",
-          omega: "\\omega",
-          theta: "\\theta",
-          phi: "\\phi",
-          alpha: "\\alpha",
-          beta: "\\beta",
-          gamma: "\\gamma",
-          delta: "\\delta"
-        }
-      },
-      chtml: {
-        scale: 1.0,
-        minScale: 0.5,
-        matchFontHeight: false
-      },
-      options: {
-        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
-        processHtmlClass: 'tex2jax_process|mathjax_process',
-        ignoreHtmlClass: 'tex2jax_ignore|mathjax_ignore'
-      },
-      startup: {
-        ready() {
-          console.log('MathJax is loaded and ready');
-          MathJax.startup.defaultReady();
-          
-          // Configure marked for markdown parsing
-          if (typeof marked !== 'undefined') {
-            marked.setOptions({
-              breaks: true,
-              gfm: true,
-              sanitize: false
-            });
-            console.log('Marked markdown parser configured');
-          }
-        }
-      }
-    };
-  </script>
   <style>
-    .nav-links a {
-      text-decoration: none;
+    .nav-links a { text-decoration: none; }
+    .nav-links a.active { text-decoration: underline; }
+
+    .hero {
+      max-width: 720px;
+      margin: 0 auto 3rem auto;
+      text-align: center;
     }
-    .nav-links a.active {
-      text-decoration: underline;
-    }
-    
-    /* Value Proposition */
-    .value-prop {
-      font-size: 1.1rem;
-      color: #3498db;
+    .hero .tagline {
+      font-size: 1.15rem;
+      color: #7aa5d6;
       font-weight: 500;
       margin-top: -0.5rem;
-      margin-bottom: 2rem;
-      letter-spacing: 0.3px;
+      margin-bottom: 1.5rem;
+      letter-spacing: 0.2px;
     }
-    
-    /* Tab Styles */
-    .tab-container {
-      max-width: 900px;
-      margin: 0 auto;
-    }
-    
-    .tab-nav {
-      display: flex;
-      border-bottom: 2px solid #e0e0e0;
-      margin-bottom: 2rem;
-      justify-content: center;
-    }
-    
-    .tab-button {
-      background: none;
-      border: none;
-      padding: 1rem 2rem;
-      font-size: 1.1rem;
-      cursor: pointer;
-      color: #999;
-      border-bottom: 3px solid transparent;
-      transition: all 0.3s ease;
-      font-family: 'Montserrat', sans-serif;
-      font-weight: 500;
-    }
-    
-    .tab-button:hover {
-      color: #666;
-      background-color: transparent;
-    }
-    
-    .tab-button.active {
-      color: #555;
-      border-bottom-color: #3498db;
-      background-color: transparent;
-    }
-    
-    .tab-content {
-      display: none;
-      animation: fadeIn 0.3s ease-in;
-    }
-    
-    .tab-content.active {
-      display: block;
-    }
-    
-    /* Intro Tab Content */
-    .intro-hero {
-      max-width: 700px;
-      margin: 0 auto 2em auto;
-      text-align: center;
-      font-size: 1.3em;
+    .hero p {
+      font-size: 1.05rem;
       line-height: 1.6;
+      color: #ddd;
     }
-    
-    .eeg-header {
-      color: #527394;
-      margin-bottom: 1rem;
-      margin-top: 2rem;
-    }
-    
-    .eeg-grid {
+
+    .card-grid {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 2rem;
+      gap: 1.5rem;
       max-width: 900px;
-      margin: 0 auto;
+      margin: 0 auto 2.5rem auto;
     }
-    
-    .eeg-item {
+    @media (min-width: 760px) {
+      .card-grid.two-col { grid-template-columns: 1fr 1fr; }
+    }
+    .card {
+      background: rgba(42, 42, 42, 0.6);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 1.75rem;
+      text-align: left;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .card:hover {
+      border-color: rgba(122, 165, 214, 0.5);
+      transform: translateY(-2px);
+    }
+    .card h3 {
+      margin: 0 0 0.6rem 0;
+      color: #fff;
+      font-size: 1.2rem;
+    }
+    .card p {
+      margin: 0 0 1rem 0;
+      color: #bbb;
+      font-size: 0.98rem;
+      line-height: 1.55;
+    }
+    .card a.card-link {
+      color: #7aa5d6;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.95rem;
+    }
+    .card a.card-link:hover { text-decoration: underline; }
+
+    .section-heading {
+      text-align: center;
+      color: #cccccc;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 3rem 0 1.5rem 0;
+      letter-spacing: 0.02em;
+    }
+
+    .diagram-frame {
+      display: block;
+      max-width: 900px;
+      margin: 0 auto 3rem auto;
       text-align: center;
     }
-    
-    .eeg-image {
+    .diagram-frame img {
       width: 100%;
       max-width: 100%;
       height: auto;
       border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+      background: #fafafa;
     }
-    
-    .eeg-caption {
-      margin-top: 1rem;
-      margin-bottom: 0.5rem;
-      font-size: 0.95rem;
-      color: #aaa;
-      font-weight: 400;
+    .diagram-caption {
+      margin-top: 0.75rem;
+      font-size: 0.9rem;
+      color: #999;
     }
-    
-    .eeg-caption.primary {
-      color: #3498db;
+
+    .notes-list {
+      max-width: 700px;
+      margin: 0 auto 2.5rem auto;
+      text-align: left;
     }
-    
-    .graph-link {
+    .notes-list a {
       display: block;
-      text-align: center;
-      margin: 2rem 0;
+      padding: 0.85rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      color: #eaeaea !important;
+      text-decoration: none !important;
     }
-    
-    .graph-image {
-      width: 400px;
-      max-width: 90vw;
-      height: auto;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.18);
-    }
-    
-    .morlets-image {
-      max-width: 100%;
-      height: auto;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(253, 253, 253, 0.6);
-    }
-    
-    /* Background Tab Content */
-    .background-intro {
-      max-width: 700px;
-      margin: 0 auto 1em auto;
-      text-align: center;
-      font-size: 1.2em;
-      color: #e0e0e0;
-    }
-    
-    .background-context {
-      max-width: 700px;
-      margin: 0 auto 2em auto;
-      text-align: center;
-      font-size: 1.08em;
-      color: #e0e0e0;
-    }
-    
-    .background-wide-image {
-      position: relative;
-      left: 50%;
-      right: 50%;
-      width: 100vw;
-      margin-left: -50vw;
-      margin-right: -50vw;
-      overflow: hidden;
-      text-align: center;
-      margin-top: 2rem;
-      margin-bottom: 2rem;
-      padding: 0;
-    }
-    
-    .background-wide-image img {
-      width: 100vw;
-      min-width: 100vw;
-      max-width: none;
-      height: auto;
-      display: block;
-      margin: 0;
-      object-fit: cover;
-    }
-    
-    .background-main {
-      max-width: 900px;
-      margin: 0 auto 1.5em auto;
-      text-align: center;
-      font-size: 1.05em;
-      color: #e0e0e0;
-    }
-    
-    .background-footer {
-      max-width: 700px;
-      margin: 0 auto 2rem auto;
-      text-align: center;
-      font-size: 1.05em;
-      color: #e0e0e0;
-    }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-  </style>
-  <style>
-    .morlets-animation {
-      animation-duration: 0.5s;
-      filter: invert(1);
+    .notes-list a:hover { color: #7aa5d6 !important; }
+    .notes-list .note-date {
+      color: #888;
+      font-size: 0.85rem;
+      margin-right: 0.75rem;
     }
   </style>
 </head>
 <body>
-  <!-- Menu will be loaded here -->
   <div id="menu-container"></div>
-  <div class="container home-container" style="max-width:900px; margin:0 auto; text-align:center;">
-    <h1>CoherIQs</h1>
-    <div class="value-prop">Enterprise-Grade Wavelet Coherence Analysis for Real-Time Signal Processing</div>
-        
-    <!-- Tab Navigation -->
-    <div class="tab-container">
-      <div class="tab-nav">
-        <button class="tab-button active" onclick="openTab(event, 'intro-tab')">Intro</button>
-        <button class="tab-button" onclick="openTab(event, 'background-tab')">Background</button>
-        <button class="tab-button" onclick="openTab(event, 'architectures-tab')">Architectures</button>
-      </div>
-      
-      <!-- Intro Tab Content -->
-      <div id="intro-tab" class="tab-content active">
-        
-        <!-- Graph Network Picture -->
-        <div class="graph-link">
-          <a href="coherentmultiplex.html">
-            <img src="resources/graph.png" alt="Signal Relationship Graph" class="graph-image">
-          </a>
-        </div>
-        
-        <div>
-          <h3 class="eeg-header">Advanced EEG Signal Processing</h3>
-          <div class="eeg-grid">
-            <div class="eeg-item">
-              <img src="resources/SP1.png" alt="Signal Processing Feature 1" class="eeg-image">
-              <h4 class="eeg-caption primary">Adaptive Wavelet Decomposition for EEG Analysis</h4>
-            </div>
-            <div class="eeg-item">
-              <img src="resources/SP2.png" alt="Signal Processing Feature 2" class="eeg-image">
-              <h4 class="eeg-caption">Real-Time Coherence Computation</h4>
-            </div>
-          </div>
-        </div>
-        
-  <!-- Coherent Multiplex CTA removed -->
-        
-        <div style="text-align: center; margin: 2rem 0;">
-          <img src="resources/morlets.gif" alt="Morlet Wavelet Analysis Animation" class="morlets-animation eeg-image">
-        </div>
-      </div>
-      
-      <!-- Background Tab Content -->
-      <div id="background-tab" class="tab-content">
-        <p class="background-intro">
-          <strong>Wavelet coherence</strong> determines lead-lag relationships in time series data across multiple scales—
-          originally proven on El Niño-Southern Oscillation and tropical Indian storm correlations.
-        </p>
+  <div class="container home-container" style="max-width:900px; margin:0 auto; text-align:left;">
 
-        <p class="background-context">
-          Existing implementations are constrained to R, MATLAB, or Python with dated, inefficient algorithms.
-          CoherIQs eliminates these bottlenecks with optimized computation for production data analysis.
-        </p>
+    <div class="hero">
+      <h1>Noah Shore</h1>
+      <div class="tagline">Mathematician &amp; Researcher — Time-Frequency Analysis, Signal Processing, Machine Learning</div>
+      <p>
+        I work on wavelet coherence methods for non-stationary signals, and how to fold them into
+        graph- and sequence-based ML architectures. Currently leading a small independent research
+        team building a graph neural network + GRU model for EEG-based epileptic seizure prediction.
+        Author of a peer-reviewed IEEE publication on real-time wavelet coherence architecture.
+      </p>
+    </div>
 
-        <!-- Wide inline image appears here (spans viewport width) -->
-        <div class="background-wide-image">
-          <img src="resources/lkclear.png" alt="Coherence Analysis Visualization">
-        </div>
-
-        <p class="background-footer">
-          Explore applications in finance and economics in our <a href="literature.html">Literature</a> section.
-        </p>
+    <div class="section-heading">Current Research</div>
+    <a href="research.html" style="text-decoration:none;">
+      <div class="diagram-frame">
+        <img src="resources/architecture-diagram-preview.png" alt="SparseEvidenceGNNCore architecture diagram — dense_edge_gru forward pass">
+        <div class="diagram-caption">Dense-edge graph neural network + GRU architecture for EEG seizure prediction — full writeup &rarr;</div>
       </div>
-      
-      <!-- Architectures Tab Content -->
-      <div id="architectures-tab" class="tab-content">
-        <p class="background-intro">
-          Brain activity during a left-hand motor imagery task, visualised as a network. Each particle travelling between electrodes represents a phase relationship at a specific frequency, that has been extracted by wavelet coherence within a specified timestamp.
-        </p>
-        
-        
-        <div class="eeg-grid">
-          <div class="eeg-item">
-            <img src="resources/left_hand.gif" alt="Left Hand Signal Analysis" class="eeg-image">
-            <h4 class="eeg-caption">Left Hand Motor Cortex Activity</h4>
-          </div>
-          <div class="eeg-item">
-            <img src="resources/right_hand.gif" alt="Right Hand Signal Analysis" class="eeg-image">
-            <h4 class="eeg-caption">Right Hand Motor Cortex Activity</h4>
-          </div>
-        </div>
+    </a>
+
+    <div class="section-heading">From the Notes</div>
+    <div class="notes-list">
+      <a href="notes/2026-08-07-phase-gate-direction-bug.html">
+        <span class="note-date">2026-08-07</span>The phase-gate direction bug: reported, "fixed," then reverted
+      </a>
+      <a href="notes/2026-08-06-mu-band-receptive-field-regression.html">
+        <span class="note-date">2026-08-06</span>Chasing a 0.80 &rarr; 0.71 accuracy regression back to a fixed receptive field
+      </a>
+    </div>
+    <div style="text-align:center; margin-bottom:3rem;">
+      <a href="notes.html" class="card-link" style="color:#7aa5d6; text-decoration:none; font-weight:500;">All notes &rarr;</a>
+    </div>
+
+    <div class="section-heading">Publications</div>
+    <div class="card-grid two-col">
+      <div class="card">
+        <h3>The Coherent Multiplex</h3>
+        <p>Scalable Real-Time Wavelet Coherence Architecture. N. Shore, IEEE 14th International Symposium on Image and Signal Processing and Analysis (ISPA), Oct. 2025.</p>
+        <a class="card-link" href="literature.html">View publication &rarr;</a>
+      </div>
+      <div class="card">
+        <h3>M.S. Thesis — University of Galway</h3>
+        <p>Wavelet-Based Time-Frequency Fingerprinting for Feature Extraction of Traditional Irish Music. Published on arXiv, 2025.</p>
+        <a class="card-link" href="literature.html">View publication &rarr;</a>
       </div>
     </div>
-  </div>
-  <!-- Footer will be loaded here -->
-  <div id="footer-container"></div>
 
-  <script>
-    function openTab(evt, tabName) {
-      // Hide all tab content
-      var tabcontent = document.getElementsByClassName("tab-content");
-      for (var i = 0; i < tabcontent.length; i++) {
-        tabcontent[i].classList.remove("active");
-      }
-      
-      // Remove active class from all tab buttons
-      var tablinks = document.getElementsByClassName("tab-button");
-      for (var i = 0; i < tablinks.length; i++) {
-        tablinks[i].classList.remove("active");
-      }
-      
-      // Show the selected tab and mark button as active
-      document.getElementById(tabName).classList.add("active");
-      evt.currentTarget.classList.add("active");
-    }
-  </script>
+  </div>
+  <div id="footer-container"></div>
 </body>
 <script src="menu-loader.js"></script>
 <script src="footer-loader.js"></script>
-<!-- Claude Assistant - TEMPORARILY DISABLED -->
-<!--
-<script>
-  // Load config
-  window.CLAUDE_FALLBACK = true;
-  console.log('Loading Claude Assistant...');
-</script>
-<script src="claude_utils/config.js" onerror="console.log('Config not loaded, using defaults')"></script>
-<script src="claude_utils/claude-utils.js" onerror="console.log('Claude utils not loaded, using fallback')"></script>
-<script src="claude-loader.js" onerror="console.log('Claude loader not loaded')"></script>
--->
-</body>
 </html>

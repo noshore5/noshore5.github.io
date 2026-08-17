@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="resources/icon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notes — Noah Shore</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .nav-links a { text-decoration: none; }
+    .nav-links a.active { text-decoration: underline; }
+    .notes-intro {
+      max-width: 700px;
+      margin: 0 auto 2.5rem auto;
+      text-align: center;
+      font-size: 1.05rem;
+      color: #ccc;
+      line-height: 1.6;
+    }
+    .notes-list {
+      max-width: 700px;
+      margin: 0 auto 2.5rem auto;
+      text-align: left;
+    }
+    .notes-list a {
+      display: block;
+      padding: 1rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      color: #eaeaea !important;
+      text-decoration: none !important;
+    }
+    .notes-list a:hover { color: #7aa5d6 !important; }
+    .notes-list .note-date {
+      color: #888;
+      font-size: 0.85rem;
+      display: block;
+      margin-bottom: 0.2rem;
+    }
+    .notes-list .note-title {
+      font-size: 1.1rem;
+    }
+  </style>
+</head>
+<body>
+  <div id="menu-container"></div>
+  <div class="container" style="max-width:900px; margin:0 auto;">
+    <h1 style="text-align:center; margin-bottom:0.5em; font-size:2.7em; letter-spacing:0.03em; font-weight:700; color:#cccccc;">Notes</h1>
+    <p class="notes-intro">
+      Devlog entries from ongoing work on EEG seizure prediction and wavelet coherence methods &mdash;
+      debugging stories, ablations, and the occasional real bug, written up from session notes as I go.
+    </p>
+    <div class="notes-list">
+      <a href="notes/2026-08-07-phase-gate-direction-bug.html">
+        <span class="note-date">2026-08-07</span>
+        <span class="note-title">The phase-gate direction bug: reported, "fixed," then reverted</span>
+      </a>
+      <a href="notes/2026-08-06-mu-band-receptive-field-regression.html">
+        <span class="note-date">2026-08-06</span>
+        <span class="note-title">Chasing a 0.80 &rarr; 0.71 accuracy regression back to a fixed receptive field</span>
+      </a>
+    </div>
+  </div>
+  <div id="footer-container"></div>
+</body>
+<script src="menu-loader.js"></script>
+<script src="footer-loader.js"></script>
+</html>

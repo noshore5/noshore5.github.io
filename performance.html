@@ -43,7 +43,8 @@
     <h1 style="text-align:center; margin-bottom:0.5em; font-size:2.7em; letter-spacing:0.03em; font-weight:700; color:#cccccc;">Performance</h1>
     <p style="font-size:1.1em;">In 2022, researchers P.A. Arts and L. van den Broek published
          the <em>Fast Continuous Wavelet Transform</em> (fCWT) algorithm, with dramatically
-          positive ramifications for wavelet transform computation. The fCWT enables CoherIQs by 
+          positive ramifications for wavelet transform computation. It underlies the real-time
+          wavelet coherence engine behind my <a href="literature.html" style="color:#7b96b4; text-decoration:underline;">IEEE-published architecture</a>, by
           scaling down the amount of compute time
             required for long signals, focusing on the inverse Fourier transform step in
              the FFT-based implementation of the wavelet transform.</p>
@@ -63,12 +64,12 @@
       </div>
     </div>
     <div style="text-align:center; margin-top:-1em; margin-bottom:2em;">
-      <p style="font-size:0.95em; color:#aaa; display:inline-block; max-width:700px;">Efficiency comparison in memory usage. Left: increasing frequency resolution. Right: increasing number of samples. Legend: <span style="color:#ff7f0e; font-weight:bold;">■</span> Our model, <span style="color:#1f77b4; font-weight:bold;">■</span> PyCWT benchmark.</p>
+      <p style="font-size:0.95em; color:#aaa; display:inline-block; max-width:700px;">Efficiency comparison in memory usage. Left: increasing frequency resolution. Right: increasing number of samples. Legend: <span style="color:#ff7f0e; font-weight:bold;">■</span> This implementation, <span style="color:#1f77b4; font-weight:bold;">■</span> PyCWT benchmark.</p>
     </div>
 
-    <p style="font-size:1.1em;">To illustrate the savings realized by these techniques, 
-        two signals consisting of pure noise are generated at an 8000 Hz sampling rate. 
-        Coherence matrices are then produced using CoherIQs in parallel with the PyCWT
+    <p style="font-size:1.1em;">To illustrate the savings realized by these techniques,
+        two signals consisting of pure noise are generated at an 8000 Hz sampling rate.
+        Coherence matrices are then produced with this implementation in parallel with the PyCWT
          library's wavelet coherence transform
          (WCT) method, which serves as a benchmark for comparison. the efficiency
            in both domains (time and frequency) is of interest, so we run two experiments.
@@ -87,7 +88,7 @@
       </div>
     </div>
     <div style="text-align:center; margin-top:-1em; margin-bottom:2em;">
-      <p style="font-size:0.95em; color:#aaa; display:inline-block; max-width:700px;">Efficiency comparison in process time. Left: increasing frequency resolution. Right: increasing number of samples. Legend: <span style="color:#ff7f0e; font-weight:bold;">■</span> Our model, <span style="color:#1f77b4; font-weight:bold;">■</span> PyCWT benchmark.</p>
+      <p style="font-size:0.95em; color:#aaa; display:inline-block; max-width:700px;">Efficiency comparison in process time. Left: increasing frequency resolution. Right: increasing number of samples. Legend: <span style="color:#ff7f0e; font-weight:bold;">■</span> This implementation, <span style="color:#1f77b4; font-weight:bold;">■</span> PyCWT benchmark.</p>
     </div>
 
     <p style="font-size:1.1em;">These results closely replicate the performance findings in the original fCWT publication, showing the large portion of coherence computation being consumed by the supporting wavelet transforms. Additionally, the step-wise behavior observed when increasing signal duration is a well documented phenomena in FFT based implementations, which are most efficient at transforming signals whose input lengths are 2<sup>n</sup>, n ∈ ℕ. As a result, such algorithms will pad signals to the next power of 2.</p>
