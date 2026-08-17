@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="../resources/icon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OOM fix and first prediction-mode results — Noah Shore</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .nav-links a { text-decoration: none; }
+    .nav-links a.active { text-decoration: underline; }
+    .post {
+      max-width: 800px;
+      margin: 0 auto 3rem auto;
+      text-align: left;
+    }
+    .post-meta {
+      color: #888;
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+    .post h1 {
+      font-size: 1.9rem;
+      text-align: center;
+      color: #eaeaea;
+      margin-bottom: 0.25rem;
+    }
+    .post p { font-size: 1.02rem; line-height: 1.65; color: #ddd; }
+    .post h2 { color: #cccccc; font-size: 1.15rem; margin-top: 2rem; }
+    .post code {
+      background: rgba(255,255,255,0.08);
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      font-size: 0.92em;
+    }
+    .callout {
+      background: rgba(42, 42, 42, 0.7);
+      border-left: 4px solid #4a6583;
+      border-radius: 6px;
+      padding: 1rem 1.5rem;
+      margin: 1.5rem 0;
+      color: #ccc;
+      font-size: 0.98rem;
+    }
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-bottom: 2rem;
+      color: #7aa5d6 !important;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 0.92rem;
+    }
+    th, td {
+      padding: 0.5rem 0.7rem;
+      text-align: right;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      color: #ccc;
+    }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: #eaeaea; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div id="menu-container"></div>
+  <div class="container" style="max-width:900px; margin:0 auto;">
+    <a href="../notes.html" class="back-link">&larr; All notes</a>
+    <div class="post">
+      <h1>OOM fix, a streaming classifier, and the first trustworthy prediction-mode results</h1>
+      <p class="post-meta">2026-08-17 &middot; EEG seizure prediction, preictal window</p>
+
+      <p>
+        First real (non-smoke) run of prediction mode &mdash; predicting the preictal window, not just
+        classifying active seizure state &mdash; on chb01, leave-one-seizure-out, 7 folds.
+      </p>
+
+      <h2>OOM crash</h2>
+      <p>
+        <code>--label-mode prediction --subjects 1 --epochs 10</code>, real <code>step_size=8</code>,
+        crashed (exit 137). Diagnosed via <code>vm_stat</code>/<code>sysctl vm.swapusage</code> (12.6GB
+        swap in use on a 16GB+15GB-swap machine) and by measuring cache-entry sizes directly:
+        <code>dense_edge_cache</code> &asymp;2.04MB/window, <code>cwt_window_cache</code> &asymp;1.51MB/window
+        &mdash; &asymp;3.55MB/window combined. Feature preparation runs once for the whole training set
+        before the epoch loop starts. At prediction mode's scale (&asymp;14,700 training windows/fold,
+        since a seizure-containing recording can't supply its own negatives, so the negative pool is the
+        entire rest of the subject), that's &asymp;52GB materialized before training begins. Not a leak
+        &mdash; an architectural mismatch between "materialize everything up front" (fine at detection's
+        &asymp;700-window scale) and prediction's real dataset size.
+      </p>
+
+      <h2>Two fixes</h2>
+      <p>
+        <strong>Stratified negative-window subsampling.</strong> Negative windows randomly dropped to
+        5&times; the positive count, stratified per (subject, run) so every recording keeps a proportional
+        share. All positive (preictal) windows always kept.
+      </p>
+      <p>
+        <strong>Streaming classifier.</strong> A new class, subclassing the existing detection classifier
+        and overriding only <code>fit()</code>: computes features per batch instead of once for the whole
+        training set &mdash; O(batch size) memory instead of O(dataset size). Detection's classifier and
+        code path left untouched.
+      </p>
+      <p>
+        Bit-exact reproduction of the original class's training trajectory turned out not to be
+        achievable (a shuffled data loader draws an extra seed from the shared generator before sampling,
+        shifting subsequent output). Verified instead on what actually matters: every training index
+        visited exactly once per epoch, per-batch feature output numerically identical to whole-set
+        feature output for the same windows (0.0 absolute difference), and end-to-end fit/predict sanity.
+        Both fixes verified together at smoke scale before the real rerun.
+      </p>
+
+      <h2>First real run &mdash; later found confounded</h2>
+      <p>
+        ~1h32m, exit 0, all 7 folds. Mean roc_auc 0.868, average_precision 0.552, hit rate 6/7. The
+        numbers looked strong enough, for a first pass at a task existing models don't do well on, to be
+        worth re-checking rather than accepting. Re-reading the fold-construction code end to end
+        surfaced a real bug: negative-window subsampling was being applied once, globally, before the
+        fold split, so every fold's <em>test</em> interictal windows were also thinned to the same
+        &asymp;1/5 ratio as train. <code>false_alarms_per_hour</code> and the window-level metrics were
+        being computed against a random &asymp;21% slice of each recording, not continuous monitoring.
+        No train/test leakage &mdash; fold construction itself checked out clean &mdash; but a real
+        reliability problem with the sample sizes behind the metrics that matter most.
+      </p>
+
+      <h2>Fix: subsample train only, per fold</h2>
+      <p>
+        Subsampling moved out of the shared dataset-building step and into the per-fold loop, applied to
+        each fold's training slice only, after the train/test split. Test windows are now never touched
+        by subsampling, at any ratio. Verified at two subsampling ratios: at the default ratio, smoke
+        scale was already too small to trigger subsampling (expected); at a ratio forced to actually
+        engage, the subsampling fired once per fold with different counts (confirming it operates on each
+        fold's train-only pool, not a shared global one), while every fold's test count matched the
+        unsubsampled baseline exactly.
+      </p>
+
+      <h2>Second real run &mdash; the numbers that stand</h2>
+      <p>
+        Same command, ~1h53m (longer than the first run &mdash; the previously-dropped &asymp;80% of each
+        fold's interictal windows needed fresh feature-cache entries). Exit 0, all 7 folds.
+      </p>
+      <table>
+        <tr><th>seizure</th><th>preictal</th><th>n_test</th><th>hit</th><th>recall</th><th>precision</th><th>auc_pr</th><th>FAR/hr</th></tr>
+        <tr><td>03</td><td>112</td><td>2245</td><td>&#10003;</td><td>0.634</td><td>0.504</td><td>0.520</td><td>29.5</td></tr>
+        <tr><td>04</td><td>113</td><td>2363</td><td>&#10003;</td><td>0.850</td><td>0.282</td><td>0.295</td><td>97.6</td></tr>
+        <tr><td>15</td><td>112</td><td>2362</td><td>&#10003;</td><td>0.714</td><td>0.584</td><td>0.677</td><td>22.8</td></tr>
+        <tr><td>16</td><td>89</td><td>2339</td><td>&#10003;</td><td>0.742</td><td>0.957</td><td><strong>0.956</strong></td><td><strong>1.2</strong></td></tr>
+        <tr><td>18</td><td>113</td><td>2363</td><td>&#10003;</td><td>0.469</td><td>0.186</td><td>0.187</td><td>92.8</td></tr>
+        <tr><td>21</td><td>3</td><td>1878</td><td>&#10007;</td><td>0.000</td><td>0.000</td><td>0.003</td><td>122.9</td></tr>
+        <tr><td>26</td><td>112</td><td>2362</td><td>&#10003;</td><td>0.179</td><td>0.147</td><td>0.124</td><td>46.4</td></tr>
+      </table>
+      <p>
+        Mean: accuracy 0.920, precision 0.380, recall 0.512, f1 0.413, average_precision 0.395, roc_auc
+        0.882, false_alarms_per_hour 59.0, hit rate 6/7 (85.7%).
+      </p>
+      <p>
+        Against the confounded run: roc_auc held up (0.868 &rarr; 0.882) &mdash; the ranking signal was
+        real, not an artifact of the eval bug. average_precision dropped substantially (0.552 &rarr;
+        0.395) once scored against the true &asymp;20&times; larger interictal population per fold. FAR/hr
+        moved in both directions per fold after the fix (down for one seizure, up for another), consistent
+        with the earlier subsampling being unbiased noise rather than a directional inflation.
+      </p>
+      <div class="callout">
+        Seizure 16 is the standout, both before and after the fix (auc_pr 0.956, FAR/hr 1.2 &mdash; the one
+        fold in clinically-interesting territory). Seizures 04, 18, and 26 are weak to near-chance (auc_pr
+        0.12&ndash;0.30). The one miss (seizure 21, 3 preictal windows) is a structural artifact: the
+        seizure's own early onset in its recording leaves almost no room for the full lead time before
+        labeling runs out of recording &mdash; not a modeling failure.
+      </div>
+      <p>
+        On why a false-alarm rate as high as 97.6/hour doesn't by itself mean there's no signal:
+        false-alarm rate, precision, and recall are all read off one fixed, untuned decision threshold,
+        while roc_auc and average_precision are threshold-independent rank statistics. For seizure 04's
+        actual class balance (&asymp;4.8% positive), a zero-skill model would score auc_pr&asymp;0.048; the
+        observed 0.295 is &asymp;6&times; that floor &mdash; real signal, poorly exploited by an uncalibrated
+        threshold, not absent.
+      </p>
+
+      <h2>Open items</h2>
+      <p>
+        Decision threshold is untuned &mdash; every false-alarm number above is read off the default
+        class-weight-skewed cutoff; sweeping it is a plausible cheap lever, not yet tried. Everything so
+        far is single-subject, patient-specific leave-one-seizure-out &mdash; the easier end of seizure
+        prediction; cross-patient generalization is untested. No chance-baseline significance test built
+        yet, so results here are suggestive, not validated. Prediction-mode hyperparameters are still a
+        straight copy of detection's tuned numbers, with no prediction-specific tuning done.
+      </p>
+    </div>
+  </div>
+  <div id="footer-container"></div>
+</body>
+<script src="../menu-loader.js"></script>
+<script src="../footer-loader.js"></script>
+</html>

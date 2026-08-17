@@ -93,13 +93,17 @@
 
       <h2>Where things stand</h2>
       <div class="status-note">
-        The model classifies active seizure state well. Current work is extending it to predict the
-        <strong>preictal</strong> (pre-seizure) period, which is the harder and more clinically useful
-        problem. On standard motor-imagery benchmark tasks, the architecture currently trails EEGNet by
-        a small margin &mdash; my working hypothesis is that the model spends representational capacity on
-        time-ordering information that isn't especially useful for motor-imagery classification
-        specifically, even though it matters for seizure propagation. That's an open thread, not a
-        finished result.
+        The model classifies active seizure state well. As of 2026-08-17 there's also a first real,
+        non-confounded result on the harder problem &mdash; predicting the <strong>preictal</strong>
+        (pre-seizure) window &mdash; on single-subject, leave-one-seizure-out evaluation: mean roc_auc
+        0.882, hit rate 6/7, with one fold in clinically-interesting territory (auc_pr 0.956, false
+        alarms/hr 1.2) and others weak to near-chance. Single-subject, patient-specific evaluation only;
+        no chance-baseline significance test yet; decision threshold untuned. Suggestive, not validated
+        &mdash; see <a href="notes.html">Notes</a> for the full writeup. On standard motor-imagery
+        benchmark tasks, the architecture currently trails EEGNet by a small margin &mdash; the working
+        hypothesis is that the model spends representational capacity on time-ordering information that
+        isn't especially useful for motor-imagery classification specifically, even though it matters for
+        seizure propagation. Open thread, not a finished result.
       </div>
 
       <h2>Devlog</h2>

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <link rel="icon" type="image/png" href="../resources/icon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chasing a 0.80 &rarr; 0.71 regression — Noah Shore</title>
+  <title>0.80 &rarr; 0.71 accuracy regression — Noah Shore</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
@@ -24,13 +24,13 @@
       text-align: center;
     }
     .post h1 {
-      font-size: 2.1rem;
+      font-size: 1.9rem;
       text-align: center;
       color: #eaeaea;
       margin-bottom: 0.25rem;
     }
-    .post p { font-size: 1.05rem; line-height: 1.7; color: #ddd; }
-    .post h2 { color: #cccccc; font-size: 1.3rem; margin-top: 2.25rem; }
+    .post p { font-size: 1.02rem; line-height: 1.65; color: #ddd; }
+    .post h2 { color: #cccccc; font-size: 1.15rem; margin-top: 2rem; }
     .post code {
       background: rgba(255,255,255,0.08);
       padding: 0.15em 0.4em;
@@ -73,71 +73,62 @@
   <div class="container" style="max-width:900px; margin:0 auto;">
     <a href="../notes.html" class="back-link">&larr; All notes</a>
     <div class="post">
-      <h1>Chasing a 0.80 &rarr; 0.71 accuracy regression back to a fixed receptive field</h1>
+      <h1>Accuracy regression (0.80 &rarr; 0.71) traced to a fixed receptive field</h1>
       <p class="post-meta">2026-08-06 &middot; EEG seizure prediction, dense-edge GNN</p>
 
       <p>
-        This one started as a visualization bug hunt and ended up explaining a real, if unglamorous,
-        modeling gotcha.
-      </p>
-
-      <h2>Finding the real bug</h2>
-      <p>
-        Debug plots were built of the raw time series, their wavelet transforms, and the resulting
-        coherence array for a single electrode pair. The first version was nearly all bright yellow
-        &mdash; coherence values of 0.8&ndash;1.0 almost everywhere &mdash; which is not what a sparse,
-        discriminative coherence map should look like. Tracing it back, the cause was downsampling: the
-        wavelet coefficients were being resampled from about 1000 points down to 200 before coherence
-        was computed, which smeared out real structure and produced spuriously high coherence even in
-        frequency bands with essentially zero power in the raw transforms.
+        Debug plots were built of the raw time series, wavelet transforms, and coherence array for a
+        single electrode pair. Initial coherence values were 0.8&ndash;1.0 almost everywhere, inconsistent
+        with the expected sparse, discriminative map. Cause: wavelet coefficients were resampled from
+        ~1000 points to 200 before coherence was computed, smearing structure and producing high
+        coherence even in frequency bands with near-zero power in the raw transforms.
       </p>
       <div class="figure">
         <img src="../resources/coherograms.png" alt="Coherence maps across ten trial samples">
         <div class="figure-caption">Coherence maps (channel pair &times; frequency) across ten trial samples, at native time resolution.</div>
       </div>
       <p>
-        Rebuilding the coherence computation at native resolution &mdash; no resampling &mdash; produced a
-        visibly correct, sparse map. Cone-of-influence masking was also added, so coherence values outside
-        each wavelet's valid time-frequency support get excluded rather than contributing spurious
-        high-coherence edges. Once the event extraction looked right, it was plugged back into the real
-        training pipeline.
+        Coherence was recomputed at native resolution, without resampling, producing a correct sparse
+        map. Cone-of-influence masking was added, excluding coherence values outside each wavelet's valid
+        time-frequency support. Event extraction was then run through the training pipeline.
       </p>
 
-      <h2>The regression</h2>
+      <h2>Regression</h2>
       <p>
         After combining native-resolution coherence, the COI mask, and a caching optimization for the
-        wavelet transforms, subject-1 accuracy dropped from a remembered ~0.80 to ~0.76, and further
-        runs fluctuated down toward 0.71&ndash;0.72. None of the obvious suspects moved the needle:
-        coherence/phase thresholds, the COI mask itself, the smoothing kernel size, the frequency range,
-        raw event density &mdash; every variant landed in a tight band around 0.76.
-      </p>
-      <p>
-        The actual cause was in the channel signal encoder: two stacked convolutional layers gave a
-        fixed 17-sample receptive field regardless of sampling rate &mdash; about 68ms at the native 250Hz
-        rate, which is shorter than a single cycle of mu-band activity (8&ndash;12Hz, roughly 83&ndash;125ms).
-        The encoder simply couldn't see a full oscillation.
-      </p>
-      <div class="callout">
-        The twist: the old, "good" 0.80 pipeline had a resampling bug that happened to stretch that same
-        17-sample window over a ~5&times; larger real-time span. The old score wasn't better because the
-        model was better &mdash; it was inadvertently getting a wider effective receptive field as a
-        side effect of the same bug that was corrupting the coherence array.
-      </div>
-      <p>
-        The fix was a dilation parameter on the channel encoder (dilation=5, giving a receptive field of
-        81 samples &mdash; about 324ms, roughly 3.2 mu-band cycles), which widens the encoder's real-time
-        window without resampling or discarding any signal, and without adding parameters. That recovered
-        accuracy to parity (~0.80 on subject 1) while keeping the coherence computation, the COI mask,
-        and the raw signal all at correct native resolution.
+        wavelet transforms, subject-1 accuracy dropped from ~0.80 to ~0.76, then to 0.71&ndash;0.72 on
+        further runs. Coherence/phase thresholds, the COI mask, smoothing kernel size, frequency range,
+        and raw event density were tested individually &mdash; none moved the result; all variants landed
+        around 0.76.
       </p>
 
-      <h2>The honest caveat</h2>
+      <h2>Root cause</h2>
       <p>
-        Going native-resolution did not improve accuracy beyond the old, buggy pipeline's ceiling &mdash;
-        it only recovered parity. A much larger smoothing kernel was re-tested afterward, giving 0.8008
-        versus 0.7991, still within noise. For this architecture and task, the correctness fixes were a
-        wash on accuracy: real bugs, genuinely fixed, at zero accuracy cost &mdash; but not, on their own,
-        a source of extra performance. Worth doing for correctness, not a result to oversell.
+        The channel signal encoder used two stacked convolutional layers with a fixed 17-sample
+        receptive field, independent of sampling rate &mdash; about 68ms at 250Hz, shorter than one
+        mu-band cycle (8&ndash;12Hz, 83&ndash;125ms). The encoder could not resolve a full oscillation.
+      </p>
+      <div class="callout">
+        The earlier 0.80 pipeline had a resampling bug that stretched the same 17-sample window over a
+        ~5&times; larger real-time span. The earlier score reflected a wider effective receptive field
+        &mdash; a side effect of the bug that was also corrupting the coherence array &mdash; not a better
+        model.
+      </div>
+
+      <h2>Fix</h2>
+      <p>
+        A dilation parameter was added to the channel encoder (dilation=5; receptive field 81 samples,
+        ~324ms, ~3.2 mu-band cycles), widening the real-time window without resampling, discarding signal,
+        or adding parameters. Accuracy recovered to parity (~0.80, subject 1) with coherence, the COI mask,
+        and the raw signal all at native resolution.
+      </p>
+
+      <h2>Result</h2>
+      <p>
+        Native-resolution correctness fixes did not improve accuracy beyond the earlier pipeline's ceiling;
+        they recovered parity. A larger smoothing kernel was tested afterward: 0.8008 vs. 0.7991, within
+        noise. The fixes were accuracy-neutral &mdash; real bugs, corrected, at no accuracy cost, but not a
+        source of improvement on their own.
       </p>
     </div>
   </div>
