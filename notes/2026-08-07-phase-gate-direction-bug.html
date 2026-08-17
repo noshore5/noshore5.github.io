@@ -60,6 +60,23 @@
       margin-bottom: 2rem;
       color: #7aa5d6 !important;
     }
+    .fig {
+      margin: 1.75rem 0;
+      text-align: center;
+    }
+    .fig img {
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      background: #fafafa;
+    }
+    .fig-caption {
+      margin-top: 0.6rem;
+      font-size: 0.88rem;
+      color: #999;
+      text-align: left;
+    }
   </style>
 </head>
 <body>
@@ -119,6 +136,17 @@ xwt_imag = src_i*dst_r - src_r*dst_i     (antisymmetric under src/dst swap)</cod
         symmetric (<code>.abs()</code>) version fires both simultaneously whenever the pair has a strong
         phase relationship in either direction, doubling event volume with duplicate, contradictory-direction
         edges.
+      </div>
+
+      <div class="fig">
+        <img src="../resources/surrogate-coherence-example.png" alt="Coherence array, surrogate-significance overlay, cross-spectrum phase, and surrogate null threshold vs. frequency for one real channel pair.">
+        <p class="fig-caption">
+          Coherence and phase computed the same way, on real data: coherence(f,t) for one channel pair, the
+          same array with the surrogate-null 95th-percentile region outlined, cross-spectrum phase, and the
+          surrogate threshold curve by frequency. From the surrogate-calibration debug tooling in the
+          sibling BCI motor-imagery pipeline (FC3&rarr;FC4, one right-hand trial) &mdash; same coherence /
+          phase / surrogate-significance machinery as this epilepsy pipeline, different dataset.
+        </p>
       </div>
 
       <h2>Resolution</h2>

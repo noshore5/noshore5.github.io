@@ -22,11 +22,11 @@ async function loadMenu() {
     // Set active state based on current page
     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
     const menuLinks = document.querySelectorAll('.nav-links a, .home-link');
-    
+
     menuLinks.forEach(link => {
       link.classList.remove('active');
-      const linkHref = link.getAttribute('href');
-      if (linkHref === currentPage || 
+      const linkHref = (link.getAttribute('href') || '').split('/').pop();
+      if (linkHref === currentPage ||
           (currentPage === '' && linkHref === 'index.html') ||
           (currentPage === 'index.html' && link.classList.contains('home-link'))) {
         link.classList.add('active');
@@ -43,16 +43,16 @@ async function loadMenu() {
     if (menuContainer) {
       menuContainer.innerHTML = `
         <nav>
-          <a href="index.html" class="home-link">Home</a>
+          <a href="/index.html" class="home-link">Home</a>
           <button class="menu-toggle" aria-label="Open menu">
             <span></span><span></span><span></span>
           </button>
           <div class="nav-links">
-            <a href="research.html">Research</a>
-            <a href="notes.html">Notes</a>
-            <a href="literature.html">Publications</a>
-            <a href="performance.html">Performance</a>
-            <a href="biography.html">About</a>
+            <a href="/research.html">Research</a>
+            <a href="/notes.html">Notes</a>
+            <a href="/literature.html">Publications</a>
+            <a href="/performance.html">Performance</a>
+            <a href="/biography.html">About</a>
           </div>
         </nav>
       `;

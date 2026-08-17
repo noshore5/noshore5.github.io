@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="../resources/icon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Subject 1 vs. subject 2 on the sparse-evidence GNN — Noah Shore</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .nav-links a { text-decoration: none; }
+    .nav-links a.active { text-decoration: underline; }
+    .post {
+      max-width: 800px;
+      margin: 0 auto 3rem auto;
+      text-align: left;
+    }
+    .post-meta {
+      color: #888;
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+    .post h1 {
+      font-size: 1.9rem;
+      text-align: center;
+      color: #eaeaea;
+      margin-bottom: 0.25rem;
+    }
+    .post p { font-size: 1.02rem; line-height: 1.65; color: #ddd; }
+    .post h2 { color: #cccccc; font-size: 1.15rem; margin-top: 2rem; }
+    .post code {
+      background: rgba(255,255,255,0.08);
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      font-size: 0.92em;
+    }
+    .callout {
+      background: rgba(42, 42, 42, 0.7);
+      border-left: 4px solid #4a6583;
+      border-radius: 6px;
+      padding: 1rem 1.5rem;
+      margin: 1.5rem 0;
+      color: #ccc;
+      font-size: 0.98rem;
+    }
+    .scope-note {
+      background: rgba(42, 42, 42, 0.7);
+      border-left: 4px solid #b08a2a;
+      border-radius: 6px;
+      padding: 1rem 1.5rem;
+      margin: 0 0 2rem 0;
+      color: #ccc;
+      font-size: 0.95rem;
+    }
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-bottom: 2rem;
+      color: #7aa5d6 !important;
+    }
+    .figure {
+      text-align: center;
+      margin: 2rem 0;
+    }
+    .figure img {
+      max-width: 100%;
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+      background: #fafafa;
+    }
+    .figure-caption {
+      font-size: 0.9rem;
+      color: #999;
+      margin-top: 0.5rem;
+      text-align: left;
+    }
+    .fig-pair {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+      margin: 2rem 0;
+    }
+    @media (min-width: 700px) {
+      .fig-pair.two-col { grid-template-columns: 1fr 1fr; }
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 0.92rem;
+    }
+    th, td {
+      padding: 0.5rem 0.7rem;
+      text-align: right;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      color: #ccc;
+    }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: #eaeaea; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div id="menu-container"></div>
+  <div class="container" style="max-width:900px; margin:0 auto;">
+    <a href="../notes.html" class="back-link">&larr; All notes</a>
+    <div class="post">
+      <h1>Subject 1 vs. subject 2 on the sparse-evidence GNN: event starvation, phase-threshold sensitivity, and where the mu-band signal goes missing</h1>
+      <p class="post-meta">2026-08-08 &middot; BCI motor imagery, sparse-evidence GNN, surrogate-calibrated coherence</p>
+
+      <div class="scope-note">
+        This covers the BCI motor-imagery sibling pipeline (<code>SparseEvidenceGNNClassifier</code>,
+        event-based / sparse mode, BNCI2014-001), not the epilepsy dense-edge-GRU pipeline described
+        elsewhere on this site &mdash; a different codebase using the same coherence / surrogate-significance
+        / phase-gate machinery. Numbers below are single-seed, from one debugging session, and read as an
+        exploratory comparison, not a validated finding. Included here mainly because the debug figures are
+        a clear real-data illustration of what surrogate-calibrated wavelet coherence looks like, independent
+        of which pipeline consumes it.
+      </div>
+
+      <p>
+        A canonical-sparse run on subject 2 alone scored close to chance: train 0.4817, test 0.4994, mean
+        0.4905. Subject 1 on the same architecture scores 0.801. Both subjects were compared on the same
+        edge (FC3&rarr;FC4, one of 72 fixed channel-pair connections in the graph) and the same trial index,
+        using a debug script that calls the real pipeline methods directly, so every panel below reflects
+        exactly what training computes.
+      </p>
+
+      <div class="fig-pair two-col">
+        <div class="figure">
+          <img src="../resources/subj1-surrogate-phase30.png" alt="Subject 1, trial 0, edge FC3-FC4, phase_threshold_deg=30">
+          <div class="figure-caption">Subject 1, trial 0 (right_hand), edge FC3&rarr;FC4, phase_threshold_deg=30.</div>
+        </div>
+        <div class="figure">
+          <img src="../resources/subj2-surrogate-phase30.png" alt="Subject 2, trial 0, edge FC3-FC4, phase_threshold_deg=30">
+          <div class="figure-caption">Subject 2, trial 0 (left_hand), edge FC3&rarr;FC4, phase_threshold_deg=30.</div>
+        </div>
+      </div>
+
+      <h2>Event counts: starvation, not a flood</h2>
+      <p>
+        On this single edge the two trials look fairly similar &mdash; 7 consolidated events for subject 1
+        vs. 5 for subject 2. Trial-wide totals (all 72 edges &times; 16 frequencies, 5 trials each) tell a
+        clearer story:
+      </p>
+      <table>
+        <tr><th>subject</th><th>trial0</th><th>trial1</th><th>trial2</th><th>trial3</th><th>trial4</th><th>mean bursts/row</th></tr>
+        <tr><td>1</td><td>577</td><td>629</td><td>654</td><td>569</td><td>606</td><td>~0.53</td></tr>
+        <tr><td>2</td><td>230</td><td>316</td><td>453</td><td>204</td><td>301</td><td>~0.26</td></tr>
+      </table>
+      <p>
+        Subject 2 consolidates roughly half the events per trial that subject 1 does, consistently across
+        all 5 trials checked. Notably, subject 2's raw coherence (figure panel 1 above) is more saturated
+        than subject 1's, not less &mdash; nearly solid high coherence across most of the time/frequency
+        plane. The surrogate null threshold tracks right along with it, though: [0.888, 0.985] for subject 2
+        on this edge vs. [0.885, 0.981] for subject 1, barely different, because the null is built from
+        phase-randomized surrogates of that same signal. A more globally coherent, noise-like signal with
+        less contrast produces an almost-as-elevated null. Net effect: fewer (edge, freq, time) cells clear
+        the co-moving threshold and the phase gate and survive long enough to consolidate into an event.
+        Subject 2 is not lacking coherence &mdash; it is lacking genuine, phase-consistent bursts that stand
+        out from its own elevated noise floor.
+      </p>
+
+      <h2>Phase-threshold sensitivity</h2>
+      <p>
+        The canonical config gates on both coherence (via the surrogate threshold) and phase
+        (<code>phase &gt; phase_threshold_deg</code>). Re-running both subjects at a looser
+        <code>phase_threshold_deg=10</code> (vs. the canonical 30) isolates which gate is responsible for
+        subject 2's deficit:
+      </p>
+      <div class="fig-pair two-col">
+        <div class="figure">
+          <img src="../resources/subj1-surrogate-phase10.png" alt="Subject 1, trial 0, edge FC3-FC4, phase_threshold_deg=10">
+          <div class="figure-caption">Subject 1, trial 0, edge FC3&rarr;FC4, phase_threshold_deg=10.</div>
+        </div>
+        <div class="figure">
+          <img src="../resources/subj2-surrogate-phase10.png" alt="Subject 2, trial 0, edge FC3-FC4, phase_threshold_deg=10">
+          <div class="figure-caption">Subject 2, trial 0, edge FC3&rarr;FC4, phase_threshold_deg=10.</div>
+        </div>
+      </div>
+      <table>
+        <tr><th>subject</th><th>mean bursts/row @30&deg;</th><th>mean bursts/row @10&deg;</th><th>ratio to subj1 @30&deg;</th><th>ratio to subj1 @10&deg;</th></tr>
+        <tr><td>1</td><td>0.527</td><td>2.443</td><td>1.00</td><td>1.00</td></tr>
+        <tr><td>2</td><td>0.261</td><td>2.542</td><td>0.50</td><td>1.04</td></tr>
+      </table>
+      <p>
+        Subject 2's event deficit essentially disappears at the looser phase threshold &mdash; at 10&deg;,
+        subject 2 is no longer the outlier, sitting almost exactly at parity with subject 1. This points at
+        the phase gate specifically, not the coherence/surrogate gate, as the mechanism behind subject 2's
+        starvation at the canonical 30&deg; setting: subject 2 appears to have plenty of coherent,
+        statistically-significant activity whose phase just does not concentrate as tightly as subject 1's
+        does, so a strict phase cutoff disproportionately discards it.
+      </p>
+
+      <h2>Where in frequency the mu-band signal goes missing</h2>
+      <p>
+        The phase panel for subject 2 (panel 3, figures above) shows two visually salient regions, both in
+        the mu band (8&ndash;9 Hz). Checked directly against the per-cell gate arrays for edge FC3&rarr;FC4,
+        trial 0, phase_threshold_deg=30:
+      </p>
+      <table>
+        <tr><th>freq</th><th>surrogate threshold</th><th>cells passing phase&gt;30&deg;</th><th>cells passing coh&gt;threshold</th><th>cells passing both</th></tr>
+        <tr><td>9.7 Hz</td><td>0.922</td><td>131</td><td>199</td><td>10</td></tr>
+        <tr><td>8.8 Hz</td><td>0.946</td><td>112</td><td>16</td><td>0</td></tr>
+        <tr><td>8.0 Hz</td><td>0.985</td><td>128</td><td>0</td><td>0</td></tr>
+      </table>
+      <p>
+        The two lowest mu-band bins (8.0, 8.8 Hz) have more phase-consistent cells than any other frequency
+        in the spectrum &mdash; the two bright regions in the phase panel. But at 8.0 Hz, zero cells in the
+        entire trial clear the coherence threshold (mean coherence where the phase gate passes is 0.705
+        against a 0.985 threshold), so none of that phase-locked mu activity survives into an event. The
+        same breakdown on subject 1's edge:
+      </p>
+      <table>
+        <tr><th></th><th>subj 1 @ 8.8Hz</th><th>subj 1 @ 8.0Hz</th><th>subj 2 @ 8.8Hz</th><th>subj 2 @ 8.0Hz</th></tr>
+        <tr><td>threshold</td><td>0.929</td><td>0.981</td><td>0.946</td><td>0.985</td></tr>
+        <tr><td>coh-passing cells</td><td>234</td><td>90</td><td>16</td><td>0</td></tr>
+        <tr><td>both</td><td>0</td><td>62</td><td>0</td><td>0</td></tr>
+      </table>
+      <div class="callout">
+        Subject 1 has the identical problem at 8.8 Hz &mdash; zero events survive there too &mdash; but
+        recovers at the adjacent 8.0 Hz bin, where 62 cells clear both gates. That is the one large,
+        high-coherence mu-band event visible near the top of subject 1's event panels above. Subject 2 loses
+        both neighboring mu bins entirely: comparable or greater phase-locked mu activity than subject 1,
+        but none of it clears the coherence bar at either bin, contributing zero mu-band events instead of
+        subject 1's one salient one.
+      </div>
+      <p>
+        This refines the event-count finding above: it is not just that subject 2 has fewer events overall
+        &mdash; the mu band specifically, the band most associated with motor imagery, is where subject 2
+        loses the most phase-consistent activity to the coherence-significance filter, while subject 1 loses
+        it at one adjacent bin but keeps it at the next.
+      </p>
+
+      <h2>Open items</h2>
+      <p>
+        Whether the phase=10&deg; event-density recovery for subject 2 actually improves classification
+        accuracy was not tested here &mdash; this comparison only covers event counts, not a full training
+        run at the looser setting. A separate, near-chance subject (subject 4) was checked in the same
+        session and shows the opposite pattern &mdash; more events than subject 1, not fewer &mdash;
+        suggesting subject 2 and subject 4 are likely two distinct failure modes rather than one general
+        "low-quality subject" story, though that is also not confirmed. All numbers above are single-seed.
+      </p>
+    </div>
+  </div>
+  <div id="footer-container"></div>
+</body>
+<script src="../menu-loader.js"></script>
+<script src="../footer-loader.js"></script>
+</html>
