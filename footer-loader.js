@@ -1,7 +1,9 @@
 // Footer loader utility
+const footerLoaderScript = document.currentScript;
 async function loadFooter() {
   try {
-    const response = await fetch('footer.html');
+    const footerUrl = new URL('footer.html', footerLoaderScript.src);
+    const response = await fetch(footerUrl);
     const footerContent = await response.text();
     document.getElementById('footer-container').innerHTML = footerContent;
   } catch (error) {

@@ -1,8 +1,10 @@
 // Menu loader utility
+const menuLoaderScript = document.currentScript;
 async function loadMenu() {
   try {
     console.log('Loading menu...');
-    const response = await fetch('menu.html');
+    const menuUrl = new URL('menu.html', menuLoaderScript.src);
+    const response = await fetch(menuUrl);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -46,12 +48,11 @@ async function loadMenu() {
             <span></span><span></span><span></span>
           </button>
           <div class="nav-links">
-            <a href="coheriqs.html">CoherIQs</a>
-            <a href="coheriqslive.html">CoherIQs Live</a>
-            <a href="coherentmultiplex.html">Coherent Multiplex</a>
+            <a href="research.html">Research</a>
+            <a href="notes.html">Notes</a>
+            <a href="literature.html">Publications</a>
             <a href="performance.html">Performance</a>
-            <a href="biography.html">About Us</a>
-            <a href="literature.html">Literature</a>
+            <a href="biography.html">About</a>
           </div>
         </nav>
       `;

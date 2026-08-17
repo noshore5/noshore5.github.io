@@ -149,10 +149,19 @@
 </div>
 
 <div class="card">
-<svg viewBox="0 0 1040 1400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pipeline diagram">
+<svg viewBox="0 0 1040 1780" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pipeline diagram">
 <defs>
 <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
 <path d="M0,0 L10,5 L0,10 z" fill="var(--text-muted)"></path>
+</marker>
+<marker id="arrow-orange" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+<path d="M0,0 L10,5 L0,10 z" fill="var(--orange)"></path>
+</marker>
+<marker id="arrow-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+<path d="M0,0 L10,5 L0,10 z" fill="var(--blue)"></path>
+</marker>
+<marker id="arrow-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+<path d="M0,0 L10,5 L0,10 z" fill="var(--green)"></path>
 </marker>
 </defs>
 
@@ -275,6 +284,137 @@
 <text x="240" y="1163" class="box-tag" fill="var(--green)">output</text>
 <text x="240" y="1183" class="box-title">logits [B, n_classes]  +  event_density (aux)</text>
 <text x="240" y="1198" class="box-body">event_density: constant 1/nfreqs in "dense" mode — not a meaningful signal here, kept for API parity with "sparse" mode.</text>
+</g>
+
+<!-- ============ SUPPLEMENTARY ILLUSTRATIONS ============ -->
+<line x1="20" y1="1240" x2="1020" y2="1240" stroke="var(--gridline)" stroke-width="1"></line>
+<text x="20" y="1263" class="lane-label">illustrative supplements — not a code diagram</text>
+
+<!-- ---- Panel 1: channel graph ---- -->
+<g class="box">
+<rect x="20" y="1272" width="320" height="480" rx="12" fill="var(--gray-soft)" stroke="var(--text-muted)"></rect>
+<text x="40" y="1295" class="box-tag" fill="var(--text-muted)">what the data looks like</text>
+<text x="40" y="1315" class="box-title">The graph the GRU messages ride on</text>
+<text x="40" y="1332" class="box-body">Channels are nodes. Every ordered pair (i,j) is its</text>
+<text x="40" y="1346" class="box-body">own directed edge, carrying [coh, sinφ, cosφ, sig].</text>
+
+<circle cx="180" cy="1410" r="14" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.4"></circle>
+<text x="180" y="1414" text-anchor="middle" font-size="10" fill="var(--text-secondary)">C1</text>
+<circle cx="266" cy="1460" r="14" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.4"></circle>
+<text x="266" y="1464" text-anchor="middle" font-size="10" fill="var(--text-secondary)">C2</text>
+<circle cx="266" cy="1560" r="14" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.4"></circle>
+<text x="266" y="1564" text-anchor="middle" font-size="10" fill="var(--text-secondary)">C3</text>
+<circle cx="180" cy="1610" r="14" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.4"></circle>
+<text x="180" y="1614" text-anchor="middle" font-size="10" fill="var(--text-secondary)">C4</text>
+<circle cx="94" cy="1560" r="14" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.4"></circle>
+<text x="94" y="1564" text-anchor="middle" font-size="10" fill="var(--text-secondary)">C5</text>
+<circle cx="94" cy="1460" r="14" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.4"></circle>
+<text x="94" y="1464" text-anchor="middle" font-size="10" fill="var(--text-secondary)">C6</text>
+
+<path class="arrow-path" d="M 192 1421 L 254 1449" marker-end="url(#arrow)"></path>
+<path class="arrow-path" d="M 266 1474 L 266 1546" marker-end="url(#arrow)"></path>
+<path class="arrow-path" d="M 254 1571 L 192 1599" marker-end="url(#arrow)"></path>
+<path class="arrow-path" d="M 168 1599 L 106 1571" marker-end="url(#arrow)"></path>
+<path class="arrow-path" d="M 94 1546 L 94 1474" marker-end="url(#arrow)"></path>
+
+<path d="M 100 1449 Q 130 1424 168 1415" fill="none" stroke="var(--orange)" stroke-width="1.8" marker-end="url(#arrow-orange)"></path>
+<path d="M 168 1409 Q 132 1421 106 1451" fill="none" stroke="var(--blue)" stroke-width="1.8" marker-end="url(#arrow-blue)"></path>
+<text x="180" y="1655" text-anchor="middle" font-size="10" fill="var(--text-muted)">C6→C1 and C1→C6 are separate edges —</text>
+<text x="180" y="1668" text-anchor="middle" font-size="10" fill="var(--text-muted)">opposite-sign phase, same coherence magnitude.</text>
+<text x="180" y="1681" text-anchor="middle" font-size="10" fill="var(--text-muted)">n_channels=9 → 72 directed edges (36 pairs × 2).</text>
+</g>
+
+<!-- ---- Panel 2: GRU recurrence ---- -->
+<g class="box">
+<rect x="360" y="1272" width="320" height="480" rx="12" fill="var(--gray-soft)" stroke="var(--text-muted)"></rect>
+<text x="380" y="1295" class="box-tag" fill="var(--text-muted)">what the data looks like</text>
+<text x="380" y="1315" class="box-title">How the per-edge GRU recurs</text>
+<text x="380" y="1332" class="box-body">One shared GRU cell, stepped across T′≈125 downsampled</text>
+<text x="380" y="1346" class="box-body">timesteps per edge. Hidden state feeds back as input.</text>
+
+<rect x="430" y="1400" width="180" height="66" rx="10" fill="var(--blue-soft)" stroke="var(--blue)"></rect>
+<text x="520" y="1428" text-anchor="middle" font-size="11.5" font-weight="700" fill="var(--text-primary)">GRU cell</text>
+<text x="520" y="1444" text-anchor="middle" font-size="10" fill="var(--text-secondary)">(shared across edges)</text>
+
+<path class="arrow-path" d="M 500 1498 L 500 1466" marker-end="url(#arrow)"></path>
+<text x="500" y="1514" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">x_t (edge feature at t)</text>
+
+<path class="arrow-path" d="M 540 1400 L 540 1368" marker-end="url(#arrow)"></path>
+<text x="580" y="1364" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">h_t</text>
+
+<path d="M 610 1420 C 660 1420 660 1490 610 1490" fill="none" stroke="var(--orange)" stroke-width="1.8" marker-end="url(#arrow-orange)"></path>
+<text x="672" y="1458" text-anchor="middle" font-size="10" fill="var(--orange)" transform="rotate(90 672 1458)">h_(t−1) fed back as next input</text>
+
+<text x="520" y="1548" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">unrolled over T′ steps:</text>
+
+<rect x="378" y="1566" width="32" height="24" rx="5" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.2"></rect>
+<text x="394" y="1582" text-anchor="middle" font-size="9.5" fill="var(--text-secondary)">h0</text>
+<path class="arrow-path" d="M 410 1578 L 434 1578" marker-end="url(#arrow)"></path>
+<rect x="436" y="1566" width="32" height="24" rx="5" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.2"></rect>
+<text x="452" y="1582" text-anchor="middle" font-size="9.5" fill="var(--text-secondary)">h1</text>
+<path class="arrow-path" d="M 468 1578 L 492 1578" marker-end="url(#arrow)"></path>
+<rect x="494" y="1566" width="32" height="24" rx="5" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.2"></rect>
+<text x="510" y="1582" text-anchor="middle" font-size="9.5" fill="var(--text-secondary)">h2</text>
+<path class="arrow-path" d="M 526 1578 L 550 1578" marker-end="url(#arrow)"></path>
+<text x="562" y="1582" text-anchor="middle" font-size="12" fill="var(--text-muted)">⋯</text>
+<path class="arrow-path" d="M 574 1578 L 598 1578" marker-end="url(#arrow)"></path>
+<rect x="600" y="1562" width="60" height="32" rx="6" fill="var(--green-soft)" stroke="var(--green)" stroke-width="1.4"></rect>
+<text x="630" y="1583" text-anchor="middle" font-size="9.5" fill="var(--text-primary)">h_T′</text>
+
+<text x="520" y="1622" text-anchor="middle" font-size="10" fill="var(--text-muted)">final hidden state = pooled edge summary,</text>
+<text x="520" y="1636" text-anchor="middle" font-size="10" fill="var(--text-muted)">passed on to gather + concatenate above.</text>
+<text x="520" y="1660" text-anchor="middle" font-size="10" fill="var(--text-muted)">Orange loop = the recurrence: each step's output</text>
+<text x="520" y="1673" text-anchor="middle" font-size="10" fill="var(--text-muted)">becomes part of the next step's input.</text>
+</g>
+
+<!-- ---- Panel 3: wavelet coherence ---- -->
+<g class="box">
+<rect x="700" y="1272" width="320" height="480" rx="12" fill="var(--gray-soft)" stroke="var(--text-muted)"></rect>
+<text x="720" y="1295" class="box-tag" fill="var(--text-muted)">what the data looks like</text>
+<text x="720" y="1315" class="box-title">Wavelet coherence, cross-spectrum</text>
+<text x="720" y="1332" class="box-body">Two channel signals → per-frequency phase &amp;</text>
+<text x="720" y="1346" class="box-body">coherence between them, at every timestep.</text>
+
+<path d="M 720 1380 Q 735 1364 750 1380 T 780 1380 T 810 1380 T 840 1380" fill="none" stroke="var(--aqua)" stroke-width="1.6"></path>
+<text x="846" y="1384" font-size="10" fill="var(--aqua)">ch i</text>
+<path d="M 720 1404 Q 738 1392 756 1404 T 792 1404 T 828 1404" fill="none" stroke="var(--orange)" stroke-width="1.6" stroke-dasharray="3 2"></path>
+<text x="846" y="1408" font-size="10" fill="var(--orange)">ch j</text>
+
+<path class="arrow-path" d="M 780 1420 L 780 1444" marker-end="url(#arrow)"></path>
+
+<text x="720" y="1462" font-size="10" fill="var(--text-secondary)">coherence(f, t):</text>
+<g>
+<rect x="720" y="1470" width="18" height="18" fill="#0ca30c" opacity="0.85"></rect>
+<rect x="738" y="1470" width="18" height="18" fill="#4a9e1f" opacity="0.85"></rect>
+<rect x="756" y="1470" width="18" height="18" fill="#8a9c1a" opacity="0.7"></rect>
+<rect x="774" y="1470" width="18" height="18" fill="#c98a1a" opacity="0.55"></rect>
+<rect x="792" y="1470" width="18" height="18" fill="#c9601a" opacity="0.4"></rect>
+<rect x="810" y="1470" width="18" height="18" fill="#c9401a" opacity="0.25"></rect>
+<rect x="720" y="1488" width="18" height="18" fill="#4a9e1f" opacity="0.8"></rect>
+<rect x="738" y="1488" width="18" height="18" fill="#0ca30c" opacity="0.9"></rect>
+<rect x="756" y="1488" width="18" height="18" fill="#4a9e1f" opacity="0.75"></rect>
+<rect x="774" y="1488" width="18" height="18" fill="#8a9c1a" opacity="0.6"></rect>
+<rect x="792" y="1488" width="18" height="18" fill="#c98a1a" opacity="0.45"></rect>
+<rect x="810" y="1488" width="18" height="18" fill="#c9601a" opacity="0.3"></rect>
+<rect x="720" y="1506" width="18" height="18" fill="#8a9c1a" opacity="0.65"></rect>
+<rect x="738" y="1506" width="18" height="18" fill="#4a9e1f" opacity="0.75"></rect>
+<rect x="756" y="1506" width="18" height="18" fill="#0ca30c" opacity="0.85"></rect>
+<rect x="774" y="1506" width="18" height="18" fill="#4a9e1f" opacity="0.7"></rect>
+<rect x="792" y="1506" width="18" height="18" fill="#8a9c1a" opacity="0.55"></rect>
+<rect x="810" y="1506" width="18" height="18" fill="#c98a1a" opacity="0.4"></rect>
+</g>
+<text x="720" y="1542" font-size="9.5" fill="var(--text-muted)">rows = frequency, cols = time — one such</text>
+<text x="720" y="1554" font-size="9.5" fill="var(--text-muted)">grid per directed edge, per trial.</text>
+
+<circle cx="860" cy="1620" r="62" fill="none" stroke="var(--gridline)" stroke-width="1.2"></circle>
+<line x1="798" y1="1620" x2="922" y2="1620" stroke="var(--gridline)" stroke-width="1"></line>
+<line x1="860" y1="1558" x2="860" y2="1682" stroke="var(--gridline)" stroke-width="1"></line>
+<path d="M 860 1620 L 918 1605" stroke="var(--orange)" stroke-width="1.8" marker-end="url(#arrow-orange)"></path>
+<path d="M 860 1620 L 918 1635" stroke="var(--blue)" stroke-width="1.8" marker-end="url(#arrow-blue)"></path>
+<text x="924" y="1600" font-size="9.5" fill="var(--orange)">phase(i→j)</text>
+<text x="924" y="1649" font-size="9.5" fill="var(--blue)">phase(j→i)</text>
+<text x="860" y="1706" text-anchor="middle" font-size="9.5" fill="var(--text-muted)">phase(j→i) = −phase(i→j), same |coherence| —</text>
+<text x="860" y="1719" text-anchor="middle" font-size="9.5" fill="var(--text-muted)">the antisymmetric part the direction-bug fix relies on.</text>
 </g>
 </svg>
 </div>
