@@ -82,27 +82,6 @@
       letter-spacing: 0.02em;
     }
 
-    .diagram-frame {
-      display: block;
-      max-width: 900px;
-      margin: 0 auto 3rem auto;
-      text-align: center;
-    }
-    .diagram-frame img {
-      width: 100%;
-      max-width: 100%;
-      height: auto;
-      border-radius: 10px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
-      background: #0d0d0d;
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-    .diagram-caption {
-      margin-top: 0.75rem;
-      font-size: 0.9rem;
-      color: #999;
-    }
-
     .notes-list {
       max-width: 700px;
       margin: 0 auto 2.5rem auto;
@@ -173,12 +152,12 @@
     </div>
 
     <div class="section-heading">Current Research</div>
-    <a href="research.html" style="text-decoration:none;">
-      <div class="diagram-frame">
-        <img src="resources/architecture-diagram-preview.png" alt="SparseEvidenceGNNCore architecture diagram — dense_edge_gru forward pass">
-        <div class="diagram-caption">Dense-edge graph neural network + GRU architecture for EEG seizure prediction — full writeup &rarr;</div>
-      </div>
-    </a>
+    <div style="max-width:700px; margin:0 auto 3rem auto; text-align:left;">
+      <p style="margin-bottom:1rem;">
+        Dense-edge graph neural network + GRU architecture for EEG-based epileptic seizure prediction.
+      </p>
+      <a href="research.html" class="card-link" style="color:#7aa5d6; text-decoration:none; font-weight:500;">Full writeup &amp; architecture diagram &rarr;</a>
+    </div>
 
     <div class="section-heading">Visualizations</div>
     <div class="eeg-grid two-col" style="margin-bottom: 2rem;">
