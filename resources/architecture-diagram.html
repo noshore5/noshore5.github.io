@@ -82,17 +82,6 @@
   h1 { font-size: 21px; margin: 0 0 6px; font-weight: 700; }
   .sub { font-size: 13.5px; color: var(--text-secondary); margin: 0 0 14px; max-width: 820px; line-height: 1.5; }
 
-  .config-badge {
-    background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px;
-    padding: 10px 14px; font-size: 12.5px; color: var(--text-secondary);
-    line-height: 1.65; margin-bottom: 18px;
-  }
-  .config-badge b { color: var(--text-primary); font-weight: 600; }
-  .config-badge code {
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px;
-    background: var(--gray-soft); padding: 1px 5px; border-radius: 4px; color: var(--text-primary);
-  }
-
   .card {
     background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px;
     padding: 8px; overflow: visible;
@@ -141,15 +130,8 @@
 </p>
 </div>
 
-<div class="config-badge">
-<b>Canonical shapes (9-channel subset):</b>
-      n_channels=9 &nbsp;→&nbsp; E = C(9,2) = <b>36</b> canonical undirected edges &nbsp;·&nbsp;
-      hidden_dim=8, channel_embed_dim=8 &nbsp;·&nbsp; message_in = 4 (coh, sinφ, cosφ, sig) + 2×8 = <b>20–21</b> &nbsp;·&nbsp;
-      n_hops=1 (multi-hop path inactive) &nbsp;·&nbsp; sampling_rate=250 Hz, T≈1001 &nbsp;·&nbsp; dense_edge_time_downsample=8 → T′≈125 into the GRU.
-</div>
-
 <div class="card">
-<svg viewBox="0 0 1040 1780" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pipeline diagram">
+<svg viewBox="0 0 1040 2064" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pipeline diagram">
 <defs>
 <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
 <path d="M0,0 L10,5 L0,10 z" fill="var(--text-muted)"></path>
@@ -167,254 +149,404 @@
 
 <!-- ============ INPUT ============ -->
 <g class="box">
-<rect x="220" y="10" width="600" height="62" rx="12" fill="var(--aqua-soft)" stroke="var(--aqua)"></rect>
+<rect x="200" y="10" width="640" height="62" rx="12" fill="var(--aqua-soft)" stroke="var(--aqua)"></rect>
 <text x="520" y="34" text-anchor="middle" class="box-title">Raw EEG epoch</text>
-<text x="520" y="53" text-anchor="middle" class="box-body">[B, n_channels, T]  ·  250 Hz, T ≈ 1001 samples</text>
+<text x="520" y="53" text-anchor="middle" class="box-body">Multichannel EEG recording window</text>
 </g>
 
-<path class="arrow-path" d="M 380 72 L 260 120" marker-end="url(#arrow)"></path>
-<path class="arrow-path" d="M 660 72 L 780 120" marker-end="url(#arrow)"></path>
-
-<!-- lane labels -->
-<text x="40" y="112" class="lane-label">channel-embedding lane</text>
-<text x="560" y="112" class="lane-label">coherence / event lane</text>
-
-<!-- ============ LEFT LANE ============ -->
-<g class="box">
-<rect x="40" y="122" width="440" height="92" rx="12" fill="var(--blue-soft)" stroke="var(--blue)"></rect>
-<text x="60" y="147" class="box-tag" fill="var(--blue)">trainable</text>
-<text x="60" y="167" class="box-title">ChannelSignalEncoder</text>
-<text x="60" y="184" class="box-body">Dilated Conv1d stack (dilation=5), weight-shared across channels.</text>
-<text x="60" y="199" class="box-body">Output: [B, n_channels, embed_dim, T] — one embedding per channel, per timestep.</text>
+<g class="illus">
+<rect x="855" y="14" width="165" height="54" rx="8" fill="var(--surface-1)" stroke="var(--aqua)" stroke-opacity="0.4"></rect>
+<path d="M 865 24 Q 872.5 16 880 24 T 895 24 T 910 24 T 925 24 T 940 24 T 955 24 T 970 24 T 985 24 T 1000 24 T 1015 24" fill="none" stroke="var(--aqua)" stroke-width="1.2" opacity="0.9"></path>
+<path d="M 865 36 Q 872.5 44 880 36 T 895 36 T 910 36 T 925 36 T 940 36 T 955 36 T 970 36 T 985 36 T 1000 36 T 1015 36" fill="none" stroke="var(--aqua)" stroke-width="1.2" opacity="0.65"></path>
+<path d="M 865 48 Q 877.5 38 890 48 T 915 48 T 940 48 T 965 48 T 990 48 T 1015 48" fill="none" stroke="var(--aqua)" stroke-width="1.2" opacity="0.75"></path>
+<path d="M 865 60 Q 872.5 65 880 60 T 895 60 T 910 60 T 925 60 T 940 60 T 955 60 T 970 60 T 985 60 T 1000 60 T 1015 60" fill="none" stroke="var(--aqua)" stroke-width="1.2" opacity="0.5"></path>
 </g>
 
-<path class="arrow-path" d="M 260 214 L 260 610" marker-end="url(#arrow)"></path>
-<text x="270" y="420" class="box-body" fill="var(--text-muted)" transform="rotate(90 270 420)" text-anchor="middle">held per-timestep, gathered below</text>
+<path class="arrow-path" d="M 520 72 L 520 120" marker-end="url(#arrow)"></path>
 
-<!-- ============ RIGHT LANE ============ -->
 <g class="box">
-<rect x="560" y="122" width="440" height="80" rx="12" fill="var(--gray-soft)" stroke="var(--text-muted)"></rect>
-<text x="580" y="145" class="box-tag" fill="var(--text-muted)">non-trainable</text>
-<text x="580" y="164" class="box-title">Cross-spectrum via CWT</text>
-<text x="580" y="181" class="box-body">fcwt Morlet(2.0) per channel-pair → coherence + phase, [B, E=36, T, F]</text>
+<rect x="200" y="122" width="640" height="112" rx="12" fill="var(--gray-soft)" stroke="var(--text-muted)"></rect>
+<text x="220" y="145" class="box-tag" fill="var(--text-muted)">non-trainable · per channel, independently</text>
+<text x="220" y="165" class="box-title">Continuous wavelet transform (CWT)</text>
+<text x="220" y="183" class="box-body">Each channel convolved with a Morlet wavelet across scales — one complex</text>
+<text x="220" y="198" class="box-body">time-frequency map per channel, computed before any cross-channel step:</text>
+<text x="520" y="222" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12.5" fill="var(--text-primary)">W_x(f, t) = ∫ x(τ) · ψ*_{f,t}(τ) dτ</text>
 </g>
 
-<path class="arrow-path" d="M 780 202 L 780 232" marker-end="url(#arrow)"></path>
-
-<g class="box">
-<rect x="560" y="234" width="440" height="90" rx="12" fill="var(--gray-soft)" stroke="var(--text-muted)"></rect>
-<text x="580" y="257" class="box-tag" fill="var(--text-muted)">non-trainable</text>
-<text x="580" y="277" class="box-title">COI mask + surrogate significance</text>
-<text x="580" y="294" class="box-body">Phase-randomized surrogate null → per-(edge,freq) 95th-pct threshold.</text>
-<text x="580" y="309" class="box-body">Stack: [coh, sinφ, cosφ, significance], zeroed outside cone of influence. [B,4,E,T,F]</text>
+<g class="illus">
+<rect x="855" y="126" width="165" height="104" rx="8" fill="var(--surface-1)" stroke="var(--text-muted)" stroke-opacity="0.4"></rect>
+<path d="M 865 148 Q 878 134 891 148 T 917 148 T 943 148 T 969 148 T 995 148" fill="none" stroke="var(--aqua)" stroke-width="1.3" opacity="0.85"></path>
+<rect x="864" y="168" width="16" height="12" fill="#0ca30c" opacity="0.75"></rect>
+<rect x="882" y="168" width="16" height="12" fill="#4a9e1f" opacity="0.6"></rect>
+<rect x="900" y="168" width="16" height="12" fill="#8a9c1a" opacity="0.5"></rect>
+<rect x="918" y="168" width="16" height="12" fill="#c98a1a" opacity="0.4"></rect>
+<rect x="864" y="182" width="16" height="12" fill="#4a9e1f" opacity="0.55"></rect>
+<rect x="882" y="182" width="16" height="12" fill="#0ca30c" opacity="0.8"></rect>
+<rect x="900" y="182" width="16" height="12" fill="#4a9e1f" opacity="0.6"></rect>
+<rect x="918" y="182" width="16" height="12" fill="#8a9c1a" opacity="0.45"></rect>
+<text x="864" y="212" font-size="11" fill="var(--text-muted)">one map per channel</text>
 </g>
 
-<path class="arrow-path" d="M 780 324 L 780 354" marker-end="url(#arrow)"></path>
+<path class="arrow-path" d="M 520 234 L 520 264" marker-end="url(#arrow)"></path>
 
 <g class="box">
-<rect x="560" y="356" width="440" height="82" rx="12" fill="var(--gray-soft)" stroke="var(--text-muted)"></rect>
-<text x="580" y="379" class="box-tag" fill="var(--text-muted)">non-trainable · cached once/trial</text>
-<text x="580" y="398" class="box-title">Smooth + downsample</text>
-<text x="580" y="415" class="box-body">Gaussian smooth (5,3) → avg_pool2d ×8 on T (T≈1001 → T′≈125)</text>
+<rect x="200" y="266" width="640" height="200" rx="12" fill="var(--gray-soft)" stroke="var(--text-muted)"></rect>
+<text x="220" y="289" class="box-tag" fill="var(--text-muted)">non-trainable · per channel-pair</text>
+<text x="220" y="311" class="box-title">Cross-wavelet coherence (WCT)</text>
+<text x="220" y="333" class="box-body">Combines each pair's CWTs into a smoothed, normalized coherence magnitude</text>
+<text x="220" y="350" class="box-body">and phase, across frequency and time:</text>
+<text x="520" y="378" text-anchor="middle" font-family="ui-monospace,monospace" font-size="13.5" fill="var(--text-primary)">R²_xy(f,t) = |S(W_xy)|² / ( S(|W_x|²) · S(|W_y|²) )</text>
+<text x="520" y="402" text-anchor="middle" font-family="ui-monospace,monospace" font-size="13.5" fill="var(--text-primary)">φ_xy(f,t) = arg( W_xy(f,t) )</text>
+<text x="220" y="428" class="box-body">This magnitude/phase pair feeds the surrogate-significance test next.</text>
 </g>
 
-<path class="arrow-path" d="M 780 438 L 780 468" marker-end="url(#arrow)"></path>
-
-<g class="box">
-<rect x="560" y="470" width="440" height="100" rx="12" fill="var(--blue-soft)" stroke="var(--blue)"></rect>
-<text x="580" y="493" class="box-tag" fill="var(--blue)">trainable — Stage 2</text>
-<text x="580" y="513" class="box-title">_DenseEdgeGRUTemporal</text>
-<text x="580" y="530" class="box-body">Per-edge nn.GRU, weight-shared (edges folded into batch dim), consumes</text>
-<text x="580" y="545" class="box-body">full T′ with memory; final hidden state = pooled edge summary.</text>
-<text x="580" y="560" class="box-body">Repacks to events_padded / src / dst / freq_idx / valid_mask (one row per edge).</text>
+<g class="illus">
+<rect x="850" y="272" width="175" height="186" rx="8" fill="var(--surface-1)" stroke="var(--text-muted)" stroke-opacity="0.4"></rect>
+<text x="862" y="291" font-size="14.5" font-weight="600" fill="var(--aqua)">channel i</text>
+<path d="M 862 305  Q 872 295 882 305  T 902 305  T 922 305  T 942 305  T 962 305  T 982 305  T 1002 305" fill="none" stroke="var(--aqua)" stroke-width="1.8"></path>
+<text x="862" y="326" font-size="14.5" font-weight="600" fill="var(--orange)">channel j</text>
+<path d="M 862 340  Q 874 328 886 340  T 910 340  T 934 340  T 958 340  T 982 340  T 1006 340" fill="none" stroke="var(--orange)" stroke-width="1.8" stroke-dasharray="4 3"></path>
+<path d="M 933 350 L 933 366" stroke="var(--text-muted)" stroke-width="1.4" marker-end="url(#arrow)"></path>
+<text x="862" y="384" font-size="14.5" fill="var(--text-secondary)">coherence(f, t)</text>
+<rect x="862" y="392" width="20" height="16" fill="#0ca30c" opacity="0.85"></rect>
+<rect x="884" y="392" width="20" height="16" fill="#4a9e1f" opacity="0.7"></rect>
+<rect x="906" y="392" width="20" height="16" fill="#8a9c1a" opacity="0.55"></rect>
+<rect x="928" y="392" width="20" height="16" fill="#c98a1a" opacity="0.4"></rect>
+<rect x="950" y="392" width="20" height="16" fill="#c9601a" opacity="0.3"></rect>
+<rect x="862" y="410" width="20" height="16" fill="#4a9e1f" opacity="0.75"></rect>
+<rect x="884" y="410" width="20" height="16" fill="#0ca30c" opacity="0.9"></rect>
+<rect x="906" y="410" width="20" height="16" fill="#4a9e1f" opacity="0.65"></rect>
+<rect x="928" y="410" width="20" height="16" fill="#8a9c1a" opacity="0.5"></rect>
+<rect x="950" y="410" width="20" height="16" fill="#c98a1a" opacity="0.35"></rect>
+<rect x="862" y="428" width="20" height="16" fill="#8a9c1a" opacity="0.6"></rect>
+<rect x="884" y="428" width="20" height="16" fill="#4a9e1f" opacity="0.7"></rect>
+<rect x="906" y="428" width="20" height="16" fill="#0ca30c" opacity="0.85"></rect>
+<rect x="928" y="428" width="20" height="16" fill="#4a9e1f" opacity="0.6"></rect>
+<rect x="950" y="428" width="20" height="16" fill="#8a9c1a" opacity="0.45"></rect>
+<text x="982" y="404" font-size="13" fill="var(--text-muted)">freq ↑</text>
+<text x="912" y="454" text-anchor="middle" font-size="13" fill="var(--text-muted)">time →</text>
 </g>
 
-<path class="arrow-path" d="M 780 570 L 780 600 L 700 610" marker-end="url(#arrow)"></path>
-<path class="arrow-path" d="M 260 610 L 340 610" marker-end="url(#arrow)"></path>
+<path class="arrow-path" d="M 520 466 L 520 496" marker-end="url(#arrow)"></path>
 
-<!-- ============ MERGE ============ -->
 <g class="box">
-<rect x="140" y="612" width="760" height="90" rx="12" fill="var(--aqua-soft)" stroke="var(--aqua)"></rect>
-<text x="160" y="635" class="box-tag" fill="var(--aqua)">data flow</text>
-<text x="160" y="655" class="box-title">Gather + concatenate</text>
-<text x="160" y="672" class="box-body">src_emb / dst_emb = channel embeddings indexed by each edge's (channel, event time).</text>
-<text x="160" y="687" class="box-body">concat( edge features [coh, sinφ, cosφ, sig], src_emb, dst_emb ) → message_in ≈ 20–21 dims / edge</text>
+<rect x="200" y="498" width="640" height="90" rx="12" fill="var(--gray-soft)" stroke="var(--text-muted)"></rect>
+<text x="220" y="521" class="box-tag" fill="var(--text-muted)">non-trainable</text>
+<text x="220" y="541" class="box-title">COI mask + surrogate significance</text>
+<text x="220" y="558" class="box-body">Phase-randomized surrogate null establishes a per-(edge,freq) significance threshold.</text>
+<text x="220" y="573" class="box-body">Stack: [coh, sinφ, cosφ, significance], zeroed outside the cone of influence.</text>
+</g>
+
+<g class="illus">
+<rect x="855" y="506" width="165" height="76" rx="8" fill="var(--surface-1)" stroke="var(--text-muted)" stroke-opacity="0.4"></rect>
+<rect x="868" y="514" width="140" height="52" rx="4" fill="var(--gray-soft)"></rect>
+<rect x="900" y="520" width="16" height="12" fill="#0ca30c" opacity="0.6"></rect>
+<rect x="918" y="520" width="16" height="12" fill="#4a9e1f" opacity="0.55"></rect>
+<rect x="900" y="534" width="16" height="12" fill="#4a9e1f" opacity="0.5"></rect>
+<rect x="918" y="534" width="16" height="12" fill="#8a9c1a" opacity="0.45"></rect>
+<rect x="960" y="520" width="16" height="12" fill="#8a9c1a" opacity="0.4"></rect>
+<rect x="978" y="520" width="16" height="12" fill="#0ca30c" opacity="0.55"></rect>
+<polygon points="868,566 868,530 912,566" fill="var(--page)" opacity="0.82"></polygon>
+<polygon points="1008,566 1008,530 964,566" fill="var(--page)" opacity="0.82"></polygon>
+<path d="M 868 530 L 912 566" stroke="var(--text-muted)" stroke-width="1.2" stroke-dasharray="3 2"></path>
+<path d="M 1008 530 L 964 566" stroke="var(--text-muted)" stroke-width="1.2" stroke-dasharray="3 2"></path>
+<text x="868" y="577" font-size="10.5" fill="var(--text-muted)">masked (edge effects)</text>
+</g>
+
+<path class="arrow-path" d="M 520 588 L 520 618" marker-end="url(#arrow)"></path>
+
+<g class="box">
+<rect x="200" y="620" width="640" height="82" rx="12" fill="var(--gray-soft)" stroke="var(--text-muted)"></rect>
+<text x="220" y="643" class="box-tag" fill="var(--text-muted)">non-trainable · cached once/trial</text>
+<text x="220" y="662" class="box-title">Smooth + downsample</text>
+<text x="220" y="679" class="box-body">Gaussian smoothing, then downsampled in time before the GRU</text>
 </g>
 
 <path class="arrow-path" d="M 520 702 L 520 732" marker-end="url(#arrow)"></path>
 
 <g class="box">
-<rect x="240" y="734" width="560" height="66" rx="12" fill="var(--blue-soft)" stroke="var(--blue)"></rect>
-<text x="260" y="757" class="box-tag" fill="var(--blue)">trainable</text>
-<text x="260" y="777" class="box-title">sparse_message_mlp</text>
-<text x="260" y="792" class="box-body">Linear(message_in → hidden_dim=8) → activation → per-edge message</text>
+<rect x="200" y="734" width="640" height="100" rx="12" fill="var(--blue-soft)" stroke="var(--blue)"></rect>
+<text x="220" y="757" class="box-tag" fill="var(--blue)">trainable</text>
+<text x="220" y="777" class="box-title">_DenseEdgeGRUTemporal</text>
+<text x="220" y="794" class="box-body">Per-edge nn.GRU, weight-shared (edges folded into batch dim), consumes</text>
+<text x="220" y="809" class="box-body">the full downsampled sequence with memory; final hidden state = pooled edge summary.</text>
+<text x="220" y="824" class="box-body">Repacks to events_padded / src / dst / freq_idx / valid_mask (one row per edge).</text>
 </g>
 
-<path class="arrow-path" d="M 520 800 L 520 830" marker-end="url(#arrow)"></path>
-
-<g class="box">
-<rect x="240" y="832" width="560" height="92" rx="12" fill="var(--orange-soft)" stroke="var(--orange)"></rect>
-<text x="260" y="855" class="box-tag" fill="var(--orange)">aggregation</text>
-<text x="260" y="875" class="box-title">_aggregate_events → scatter to destination channel nodes</text>
-<text x="260" y="892" class="box-body">event_aggregation ∈ {"mean","concat","gated_softmax"} — canonical run uses "concat"</text>
-<text x="260" y="907" class="box-body">evidence: [B, n_channels, hidden_dim]  (or  [B, n_channels, concat_max_degree, hidden_dim] for "concat")</text>
+<g class="illus">
+<rect x="855" y="738" width="165" height="88" rx="8" fill="var(--surface-1)" stroke="var(--blue)" stroke-opacity="0.4"></rect>
+<rect x="920" y="764" width="70" height="40" rx="8" fill="var(--blue-soft)" stroke="var(--blue)" stroke-width="1.2"></rect>
+<text x="955" y="788" text-anchor="middle" font-size="12" fill="var(--text-primary)">GRU</text>
+<path d="M 990 774 C 1012 774 1012 794 990 794" fill="none" stroke="var(--orange)" stroke-width="1.4" marker-end="url(#arrow-orange)"></path>
+<path d="M 920 776 L 900 776" stroke="var(--text-muted)" stroke-width="1.2" marker-end="url(#arrow)"></path>
+<text x="878" y="772" font-size="10.5" fill="var(--text-muted)" text-anchor="middle">x_t</text>
+<path d="M 940 764 L 940 752" stroke="var(--text-muted)" stroke-width="1.2" marker-end="url(#arrow)"></path>
+<text x="940" y="748" font-size="10.5" fill="var(--text-muted)" text-anchor="middle">h_t</text>
+<circle cx="880" cy="816" r="4" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1"></circle>
+<path d="M 884 816 L 896 816" stroke="var(--text-muted)" stroke-width="1"></path>
+<circle cx="900" cy="816" r="4" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1"></circle>
+<path d="M 904 816 L 916 816" stroke="var(--text-muted)" stroke-width="1"></path>
+<circle cx="920" cy="816" r="4" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1"></circle>
+<path d="M 924 816 L 936 816" stroke="var(--text-muted)" stroke-width="1"></path>
+<circle cx="944" cy="816" r="4.5" fill="var(--green-soft)" stroke="var(--green)" stroke-width="1.2"></circle>
 </g>
 
-<path class="arrow-path dashed" d="M 520 924 L 520 954" marker-end="url(#arrow)"></path>
+<path class="arrow-path" d="M 520 834 L 520 874" marker-end="url(#arrow)"></path>
 
+<!-- ============ REPACK ============ -->
 <g class="box">
-<rect x="240" y="956" width="560" height="54" rx="12" fill="var(--gray-soft)" stroke="var(--text-muted)" stroke-dasharray="4 3"></rect>
-<text x="260" y="977" class="box-tag" fill="var(--text-muted)">inactive when n_hops=1</text>
-<text x="260" y="995" class="box-body">_propagate_hops — (n_hops − 1) extra message-passing rounds. Canonical config: n_hops=1 (skipped).</text>
+<rect x="200" y="876" width="640" height="90" rx="12" fill="var(--aqua-soft)" stroke="var(--aqua)"></rect>
+<text x="220" y="899" class="box-tag" fill="var(--aqua)">data flow</text>
+<text x="220" y="919" class="box-title">Repack per-edge features</text>
+<text x="220" y="936" class="box-body">concat( edge features [coh, sinφ, cosφ, sig] ) → per-edge message vector</text>
+<text x="220" y="951" class="box-body">fed directly into sparse_message_mlp, one vector per edge</text>
 </g>
 
-<path class="arrow-path" d="M 520 1010 L 520 1040" marker-end="url(#arrow)"></path>
-
-<g class="box">
-<rect x="240" y="1042" width="560" height="66" rx="12" fill="var(--blue-soft)" stroke="var(--blue)"></rect>
-<text x="260" y="1065" class="box-tag" fill="var(--blue)">trainable</text>
-<text x="260" y="1085" class="box-title">Flatten → sparse_classifier</text>
-<text x="260" y="1100" class="box-body">Linear(n_channels × hidden_dim[× concat_max_degree] → n_classes)</text>
+<g class="illus">
+<rect x="855" y="884" width="165" height="76" rx="8" fill="var(--surface-1)" stroke="var(--aqua)" stroke-opacity="0.4"></rect>
+<rect x="864" y="892" width="22" height="12" fill="var(--aqua)" opacity="0.6" rx="2"></rect>
+<rect x="864" y="908" width="22" height="12" fill="var(--aqua)" opacity="0.45" rx="2"></rect>
+<rect x="864" y="924" width="22" height="12" fill="var(--aqua)" opacity="0.3" rx="2"></rect>
+<rect x="864" y="940" width="22" height="12" fill="var(--aqua)" opacity="0.15" rx="2"></rect>
+<path d="M 890 898 L 916 914" stroke="var(--text-muted)" stroke-width="1" marker-end="url(#arrow)"></path>
+<path d="M 890 914 L 916 918" stroke="var(--text-muted)" stroke-width="1" marker-end="url(#arrow)"></path>
+<path d="M 890 930 L 916 922" stroke="var(--text-muted)" stroke-width="1" marker-end="url(#arrow)"></path>
+<path d="M 890 946 L 916 926" stroke="var(--text-muted)" stroke-width="1" marker-end="url(#arrow)"></path>
+<rect x="920" y="900" width="70" height="34" rx="6" fill="var(--aqua-soft)" stroke="var(--aqua)" stroke-width="1.2"></rect>
+<text x="955" y="921" text-anchor="middle" font-size="11.5" fill="var(--text-primary)">message</text>
 </g>
 
-<path class="arrow-path" d="M 520 1108 L 520 1138" marker-end="url(#arrow)"></path>
+<path class="arrow-path" d="M 520 966 L 520 996" marker-end="url(#arrow)"></path>
 
 <g class="box">
-<rect x="220" y="1140" width="600" height="70" rx="12" fill="var(--green-soft)" stroke="var(--green)"></rect>
-<text x="240" y="1163" class="box-tag" fill="var(--green)">output</text>
-<text x="240" y="1183" class="box-title">logits [B, n_classes]  +  event_density (aux)</text>
-<text x="240" y="1198" class="box-body">event_density: constant 1/nfreqs in "dense" mode — not a meaningful signal here, kept for API parity with "sparse" mode.</text>
+<rect x="200" y="998" width="640" height="66" rx="12" fill="var(--blue-soft)" stroke="var(--blue)"></rect>
+<text x="220" y="1021" class="box-tag" fill="var(--blue)">trainable</text>
+<text x="220" y="1041" class="box-title">sparse_message_mlp</text>
+<text x="220" y="1056" class="box-body">Linear layer → activation → per-edge message</text>
+</g>
+
+<g class="illus">
+<rect x="855" y="1004" width="165" height="54" rx="8" fill="var(--surface-1)" stroke="var(--blue)" stroke-opacity="0.4"></rect>
+<circle cx="880" cy="1018" r="4" fill="var(--blue-soft)" stroke="var(--blue)" stroke-width="1"></circle>
+<circle cx="880" cy="1030" r="4" fill="var(--blue-soft)" stroke="var(--blue)" stroke-width="1"></circle>
+<circle cx="880" cy="1042" r="4" fill="var(--blue-soft)" stroke="var(--blue)" stroke-width="1"></circle>
+<circle cx="950" cy="1024" r="4.5" fill="var(--blue)" stroke="var(--blue)" stroke-width="1"></circle>
+<circle cx="950" cy="1036" r="4.5" fill="var(--blue)" stroke="var(--blue)" stroke-width="1"></circle>
+<path d="M 884 1018 L 946 1024" stroke="var(--text-muted)" stroke-width="0.7"></path>
+<path d="M 884 1018 L 946 1036" stroke="var(--text-muted)" stroke-width="0.7"></path>
+<path d="M 884 1030 L 946 1024" stroke="var(--text-muted)" stroke-width="0.7"></path>
+<path d="M 884 1030 L 946 1036" stroke="var(--text-muted)" stroke-width="0.7"></path>
+<path d="M 884 1042 L 946 1024" stroke="var(--text-muted)" stroke-width="0.7"></path>
+<path d="M 884 1042 L 946 1036" stroke="var(--text-muted)" stroke-width="0.7"></path>
+<path d="M 955 1024 L 985 1027" stroke="var(--text-muted)" stroke-width="1" marker-end="url(#arrow)"></path>
+<path d="M 955 1036 L 985 1033" stroke="var(--text-muted)" stroke-width="1" marker-end="url(#arrow)"></path>
+</g>
+
+<path class="arrow-path" d="M 520 1064 L 520 1094" marker-end="url(#arrow)"></path>
+
+<g class="box">
+<rect x="200" y="1096" width="640" height="92" rx="12" fill="var(--orange-soft)" stroke="var(--orange)"></rect>
+<text x="220" y="1119" class="box-tag" fill="var(--orange)">aggregation</text>
+<text x="220" y="1139" class="box-title">_aggregate_events → scatter to destination channel nodes</text>
+<text x="220" y="1156" class="box-body">event_aggregation ∈ {"mean","concat","gated_softmax"} — canonical run uses "concat"</text>
+<text x="220" y="1171" class="box-body">Produces one evidence vector per channel node (or a stack of them, for "concat")</text>
+</g>
+
+<g class="illus">
+<rect x="855" y="1104" width="165" height="76" rx="8" fill="var(--surface-1)" stroke="var(--orange)" stroke-opacity="0.4"></rect>
+<circle cx="875" cy="1116" r="4" fill="var(--surface-1)" stroke="var(--orange)" stroke-width="1"></circle>
+<circle cx="875" cy="1136" r="4" fill="var(--surface-1)" stroke="var(--orange)" stroke-width="1"></circle>
+<circle cx="875" cy="1156" r="4" fill="var(--surface-1)" stroke="var(--orange)" stroke-width="1"></circle>
+<circle cx="900" cy="1126" r="4" fill="var(--surface-1)" stroke="var(--orange)" stroke-width="1"></circle>
+<circle cx="900" cy="1166" r="4" fill="var(--surface-1)" stroke="var(--orange)" stroke-width="1"></circle>
+<circle cx="965" cy="1141" r="9" fill="var(--orange-soft)" stroke="var(--orange)" stroke-width="1.4"></circle>
+<text x="965" y="1144" text-anchor="middle" font-size="10.5" fill="var(--text-primary)">dst</text>
+<path d="M 879 1116 L 954 1138" stroke="var(--orange)" stroke-width="1" marker-end="url(#arrow-orange)" opacity="0.7"></path>
+<path d="M 879 1136 L 956 1141" stroke="var(--orange)" stroke-width="1" marker-end="url(#arrow-orange)" opacity="0.7"></path>
+<path d="M 879 1156 L 954 1145" stroke="var(--orange)" stroke-width="1" marker-end="url(#arrow-orange)" opacity="0.7"></path>
+<path d="M 904 1126 L 958 1136" stroke="var(--orange)" stroke-width="1" marker-end="url(#arrow-orange)" opacity="0.7"></path>
+<path d="M 904 1166 L 958 1147" stroke="var(--orange)" stroke-width="1" marker-end="url(#arrow-orange)" opacity="0.7"></path>
+</g>
+
+<path class="arrow-path dashed" d="M 520 1188 L 520 1218" marker-end="url(#arrow)"></path>
+
+<g class="box">
+<rect x="200" y="1220" width="640" height="54" rx="12" fill="var(--gray-soft)" stroke="var(--text-muted)" stroke-dasharray="4 3"></rect>
+<text x="220" y="1241" class="box-tag" fill="var(--text-muted)">inactive when n_hops=1</text>
+<text x="220" y="1259" class="box-body">_propagate_hops — (n_hops − 1) extra message-passing rounds. Canonical config: n_hops=1 (skipped).</text>
+</g>
+
+<path class="arrow-path" d="M 520 1274 L 520 1304" marker-end="url(#arrow)"></path>
+
+<g class="box">
+<rect x="200" y="1306" width="640" height="66" rx="12" fill="var(--blue-soft)" stroke="var(--blue)"></rect>
+<text x="220" y="1329" class="box-tag" fill="var(--blue)">trainable</text>
+<text x="220" y="1349" class="box-title">Flatten → sparse_classifier</text>
+<text x="220" y="1364" class="box-body">Linear layer → class logits</text>
+</g>
+
+<g class="illus">
+<rect x="855" y="1312" width="165" height="54" rx="8" fill="var(--surface-1)" stroke="var(--blue)" stroke-opacity="0.4"></rect>
+<rect x="868" y="1342" width="14" height="16" fill="var(--blue)" opacity="0.5"></rect>
+<rect x="888" y="1328" width="14" height="30" fill="var(--blue)" opacity="0.7"></rect>
+<rect x="908" y="1352" width="14" height="6" fill="var(--blue)" opacity="0.4"></rect>
+<rect x="928" y="1336" width="14" height="22" fill="var(--blue)" opacity="0.6"></rect>
+<rect x="948" y="1322" width="14" height="36" fill="var(--blue)" opacity="0.85"></rect>
+<line x1="864" y1="1358" x2="968" y2="1358" stroke="var(--text-muted)" stroke-width="1"></line>
+<text x="985" y="1344" font-size="10.5" fill="var(--text-muted)">logits</text>
+</g>
+
+<path class="arrow-path" d="M 520 1372 L 520 1402" marker-end="url(#arrow)"></path>
+
+<g class="box">
+<rect x="200" y="1404" width="640" height="85" rx="12" fill="var(--green-soft)" stroke="var(--green)"></rect>
+<text x="220" y="1427" class="box-tag" fill="var(--green)">output</text>
+<text x="220" y="1447" class="box-title">Class logits  +  event_density (aux)</text>
+<text x="220" y="1462" class="box-body">event_density: a fixed constant in "dense" mode — not a meaningful signal here,</text>
+<text x="220" y="1477" class="box-body">kept for API parity with "sparse" mode.</text>
+</g>
+
+<g class="illus">
+<rect x="855" y="1412" width="165" height="71" rx="8" fill="var(--surface-1)" stroke="var(--green)" stroke-opacity="0.4"></rect>
+<rect x="868" y="1444" width="16" height="18" fill="var(--text-muted)" opacity="0.4"></rect>
+<rect x="890" y="1424" width="16" height="38" fill="var(--green)" opacity="0.85"></rect>
+<rect x="912" y="1452" width="16" height="10" fill="var(--text-muted)" opacity="0.35"></rect>
+<line x1="864" y1="1462" x2="936" y2="1462" stroke="var(--text-muted)" stroke-width="1"></line>
+<path d="M 950 1442 L 1006 1442" stroke="var(--text-muted)" stroke-width="1.2" stroke-dasharray="3 2"></path>
+<text x="945" y="1434" font-size="10" fill="var(--text-muted)">flat (aux)</text>
+<text x="898" y="1476" text-anchor="middle" font-size="10.5" fill="var(--green)">predicted class</text>
 </g>
 
 <!-- ============ SUPPLEMENTARY ILLUSTRATIONS ============ -->
-<line x1="20" y1="1240" x2="1020" y2="1240" stroke="var(--gridline)" stroke-width="1"></line>
-<text x="20" y="1263" class="lane-label">illustrative supplements — not a code diagram</text>
+<line x1="20" y1="1519" x2="1020" y2="1519" stroke="var(--gridline)" stroke-width="1"></line>
+<text x="20" y="1542" class="lane-label">illustrative supplements — not a code diagram</text>
 
 <!-- ---- Panel 1: channel graph ---- -->
 <g class="box">
-<rect x="20" y="1272" width="320" height="480" rx="12" fill="var(--gray-soft)" stroke="var(--text-muted)"></rect>
-<text x="40" y="1295" class="box-tag" fill="var(--text-muted)">what the data looks like</text>
-<text x="40" y="1315" class="box-title">The graph the GRU messages ride on</text>
-<text x="40" y="1332" class="box-body">Channels are nodes. Every ordered pair (i,j) is its</text>
-<text x="40" y="1346" class="box-body">own directed edge, carrying [coh, sinφ, cosφ, sig].</text>
+<rect x="20" y="1551" width="320" height="480" rx="12" fill="var(--gray-soft)" stroke="var(--text-muted)"></rect>
+<text x="40" y="1574" class="box-tag" fill="var(--text-muted)">what the data looks like</text>
+<text x="40" y="1594" class="box-title">The graph the GRU messages ride on</text>
+<text x="40" y="1611" class="box-body">Channels are nodes. Every ordered pair (i,j) is its</text>
+<text x="40" y="1625" class="box-body">own directed edge, carrying [coh, sinφ, cosφ, sig].</text>
 
-<circle cx="180" cy="1410" r="14" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.4"></circle>
-<text x="180" y="1414" text-anchor="middle" font-size="10" fill="var(--text-secondary)">C1</text>
-<circle cx="266" cy="1460" r="14" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.4"></circle>
-<text x="266" y="1464" text-anchor="middle" font-size="10" fill="var(--text-secondary)">C2</text>
-<circle cx="266" cy="1560" r="14" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.4"></circle>
-<text x="266" y="1564" text-anchor="middle" font-size="10" fill="var(--text-secondary)">C3</text>
-<circle cx="180" cy="1610" r="14" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.4"></circle>
-<text x="180" y="1614" text-anchor="middle" font-size="10" fill="var(--text-secondary)">C4</text>
-<circle cx="94" cy="1560" r="14" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.4"></circle>
-<text x="94" y="1564" text-anchor="middle" font-size="10" fill="var(--text-secondary)">C5</text>
-<circle cx="94" cy="1460" r="14" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.4"></circle>
-<text x="94" y="1464" text-anchor="middle" font-size="10" fill="var(--text-secondary)">C6</text>
+<circle cx="180" cy="1689" r="14" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.4"></circle>
+<text x="180" y="1693" text-anchor="middle" font-size="12.5" fill="var(--text-secondary)">C1</text>
+<circle cx="266" cy="1739" r="14" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.4"></circle>
+<text x="266" y="1743" text-anchor="middle" font-size="12.5" fill="var(--text-secondary)">C2</text>
+<circle cx="266" cy="1839" r="14" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.4"></circle>
+<text x="266" y="1843" text-anchor="middle" font-size="12.5" fill="var(--text-secondary)">C3</text>
+<circle cx="180" cy="1889" r="14" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.4"></circle>
+<text x="180" y="1893" text-anchor="middle" font-size="12.5" fill="var(--text-secondary)">C4</text>
+<circle cx="94" cy="1839" r="14" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.4"></circle>
+<text x="94" y="1843" text-anchor="middle" font-size="12.5" fill="var(--text-secondary)">C5</text>
+<circle cx="94" cy="1739" r="14" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.4"></circle>
+<text x="94" y="1743" text-anchor="middle" font-size="12.5" fill="var(--text-secondary)">C6</text>
 
-<path class="arrow-path" d="M 192 1421 L 254 1449" marker-end="url(#arrow)"></path>
-<path class="arrow-path" d="M 266 1474 L 266 1546" marker-end="url(#arrow)"></path>
-<path class="arrow-path" d="M 254 1571 L 192 1599" marker-end="url(#arrow)"></path>
-<path class="arrow-path" d="M 168 1599 L 106 1571" marker-end="url(#arrow)"></path>
-<path class="arrow-path" d="M 94 1546 L 94 1474" marker-end="url(#arrow)"></path>
+<path class="arrow-path" d="M 192 1700  L 254 1728" marker-end="url(#arrow)"></path>
+<path class="arrow-path" d="M 266 1753  L 266 1825" marker-end="url(#arrow)"></path>
+<path class="arrow-path" d="M 254 1850  L 192 1878" marker-end="url(#arrow)"></path>
+<path class="arrow-path" d="M 168 1878  L 106 1850" marker-end="url(#arrow)"></path>
+<path class="arrow-path" d="M 94 1825  L 94 1753" marker-end="url(#arrow)"></path>
 
-<path d="M 100 1449 Q 130 1424 168 1415" fill="none" stroke="var(--orange)" stroke-width="1.8" marker-end="url(#arrow-orange)"></path>
-<path d="M 168 1409 Q 132 1421 106 1451" fill="none" stroke="var(--blue)" stroke-width="1.8" marker-end="url(#arrow-blue)"></path>
-<text x="180" y="1655" text-anchor="middle" font-size="10" fill="var(--text-muted)">C6→C1 and C1→C6 are separate edges —</text>
-<text x="180" y="1668" text-anchor="middle" font-size="10" fill="var(--text-muted)">opposite-sign phase, same coherence magnitude.</text>
-<text x="180" y="1681" text-anchor="middle" font-size="10" fill="var(--text-muted)">n_channels=9 → 72 directed edges (36 pairs × 2).</text>
+<path d="M 100 1728  Q 130 1703 168 1694" fill="none" stroke="var(--orange)" stroke-width="1.8" marker-end="url(#arrow-orange)"></path>
+<path d="M 168 1688  Q 132 1700 106 1730" fill="none" stroke="var(--blue)" stroke-width="1.8" marker-end="url(#arrow-blue)"></path>
+<text x="180" y="1934" text-anchor="middle" font-size="12.5" fill="var(--text-muted)">C6→C1 and C1→C6 are separate edges —</text>
+<text x="180" y="1947" text-anchor="middle" font-size="12.5" fill="var(--text-muted)">opposite-sign phase, same coherence magnitude.</text>
+<text x="180" y="1960" text-anchor="middle" font-size="12.5" fill="var(--text-muted)">Every channel pair contributes two directed edges.</text>
 </g>
 
 <!-- ---- Panel 2: GRU recurrence ---- -->
 <g class="box">
-<rect x="360" y="1272" width="320" height="480" rx="12" fill="var(--gray-soft)" stroke="var(--text-muted)"></rect>
-<text x="380" y="1295" class="box-tag" fill="var(--text-muted)">what the data looks like</text>
-<text x="380" y="1315" class="box-title">How the per-edge GRU recurs</text>
-<text x="380" y="1332" class="box-body">One shared GRU cell, stepped across T′≈125 downsampled</text>
-<text x="380" y="1346" class="box-body">timesteps per edge. Hidden state feeds back as input.</text>
+<rect x="360" y="1551" width="320" height="480" rx="12" fill="var(--gray-soft)" stroke="var(--text-muted)"></rect>
+<text x="380" y="1574" class="box-tag" fill="var(--text-muted)">what the data looks like</text>
+<text x="380" y="1594" class="box-title">How the per-edge GRU recurs</text>
+<text x="380" y="1611" class="box-body">One shared GRU cell, stepped across</text>
+<text x="380" y="1625" class="box-body">downsampled timesteps per edge.</text>
+<text x="380" y="1639" class="box-body">Hidden state feeds back as input.</text>
 
-<rect x="430" y="1400" width="180" height="66" rx="10" fill="var(--blue-soft)" stroke="var(--blue)"></rect>
-<text x="520" y="1428" text-anchor="middle" font-size="11.5" font-weight="700" fill="var(--text-primary)">GRU cell</text>
-<text x="520" y="1444" text-anchor="middle" font-size="10" fill="var(--text-secondary)">(shared across edges)</text>
+<rect x="430" y="1679" width="180" height="66" rx="10" fill="var(--blue-soft)" stroke="var(--blue)"></rect>
+<text x="520" y="1707" text-anchor="middle" font-size="14" font-weight="700" fill="var(--text-primary)">GRU cell</text>
+<text x="520" y="1723" text-anchor="middle" font-size="12.5" fill="var(--text-secondary)">(shared across edges)</text>
 
-<path class="arrow-path" d="M 500 1498 L 500 1466" marker-end="url(#arrow)"></path>
-<text x="500" y="1514" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">x_t (edge feature at t)</text>
+<path class="arrow-path" d="M 500 1777  L 500 1745" marker-end="url(#arrow)"></path>
+<text x="500" y="1793" text-anchor="middle" font-size="13" fill="var(--text-secondary)">x_t (edge feature at t)</text>
 
-<path class="arrow-path" d="M 540 1400 L 540 1368" marker-end="url(#arrow)"></path>
-<text x="580" y="1364" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">h_t</text>
+<path class="arrow-path" d="M 540 1679  L 540 1647" marker-end="url(#arrow)"></path>
+<text x="580" y="1643" text-anchor="middle" font-size="13" fill="var(--text-secondary)">h_t</text>
 
-<path d="M 610 1420 C 660 1420 660 1490 610 1490" fill="none" stroke="var(--orange)" stroke-width="1.8" marker-end="url(#arrow-orange)"></path>
-<text x="672" y="1458" text-anchor="middle" font-size="10" fill="var(--orange)" transform="rotate(90 672 1458)">h_(t−1) fed back as next input</text>
+<path d="M 610 1699  C 660 1699 660 1769 610 1769" fill="none" stroke="var(--orange)" stroke-width="1.8" marker-end="url(#arrow-orange)"></path>
+<text x="672" y="1737" text-anchor="middle" font-size="12.5" fill="var(--orange)" transform="rotate(90 672 1737)">h_(t−1) fed back as next input</text>
 
-<text x="520" y="1548" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">unrolled over T′ steps:</text>
+<text x="520" y="1827" text-anchor="middle" font-size="13" fill="var(--text-secondary)">unrolled over time:</text>
 
-<rect x="378" y="1566" width="32" height="24" rx="5" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.2"></rect>
-<text x="394" y="1582" text-anchor="middle" font-size="9.5" fill="var(--text-secondary)">h0</text>
-<path class="arrow-path" d="M 410 1578 L 434 1578" marker-end="url(#arrow)"></path>
-<rect x="436" y="1566" width="32" height="24" rx="5" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.2"></rect>
-<text x="452" y="1582" text-anchor="middle" font-size="9.5" fill="var(--text-secondary)">h1</text>
-<path class="arrow-path" d="M 468 1578 L 492 1578" marker-end="url(#arrow)"></path>
-<rect x="494" y="1566" width="32" height="24" rx="5" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.2"></rect>
-<text x="510" y="1582" text-anchor="middle" font-size="9.5" fill="var(--text-secondary)">h2</text>
-<path class="arrow-path" d="M 526 1578 L 550 1578" marker-end="url(#arrow)"></path>
-<text x="562" y="1582" text-anchor="middle" font-size="12" fill="var(--text-muted)">⋯</text>
-<path class="arrow-path" d="M 574 1578 L 598 1578" marker-end="url(#arrow)"></path>
-<rect x="600" y="1562" width="60" height="32" rx="6" fill="var(--green-soft)" stroke="var(--green)" stroke-width="1.4"></rect>
-<text x="630" y="1583" text-anchor="middle" font-size="9.5" fill="var(--text-primary)">h_T′</text>
+<rect x="378" y="1845" width="32" height="24" rx="5" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.2"></rect>
+<text x="394" y="1861" text-anchor="middle" font-size="12" fill="var(--text-secondary)">h0</text>
+<path class="arrow-path" d="M 410 1857  L 434 1857" marker-end="url(#arrow)"></path>
+<rect x="436" y="1845" width="32" height="24" rx="5" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.2"></rect>
+<text x="452" y="1861" text-anchor="middle" font-size="12" fill="var(--text-secondary)">h1</text>
+<path class="arrow-path" d="M 468 1857  L 492 1857" marker-end="url(#arrow)"></path>
+<rect x="494" y="1845" width="32" height="24" rx="5" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.2"></rect>
+<text x="510" y="1861" text-anchor="middle" font-size="12" fill="var(--text-secondary)">h2</text>
+<path class="arrow-path" d="M 526 1857  L 550 1857" marker-end="url(#arrow)"></path>
+<text x="562" y="1861" text-anchor="middle" font-size="14.5" fill="var(--text-muted)">⋯</text>
+<path class="arrow-path" d="M 574 1857  L 598 1857" marker-end="url(#arrow)"></path>
+<rect x="600" y="1841" width="60" height="32" rx="6" fill="var(--green-soft)" stroke="var(--green)" stroke-width="1.4"></rect>
+<text x="630" y="1862" text-anchor="middle" font-size="12" fill="var(--text-primary)">h_n</text>
 
-<text x="520" y="1622" text-anchor="middle" font-size="10" fill="var(--text-muted)">final hidden state = pooled edge summary,</text>
-<text x="520" y="1636" text-anchor="middle" font-size="10" fill="var(--text-muted)">passed on to gather + concatenate above.</text>
-<text x="520" y="1660" text-anchor="middle" font-size="10" fill="var(--text-muted)">Orange loop = the recurrence: each step's output</text>
-<text x="520" y="1673" text-anchor="middle" font-size="10" fill="var(--text-muted)">becomes part of the next step's input.</text>
+<text x="520" y="1901" text-anchor="middle" font-size="12.5" fill="var(--text-muted)">final hidden state = pooled edge summary,</text>
+<text x="520" y="1915" text-anchor="middle" font-size="12.5" fill="var(--text-muted)">passed on to repack per-edge features above.</text>
+<text x="520" y="1939" text-anchor="middle" font-size="12.5" fill="var(--text-muted)">Orange loop = the recurrence: each step's output</text>
+<text x="520" y="1952" text-anchor="middle" font-size="12.5" fill="var(--text-muted)">becomes part of the next step's input.</text>
 </g>
 
 <!-- ---- Panel 3: wavelet coherence ---- -->
 <g class="box">
-<rect x="700" y="1272" width="320" height="480" rx="12" fill="var(--gray-soft)" stroke="var(--text-muted)"></rect>
-<text x="720" y="1295" class="box-tag" fill="var(--text-muted)">what the data looks like</text>
-<text x="720" y="1315" class="box-title">Wavelet coherence, cross-spectrum</text>
-<text x="720" y="1332" class="box-body">Two channel signals → per-frequency phase &amp;</text>
-<text x="720" y="1346" class="box-body">coherence between them, at every timestep.</text>
+<rect x="700" y="1551" width="320" height="480" rx="12" fill="var(--gray-soft)" stroke="var(--text-muted)"></rect>
+<text x="720" y="1574" class="box-tag" fill="var(--text-muted)">what the data looks like</text>
+<text x="720" y="1594" class="box-title">Wavelet coherence, cross-spectrum</text>
+<text x="720" y="1611" class="box-body">Two channel signals → per-frequency phase &amp;</text>
+<text x="720" y="1625" class="box-body">coherence between them, at every timestep.</text>
 
-<path d="M 720 1380 Q 735 1364 750 1380 T 780 1380 T 810 1380 T 840 1380" fill="none" stroke="var(--aqua)" stroke-width="1.6"></path>
-<text x="846" y="1384" font-size="10" fill="var(--aqua)">ch i</text>
-<path d="M 720 1404 Q 738 1392 756 1404 T 792 1404 T 828 1404" fill="none" stroke="var(--orange)" stroke-width="1.6" stroke-dasharray="3 2"></path>
-<text x="846" y="1408" font-size="10" fill="var(--orange)">ch j</text>
+<path d="M 720 1659  Q 735 1643 750 1659  T 780 1659  T 810 1659  T 840 1659" fill="none" stroke="var(--aqua)" stroke-width="1.6"></path>
+<text x="846" y="1663" font-size="12.5" fill="var(--aqua)">ch i</text>
+<path d="M 720 1683  Q 738 1671 756 1683  T 792 1683  T 828 1683" fill="none" stroke="var(--orange)" stroke-width="1.6" stroke-dasharray="3 2"></path>
+<text x="846" y="1687" font-size="12.5" fill="var(--orange)">ch j</text>
 
-<path class="arrow-path" d="M 780 1420 L 780 1444" marker-end="url(#arrow)"></path>
+<path class="arrow-path" d="M 780 1699  L 780 1723" marker-end="url(#arrow)"></path>
 
-<text x="720" y="1462" font-size="10" fill="var(--text-secondary)">coherence(f, t):</text>
+<text x="720" y="1741" font-size="12.5" fill="var(--text-secondary)">coherence(f, t):</text>
 <g>
-<rect x="720" y="1470" width="18" height="18" fill="#0ca30c" opacity="0.85"></rect>
-<rect x="738" y="1470" width="18" height="18" fill="#4a9e1f" opacity="0.85"></rect>
-<rect x="756" y="1470" width="18" height="18" fill="#8a9c1a" opacity="0.7"></rect>
-<rect x="774" y="1470" width="18" height="18" fill="#c98a1a" opacity="0.55"></rect>
-<rect x="792" y="1470" width="18" height="18" fill="#c9601a" opacity="0.4"></rect>
-<rect x="810" y="1470" width="18" height="18" fill="#c9401a" opacity="0.25"></rect>
-<rect x="720" y="1488" width="18" height="18" fill="#4a9e1f" opacity="0.8"></rect>
-<rect x="738" y="1488" width="18" height="18" fill="#0ca30c" opacity="0.9"></rect>
-<rect x="756" y="1488" width="18" height="18" fill="#4a9e1f" opacity="0.75"></rect>
-<rect x="774" y="1488" width="18" height="18" fill="#8a9c1a" opacity="0.6"></rect>
-<rect x="792" y="1488" width="18" height="18" fill="#c98a1a" opacity="0.45"></rect>
-<rect x="810" y="1488" width="18" height="18" fill="#c9601a" opacity="0.3"></rect>
-<rect x="720" y="1506" width="18" height="18" fill="#8a9c1a" opacity="0.65"></rect>
-<rect x="738" y="1506" width="18" height="18" fill="#4a9e1f" opacity="0.75"></rect>
-<rect x="756" y="1506" width="18" height="18" fill="#0ca30c" opacity="0.85"></rect>
-<rect x="774" y="1506" width="18" height="18" fill="#4a9e1f" opacity="0.7"></rect>
-<rect x="792" y="1506" width="18" height="18" fill="#8a9c1a" opacity="0.55"></rect>
-<rect x="810" y="1506" width="18" height="18" fill="#c98a1a" opacity="0.4"></rect>
+<rect x="720" y="1749" width="18" height="18" fill="#0ca30c" opacity="0.85"></rect>
+<rect x="738" y="1749" width="18" height="18" fill="#4a9e1f" opacity="0.85"></rect>
+<rect x="756" y="1749" width="18" height="18" fill="#8a9c1a" opacity="0.7"></rect>
+<rect x="774" y="1749" width="18" height="18" fill="#c98a1a" opacity="0.55"></rect>
+<rect x="792" y="1749" width="18" height="18" fill="#c9601a" opacity="0.4"></rect>
+<rect x="810" y="1749" width="18" height="18" fill="#c9401a" opacity="0.25"></rect>
+<rect x="720" y="1767" width="18" height="18" fill="#4a9e1f" opacity="0.8"></rect>
+<rect x="738" y="1767" width="18" height="18" fill="#0ca30c" opacity="0.9"></rect>
+<rect x="756" y="1767" width="18" height="18" fill="#4a9e1f" opacity="0.75"></rect>
+<rect x="774" y="1767" width="18" height="18" fill="#8a9c1a" opacity="0.6"></rect>
+<rect x="792" y="1767" width="18" height="18" fill="#c98a1a" opacity="0.45"></rect>
+<rect x="810" y="1767" width="18" height="18" fill="#c9601a" opacity="0.3"></rect>
+<rect x="720" y="1785" width="18" height="18" fill="#8a9c1a" opacity="0.65"></rect>
+<rect x="738" y="1785" width="18" height="18" fill="#4a9e1f" opacity="0.75"></rect>
+<rect x="756" y="1785" width="18" height="18" fill="#0ca30c" opacity="0.85"></rect>
+<rect x="774" y="1785" width="18" height="18" fill="#4a9e1f" opacity="0.7"></rect>
+<rect x="792" y="1785" width="18" height="18" fill="#8a9c1a" opacity="0.55"></rect>
+<rect x="810" y="1785" width="18" height="18" fill="#c98a1a" opacity="0.4"></rect>
 </g>
-<text x="720" y="1542" font-size="9.5" fill="var(--text-muted)">rows = frequency, cols = time — one such</text>
-<text x="720" y="1554" font-size="9.5" fill="var(--text-muted)">grid per directed edge, per trial.</text>
+<text x="720" y="1821" font-size="12" fill="var(--text-muted)">rows = frequency, cols = time — one such</text>
+<text x="720" y="1833" font-size="12" fill="var(--text-muted)">grid per directed edge, per trial.</text>
 
-<circle cx="860" cy="1620" r="62" fill="none" stroke="var(--gridline)" stroke-width="1.2"></circle>
-<line x1="798" y1="1620" x2="922" y2="1620" stroke="var(--gridline)" stroke-width="1"></line>
-<line x1="860" y1="1558" x2="860" y2="1682" stroke="var(--gridline)" stroke-width="1"></line>
-<path d="M 860 1620 L 918 1605" stroke="var(--orange)" stroke-width="1.8" marker-end="url(#arrow-orange)"></path>
-<path d="M 860 1620 L 918 1635" stroke="var(--blue)" stroke-width="1.8" marker-end="url(#arrow-blue)"></path>
-<text x="924" y="1600" font-size="9.5" fill="var(--orange)">phase(i→j)</text>
-<text x="924" y="1649" font-size="9.5" fill="var(--blue)">phase(j→i)</text>
-<text x="860" y="1706" text-anchor="middle" font-size="9.5" fill="var(--text-muted)">phase(j→i) = −phase(i→j), same |coherence| —</text>
-<text x="860" y="1719" text-anchor="middle" font-size="9.5" fill="var(--text-muted)">the antisymmetric part the direction-bug fix relies on.</text>
+<circle cx="860" cy="1899" r="62" fill="none" stroke="var(--gridline)" stroke-width="1.2"></circle>
+<line x1="798" y1="1899" x2="922" y2="1899" stroke="var(--gridline)" stroke-width="1"></line>
+<line x1="860" y1="1837" x2="860" y2="1961" stroke="var(--gridline)" stroke-width="1"></line>
+<path d="M 860 1899  L 918 1884" stroke="var(--orange)" stroke-width="1.8" marker-end="url(#arrow-orange)"></path>
+<path d="M 860 1899  L 918 1914" stroke="var(--blue)" stroke-width="1.8" marker-end="url(#arrow-blue)"></path>
+<text x="924" y="1879" font-size="12" fill="var(--orange)">phase(i→j)</text>
+<text x="924" y="1928" font-size="12" fill="var(--blue)">phase(j→i)</text>
+<text x="860" y="1985" text-anchor="middle" font-size="12" fill="var(--text-muted)">phase(j→i) = −phase(i→j), same |coherence| —</text>
+<text x="860" y="1998" text-anchor="middle" font-size="12" fill="var(--text-muted)">the antisymmetric part the direction-bug fix relies on.</text>
 </g>
 </svg>
 </div>
@@ -428,7 +560,7 @@
 </div>
 
 <div class="foot">
-      Source: <code>Epilepsy/pipelines/cwt_gnn_classifiers.py</code> (<code>SparseEvidenceGNNCore.forward</code>, <code>_dense_edge_features</code>, <code>_DenseEdgeGRUTemporal</code>, <code>ChannelSignalEncoder</code>) — merged 2026-08-16 from the former <code>xwt_phase_gnn_classifier.py</code> / <code>sparse_evidence_gnn_classifier.py</code> split. This diagram covers only the code path <code>run_pipelines.py</code> actually instantiates for the epilepsy dense-edge-GRU pipeline; the <code>XWTPhaseGNN*</code> classes and the <code>"sparse"</code> / <code>"temporal_graph"</code> event modes earlier in the same file are separate, unused-here code paths kept for parity with the BCI sibling file.
+      Source: <code>Epilepsy/pipelines/cwt_gnn_classifiers.py</code> (<code>SparseEvidenceGNNCore.forward</code>, <code>_dense_edge_features</code>, <code>_DenseEdgeGRUTemporal</code>) — merged 2026-08-16 from the former <code>xwt_phase_gnn_classifier.py</code> / <code>sparse_evidence_gnn_classifier.py</code> split. This diagram covers only the code path <code>run_pipelines.py</code> actually instantiates for the epilepsy dense-edge-GRU pipeline; the <code>XWTPhaseGNN*</code> classes and the <code>"sparse"</code> / <code>"temporal_graph"</code> event modes earlier in the same file are separate, unused-here code paths kept for parity with the BCI sibling file.
 </div>
 </div>
 </div>

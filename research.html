@@ -58,8 +58,8 @@
 
     <div class="research-body">
       <p>
-        Since 2025 I've been leading a small independent research team (myself and two collaborators)
-        building a machine learning architecture for EEG-based epileptic seizure prediction. The core
+        Since august 2025 I've been with a small independent research team (myself and two collaborators)
+        building a machine learning architecture for EEG-based paradigms. The core
         idea: use complex-valued wavelet coherence between electrode-channel pairs as edge features in
         a graph neural network, so the model can represent lead/lag phase relationships &mdash; i.e. how
         seizure activity actually propagates across the electrode array &mdash; rather than treating each
@@ -76,17 +76,34 @@
         aggregation, and a final classifier.
       </p>
       <div class="diagram-full" style="background:#0d0d0d; border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,0.08);">
-        <iframe id="arch-frame" src="resources/architecture-diagram.html" style="width:100%; border:none; display:block;" title="SparseEvidenceGNNCore architecture diagram"></iframe>
+        <iframe id="arch-frame" src="resources/architecture-diagram.html" style="width:100%; border:none; display:block;" title="SparseEvidenceGNNCore architecture diagram" scrolling="no"
+        onload="this.style.height = this.contentWindow.document.body.scrollHeight + 'px';"
+        style="width: 100%; border: none; overflow: hidden;"></iframe>
       </div>
       <script>
         (function() {
           var f = document.getElementById('arch-frame');
           function resize() {
             try {
-              f.style.height = f.contentWindow.document.body.scrollHeight + 'px';
+              var doc = f.contentWindow.document;
+              var h = Math.max(doc.documentElement.scrollHeight, doc.body.scrollHeight);
+              f.style.height = h + 'px';
             } catch (e) {}
           }
-          f.addEventListener('load', resize);
+          f.addEventListener('load', function() {
+            resize();
+            // Content can settle a moment after 'load' (layout/reflow timing) — a plain
+            // one-shot measurement here occasionally caught a too-small height, leaving
+            // the iframe showing a scrollable sliver of the diagram. ResizeObserver keeps
+            // watching the actual rendered content instead of guessing when it's "done".
+            try {
+              var ro = new ResizeObserver(resize);
+              ro.observe(f.contentWindow.document.body);
+            } catch (e) {
+              setTimeout(resize, 100);
+              setTimeout(resize, 500);
+            }
+          });
           window.addEventListener('resize', resize);
         })();
       </script>
