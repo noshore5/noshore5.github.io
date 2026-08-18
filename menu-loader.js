@@ -49,6 +49,7 @@ async function loadMenu() {
           </button>
           <div class="nav-links">
             <a href="/research.html">Research</a>
+            <a href="/visual.html">Visual</a>
             <a href="/notes.html">Notes</a>
             <a href="/literature.html">Literature</a>
             <a href="/biography.html">About</a>
