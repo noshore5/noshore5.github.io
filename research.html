@@ -91,6 +91,16 @@
         })();
       </script>
 
+      <h2>Explore the coherence graph</h2>
+      <p>
+        A real coherence graph from one preictal window (chb01, seizure 16 &mdash; the fold above,
+        auc_pr 0.956, false alarms/hour 1.2). Drag to rotate; click any highlighted edge for the
+        full coherence / significance / phase detail behind it.
+      </p>
+      <div class="diagram-full" style="background:#0d0d0d; border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,0.08);">
+        <iframe id="coherence-graph-frame" src="resources/coherence-graph-viewer.html" style="width:100%; height:900px; border:none; display:block;" title="Real coherence graph, chb01 seizure 16 preictal window"></iframe>
+      </div>
+
       <h2>Where things stand</h2>
       <div class="status-note">
         The model classifies active seizure state well. As of 2026-08-17 there's also a first real,

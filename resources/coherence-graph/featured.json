@@ -1,0 +1,362 @@
+[
+  {
+    "src": "FP1-F7",
+    "dst": "FP1-F3",
+    "mean_coherence": 0.7093,
+    "file": "edges/FP1-F7__FP1-F3.json"
+  },
+  {
+    "src": "F8-T8",
+    "dst": "FT10-T8",
+    "mean_coherence": 0.7059,
+    "file": "edges/F8-T8__FT10-T8.json"
+  },
+  {
+    "src": "T7-FT9",
+    "dst": "FT10-T8",
+    "mean_coherence": 0.6806,
+    "file": "edges/T7-FT9__FT10-T8.json"
+  },
+  {
+    "src": "F8-T8",
+    "dst": "T7-FT9",
+    "mean_coherence": 0.6697,
+    "file": "edges/F8-T8__T7-FT9.json"
+  },
+  {
+    "src": "FP1-F7",
+    "dst": "FT9-FT10",
+    "mean_coherence": 0.6685,
+    "file": "edges/FP1-F7__FT9-FT10.json"
+  },
+  {
+    "src": "FP1-F7",
+    "dst": "F3-C3",
+    "mean_coherence": 0.6613,
+    "file": "edges/FP1-F7__F3-C3.json"
+  },
+  {
+    "src": "FP1-F3",
+    "dst": "C3-P3",
+    "mean_coherence": 0.6523,
+    "file": "edges/FP1-F3__C3-P3.json"
+  },
+  {
+    "src": "FP1-F7",
+    "dst": "C3-P3",
+    "mean_coherence": 0.6251,
+    "file": "edges/FP1-F7__C3-P3.json"
+  },
+  {
+    "src": "T7-FT9",
+    "dst": "FT9-FT10",
+    "mean_coherence": 0.6218,
+    "file": "edges/T7-FT9__FT9-FT10.json"
+  },
+  {
+    "src": "P7-O1",
+    "dst": "FT9-FT10",
+    "mean_coherence": 0.6173,
+    "file": "edges/P7-O1__FT9-FT10.json"
+  },
+  {
+    "src": "FP1-F3",
+    "dst": "F3-C3",
+    "mean_coherence": 0.6155,
+    "file": "edges/FP1-F3__F3-C3.json"
+  },
+  {
+    "src": "FP1-F3",
+    "dst": "P3-O1",
+    "mean_coherence": 0.6128,
+    "file": "edges/FP1-F3__P3-O1.json"
+  },
+  {
+    "src": "C3-P3",
+    "dst": "FT9-FT10",
+    "mean_coherence": 0.611,
+    "file": "edges/C3-P3__FT9-FT10.json"
+  },
+  {
+    "src": "F4-C4",
+    "dst": "FZ-CZ",
+    "mean_coherence": 0.6102,
+    "file": "edges/F4-C4__FZ-CZ.json"
+  },
+  {
+    "src": "FP2-F4",
+    "dst": "FP2-F8",
+    "mean_coherence": 0.6067,
+    "file": "edges/FP2-F4__FP2-F8.json"
+  },
+  {
+    "src": "P7-O1",
+    "dst": "FT10-T8",
+    "mean_coherence": 0.6028,
+    "file": "edges/P7-O1__FT10-T8.json"
+  },
+  {
+    "src": "F3-C3",
+    "dst": "T7-FT9",
+    "mean_coherence": 0.6025,
+    "file": "edges/F3-C3__T7-FT9.json"
+  },
+  {
+    "src": "F4-C4",
+    "dst": "F8-T8",
+    "mean_coherence": 0.6003,
+    "file": "edges/F4-C4__F8-T8.json"
+  },
+  {
+    "src": "FP1-F3",
+    "dst": "FT9-FT10",
+    "mean_coherence": 0.5931,
+    "file": "edges/FP1-F3__FT9-FT10.json"
+  },
+  {
+    "src": "FT9-FT10",
+    "dst": "FT10-T8",
+    "mean_coherence": 0.5893,
+    "file": "edges/FT9-FT10__FT10-T8.json"
+  },
+  {
+    "src": "P7-O1",
+    "dst": "P3-O1",
+    "mean_coherence": 0.5853,
+    "file": "edges/P7-O1__P3-O1.json"
+  },
+  {
+    "src": "FP1-F7",
+    "dst": "T7-FT9",
+    "mean_coherence": 0.5833,
+    "file": "edges/FP1-F7__T7-FT9.json"
+  },
+  {
+    "src": "F3-C3",
+    "dst": "FT9-FT10",
+    "mean_coherence": 0.5747,
+    "file": "edges/F3-C3__FT9-FT10.json"
+  },
+  {
+    "src": "FP1-F7",
+    "dst": "F8-T8",
+    "mean_coherence": 0.5731,
+    "file": "edges/FP1-F7__F8-T8.json"
+  },
+  {
+    "src": "P7-O1",
+    "dst": "F8-T8",
+    "mean_coherence": 0.573,
+    "file": "edges/P7-O1__F8-T8.json"
+  },
+  {
+    "src": "C3-P3",
+    "dst": "P3-O1",
+    "mean_coherence": 0.5703,
+    "file": "edges/C3-P3__P3-O1.json"
+  },
+  {
+    "src": "F3-C3",
+    "dst": "FP2-F8",
+    "mean_coherence": 0.5681,
+    "file": "edges/F3-C3__FP2-F8.json"
+  },
+  {
+    "src": "P3-O1",
+    "dst": "FT9-FT10",
+    "mean_coherence": 0.5657,
+    "file": "edges/P3-O1__FT9-FT10.json"
+  },
+  {
+    "src": "F8-T8",
+    "dst": "FT9-FT10",
+    "mean_coherence": 0.5639,
+    "file": "edges/F8-T8__FT9-FT10.json"
+  },
+  {
+    "src": "P8-O2",
+    "dst": "FT10-T8",
+    "mean_coherence": 0.5636,
+    "file": "edges/P8-O2__FT10-T8.json"
+  },
+  {
+    "src": "C3-P3",
+    "dst": "T7-FT9",
+    "mean_coherence": 0.5632,
+    "file": "edges/C3-P3__T7-FT9.json"
+  },
+  {
+    "src": "C3-P3",
+    "dst": "F8-T8",
+    "mean_coherence": 0.5586,
+    "file": "edges/C3-P3__F8-T8.json"
+  },
+  {
+    "src": "P3-O1",
+    "dst": "F8-T8",
+    "mean_coherence": 0.5579,
+    "file": "edges/P3-O1__F8-T8.json"
+  },
+  {
+    "src": "F3-C3",
+    "dst": "P3-O1",
+    "mean_coherence": 0.5567,
+    "file": "edges/F3-C3__P3-O1.json"
+  },
+  {
+    "src": "P7-O1",
+    "dst": "T7-FT9",
+    "mean_coherence": 0.5552,
+    "file": "edges/P7-O1__T7-FT9.json"
+  },
+  {
+    "src": "F3-C3",
+    "dst": "FP2-F4",
+    "mean_coherence": 0.5513,
+    "file": "edges/F3-C3__FP2-F4.json"
+  },
+  {
+    "src": "FP1-F3",
+    "dst": "F8-T8",
+    "mean_coherence": 0.5512,
+    "file": "edges/FP1-F3__F8-T8.json"
+  },
+  {
+    "src": "P3-O1",
+    "dst": "T7-FT9",
+    "mean_coherence": 0.5484,
+    "file": "edges/P3-O1__T7-FT9.json"
+  },
+  {
+    "src": "FP1-F7",
+    "dst": "P7-O1",
+    "mean_coherence": 0.5439,
+    "file": "edges/FP1-F7__P7-O1.json"
+  },
+  {
+    "src": "F3-C3",
+    "dst": "C3-P3",
+    "mean_coherence": 0.5409,
+    "file": "edges/F3-C3__C3-P3.json"
+  },
+  {
+    "src": "P7-O1",
+    "dst": "FP1-F3",
+    "mean_coherence": 0.5408,
+    "file": "edges/P7-O1__FP1-F3.json"
+  },
+  {
+    "src": "FP1-F7",
+    "dst": "FT10-T8",
+    "mean_coherence": 0.539,
+    "file": "edges/FP1-F7__FT10-T8.json"
+  },
+  {
+    "src": "FP1-F7",
+    "dst": "FP2-F8",
+    "mean_coherence": 0.538,
+    "file": "edges/FP1-F7__FP2-F8.json"
+  },
+  {
+    "src": "FP2-F8",
+    "dst": "F8-T8",
+    "mean_coherence": 0.5375,
+    "file": "edges/FP2-F8__F8-T8.json"
+  },
+  {
+    "src": "F7-T7",
+    "dst": "F3-C3",
+    "mean_coherence": 0.5362,
+    "file": "edges/F7-T7__F3-C3.json"
+  },
+  {
+    "src": "P7-O1",
+    "dst": "C3-P3",
+    "mean_coherence": 0.536,
+    "file": "edges/P7-O1__C3-P3.json"
+  },
+  {
+    "src": "C3-P3",
+    "dst": "P7-T7",
+    "mean_coherence": 0.5329,
+    "file": "edges/C3-P3__P7-T7.json"
+  },
+  {
+    "src": "T7-P7",
+    "dst": "C3-P3",
+    "mean_coherence": 0.5329,
+    "file": "edges/T7-P7__C3-P3.json"
+  },
+  {
+    "src": "F7-T7",
+    "dst": "P7-T7",
+    "mean_coherence": 0.5316,
+    "file": "edges/F7-T7__P7-T7.json"
+  },
+  {
+    "src": "F7-T7",
+    "dst": "T7-P7",
+    "mean_coherence": 0.5316,
+    "file": "edges/F7-T7__T7-P7.json"
+  },
+  {
+    "src": "C4-P4",
+    "dst": "P8-O2",
+    "mean_coherence": 0.5286,
+    "file": "edges/C4-P4__P8-O2.json"
+  },
+  {
+    "src": "C4-P4",
+    "dst": "F8-T8",
+    "mean_coherence": 0.5278,
+    "file": "edges/C4-P4__F8-T8.json"
+  },
+  {
+    "src": "FP1-F3",
+    "dst": "FZ-CZ",
+    "mean_coherence": 0.5278,
+    "file": "edges/FP1-F3__FZ-CZ.json"
+  },
+  {
+    "src": "C4-P4",
+    "dst": "CZ-PZ",
+    "mean_coherence": 0.527,
+    "file": "edges/C4-P4__CZ-PZ.json"
+  },
+  {
+    "src": "FP1-F7",
+    "dst": "P3-O1",
+    "mean_coherence": 0.5235,
+    "file": "edges/FP1-F7__P3-O1.json"
+  },
+  {
+    "src": "FP2-F8",
+    "dst": "FT10-T8",
+    "mean_coherence": 0.5233,
+    "file": "edges/FP2-F8__FT10-T8.json"
+  },
+  {
+    "src": "C4-P4",
+    "dst": "T8-P8-1",
+    "mean_coherence": 0.5175,
+    "file": "edges/C4-P4__T8-P8-1.json"
+  },
+  {
+    "src": "C4-P4",
+    "dst": "T8-P8-0",
+    "mean_coherence": 0.5175,
+    "file": "edges/C4-P4__T8-P8-0.json"
+  },
+  {
+    "src": "FP1-F7",
+    "dst": "C4-P4",
+    "mean_coherence": 0.5154,
+    "file": "edges/FP1-F7__C4-P4.json"
+  },
+  {
+    "src": "FP1-F3",
+    "dst": "F4-C4",
+    "mean_coherence": 0.5148,
+    "file": "edges/FP1-F3__F4-C4.json"
+  }
+]

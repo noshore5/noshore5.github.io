@@ -1,0 +1,448 @@
+<!--
+  Coherence graph viewer -- real chb01 seizure 16 preictal window.
+
+  PROVENANCE: reads resources/coherence-graph/{positions,graph,featured,coi}.json
+  and resources/coherence-graph/edges/*.json, exported from the real
+  dense_edge_gru pipeline (EEG_Benchmarks/exports/coherence-graph/raw/coherence.npz
+  -> converted here). coherence/phase/significance/coi_valid are the real
+  computed arrays -- coherence_threshold=0.90 and lowest_hz=8.0 are a
+  DELIBERATE relaxation from the model's real trained values (0.99, 1.0Hz)
+  for demo legibility; the caption below discloses this. The "significant"
+  flag in graph.json is not reliable (near-universal true at this threshold/
+  window length) -- this viewer curates the 60 "featured" clickable edges by
+  real mean_coherence instead (see featured.json), not that flag.
+
+  BUILT/VERIFIED in a Cowork session (2026-08-18) via device-bridge access to
+  the real export + Playwright screenshot testing -- not scaffolding for
+  another agent to design from scratch.
+
+  OPEN ITEMS for whoever picks this up next in the site repo:
+    - Only tested at desktop width (~1000px) and dark theme. Not yet checked
+      on narrow/mobile viewports -- the fixed 640px three.js canvas and the
+      900px iframe height in research.html will likely need a mobile-specific
+      height/interaction pass (drag-to-rotate is awkward on touch).
+    - No touch/tap handling for the edge click-to-open-modal interaction --
+      currently mouse-only (mousemove hover + click). Needs a touch equivalent.
+    - vendor/three.min.js is r0.160.0, UMD build, vendored locally (not CDN)
+      because this sandbox's network couldn't reach cdnjs during testing --
+      worth confirming a CDN would actually work fine on the real deployed
+      site if a lighter-weight approach is preferred later; local vendoring
+      is also just a reasonable default (no external dependency either way).
+    - featured.json hardcodes the top 60 edges by mean_coherence chosen in
+      this session -- if the underlying window/subject changes later, this
+      whole export needs regenerating, not just positions/graph.
+    - No favicon reference in this standalone file (fine as embedded via
+      iframe in research.html, which already declares one -- only matters if
+      this file is ever linked to directly).
+-->
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coherence graph — chb01 seizure 16 preictal window</title>
+<style>
+  .viz-root {
+    color-scheme: dark;
+    --surface-1: #0d0d0d;
+    --surface-2: #1a1a19;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #8a897f;
+    --border: rgba(255,255,255,0.08);
+    /* sequential blue (coherence) */
+    --seq-100: #cde2fb; --seq-250: #86b6ef; --seq-400: #3987e5;
+    --seq-500: #256abf; --seq-600: #184f95; --seq-700: #0d366b;
+    /* diverging blue<->red (significance) */
+    --div-blue: #3987e5; --div-mid: #383835; --div-red: #e66767;
+  }
+  html, body { margin:0; padding:0; background: var(--surface-1); }
+  * { box-sizing: border-box; }
+  .viz-root {
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: var(--text-primary);
+    background: var(--surface-1);
+    width: 100%;
+    position: relative;
+  }
+  #scene-container { width: 100%; height: 640px; display: block; cursor: grab; }
+  #scene-container:active { cursor: grabbing; }
+  .caption {
+    max-width: 760px; margin: 0 auto; padding: 0.75rem 1rem 1.25rem;
+    font-size: 0.85rem; color: var(--text-secondary); line-height: 1.55; text-align: center;
+  }
+  .caption strong { color: var(--text-primary); }
+  #tooltip {
+    position: absolute; pointer-events: none; background: var(--surface-2);
+    border: 1px solid var(--border); border-radius: 6px; padding: 0.4rem 0.6rem;
+    font-size: 0.78rem; color: var(--text-primary); display: none; z-index: 20;
+    white-space: nowrap;
+  }
+  #modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.72);
+    z-index: 100; align-items: center; justify-content: center; padding: 1.5rem;
+  }
+  #modal-overlay.open { display: flex; }
+  #modal {
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px;
+    max-width: 920px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 1.25rem 1.5rem 1.5rem;
+  }
+  #modal-close {
+    float: right; background: none; border: none; color: var(--text-secondary);
+    font-size: 1.3rem; cursor: pointer; line-height: 1;
+  }
+  #modal-close:hover { color: var(--text-primary); }
+  #modal h3 { margin: 0 0.25rem 0.2rem 0; font-size: 1.05rem; font-weight: 600; }
+  #modal .sub { color: var(--text-muted); font-size: 0.78rem; margin-bottom: 1rem; }
+  .panels { display: flex; flex-direction: column; gap: 1.1rem; }
+  .panel-row { display: flex; align-items: center; gap: 0.85rem; }
+  .panel-label { width: 84px; flex-shrink: 0; font-size: 0.78rem; color: var(--text-secondary); text-align: right; }
+  .panel-canvas-wrap { position: relative; }
+  canvas.heatmap { display: block; border-radius: 4px; image-rendering: pixelated; }
+  .legend-strip { display:flex; align-items:center; gap:0.4rem; margin-top:0.3rem; }
+  .legend-bar { width: 120px; height: 8px; border-radius: 3px; }
+  .legend-label { font-size: 0.68rem; color: var(--text-muted); }
+  #loading { text-align:center; padding: 2rem; color: var(--text-muted); font-size: 0.85rem; }
+</style>
+</head>
+<body>
+<div class="viz-root">
+  <div id="scene-container"></div>
+  <div id="tooltip"></div>
+  <p class="caption">
+    Real computed coherence graph — <strong>chb01, seizure 1_16_0 preictal window</strong>
+    (the fold already highlighted on the research page: auc_pr 0.956, false alarms/hour 1.2).
+    Nodes are chb01's 23 real bipolar channels (CHB-MIT records electrode differences, not single
+    electrodes), placed at the midpoint of each pair's real 10-20 scalp positions. Edge color/thickness
+    is real mean coherence over this window. For legibility, this view uses a relaxed coherence
+    threshold (0.90, vs. the model's trained 0.99) and a narrowed frequency floor (8Hz, vs. the
+    model's trained 1Hz) — the underlying computation (cross-spectrum, smoothing, cone-of-influence
+    masking) is identical to what the model runs. The 60 highest-coherence edges are clickable for
+    the full coherence / significance / phase detail.
+  </p>
+  <div id="modal-overlay">
+    <div id="modal">
+      <button id="modal-close" aria-label="Close">&times;</button>
+      <h3 id="modal-title"></h3>
+      <div class="sub" id="modal-sub"></div>
+      <div class="panels" id="modal-panels"></div>
+    </div>
+  </div>
+</div>
+
+<script src="vendor/three.min.js"></script>
+<script>
+(async function () {
+  const BASE = 'coherence-graph/';
+  const container = document.getElementById('scene-container');
+  const tooltip = document.getElementById('tooltip');
+
+  const [positions, graph, featured, coi] = await Promise.all([
+    fetch(BASE + 'positions.json').then(r => r.json()),
+    fetch(BASE + 'graph.json').then(r => r.json()),
+    fetch(BASE + 'featured.json').then(r => r.json()),
+    fetch(BASE + 'coi.json').then(r => r.json()),
+  ]);
+
+  const featuredSet = new Set(featured.map(f => f.src + '__' + f.dst));
+  const posByChannel = {};
+  positions.forEach(p => { posByChannel[p.channel] = p; });
+
+  // only the 23 bipolar-channel nodes (positions.json also has the 21 raw
+  // electrode positions used to compute midpoints -- not rendered as nodes)
+  const channelNames = new Set();
+  graph.forEach(e => { channelNames.add(e.src); channelNames.add(e.dst); });
+
+  const SCALE = 420;
+  function toScene(p) {
+    return new THREE.Vector3(p.x * SCALE, p.z * SCALE, p.y * SCALE);
+  }
+
+  // --- three.js scene ---
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45, container.clientWidth / 640, 1, 2000);
+  camera.position.set(0, 60, 260);
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setSize(container.clientWidth, 640);
+  renderer.setPixelRatio(window.devicePixelRatio || 1);
+  container.appendChild(renderer.domElement);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+  const dl = new THREE.DirectionalLight(0xffffff, 0.6);
+  dl.position.set(100, 200, 150);
+  scene.add(dl);
+
+  const nodeGroup = new THREE.Group();
+  const edgeGroup = new THREE.Group();
+  const hitGroup = new THREE.Group(); // invisible thick tubes for raycasting
+  scene.add(nodeGroup, edgeGroup, hitGroup);
+
+  const nodeMeshes = {};
+  const nodeGeo = new THREE.SphereGeometry(3.2, 16, 16);
+  channelNames.forEach(ch => {
+    const p = posByChannel[ch];
+    if (!p) return;
+    const mat = new THREE.MeshStandardMaterial({ color: 0x86b6ef, emissive: 0x1c5cab, emissiveIntensity: 0.25 });
+    const mesh = new THREE.Mesh(nodeGeo, mat);
+    mesh.position.copy(toScene(p));
+    mesh.userData = { channel: ch };
+    nodeGroup.add(mesh);
+    nodeMeshes[ch] = mesh;
+  });
+
+  // sequential blue ramp, low->high mean_coherence
+  const seqStops = [
+    [0.317, 0x184f95], [0.45, 0x256abf], [0.55, 0x3987e5], [0.65, 0x86b6ef], [0.71, 0xcde2fb],
+  ];
+  function seqColor(v) {
+    for (let i = 0; i < seqStops.length - 1; i++) {
+      if (v <= seqStops[i + 1][0]) {
+        const [v0, c0] = seqStops[i], [v1, c1] = seqStops[i + 1];
+        const t = (v - v0) / Math.max(v1 - v0, 1e-6);
+        const col0 = new THREE.Color(c0), col1 = new THREE.Color(c1);
+        return col0.lerp(col1, Math.max(0, Math.min(1, t)));
+      }
+    }
+    return new THREE.Color(seqStops[seqStops.length - 1][1]);
+  }
+
+  const clickable = [];
+  graph.forEach(e => {
+    const p1 = posByChannel[e.src], p2 = posByChannel[e.dst];
+    if (!p1 || !p2) return;
+    if (e.mean_coherence >= 0.99) return; // trivial duplicate-channel pair, skip drawing
+    const isFeatured = featuredSet.has(e.src + '__' + e.dst);
+    const v1 = toScene(p1), v2 = toScene(p2);
+    const color = seqColor(e.mean_coherence);
+    const opacity = isFeatured ? 0.55 + 0.35 * ((e.mean_coherence - 0.3) / 0.4) : 0.06;
+    const geo = new THREE.BufferGeometry().setFromPoints([v1, v2]);
+    const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: Math.max(0.04, Math.min(0.95, opacity)) });
+    const line = new THREE.Line(geo, mat);
+    edgeGroup.add(line);
+
+    if (isFeatured) {
+      const dir = new THREE.Vector3().subVectors(v2, v1);
+      const len = dir.length();
+      const hitGeo = new THREE.CylinderGeometry(2.2, 2.2, len, 6, 1);
+      const hitMat = new THREE.MeshBasicMaterial({ visible: false });
+      const hit = new THREE.Mesh(hitGeo, hitMat);
+      const mid = new THREE.Vector3().addVectors(v1, v2).multiplyScalar(0.5);
+      hit.position.copy(mid);
+      hit.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize());
+      hit.userData = { src: e.src, dst: e.dst, mean_coherence: e.mean_coherence };
+      hitGroup.add(hit);
+      clickable.push(hit);
+    }
+  });
+
+  // simple orbit-ish drag rotation (no external OrbitControls dependency)
+  let dragging = false, lastX = 0, lastY = 0;
+  let rotY = 0.5, rotX = -0.15;
+  function applyRotation() {
+    const r = 300;
+    camera.position.x = r * Math.sin(rotY) * Math.cos(rotX);
+    camera.position.z = r * Math.cos(rotY) * Math.cos(rotX);
+    camera.position.y = 60 + r * Math.sin(rotX);
+    camera.lookAt(0, 20, 0);
+  }
+  applyRotation();
+  container.addEventListener('mousedown', e => { dragging = true; lastX = e.clientX; lastY = e.clientY; });
+  window.addEventListener('mouseup', () => dragging = false);
+  window.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    rotY -= (e.clientX - lastX) * 0.006;
+    rotX = Math.max(-0.6, Math.min(0.6, rotX + (e.clientY - lastY) * 0.006));
+    lastX = e.clientX; lastY = e.clientY;
+    applyRotation();
+  });
+
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+  function setMouse(e) {
+    const rect = container.getBoundingClientRect();
+    mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+  }
+  container.addEventListener('mousemove', e => {
+    if (dragging) { tooltip.style.display = 'none'; return; }
+    setMouse(e);
+    raycaster.setFromCamera(mouse, camera);
+    const hits = raycaster.intersectObjects(clickable);
+    if (hits.length) {
+      const d = hits[0].object.userData;
+      tooltip.style.display = 'block';
+      tooltip.style.left = (e.clientX - container.getBoundingClientRect().left + 12) + 'px';
+      tooltip.style.top = (e.clientY - container.getBoundingClientRect().top + 8) + 'px';
+      tooltip.innerHTML = `<strong>${d.src} ↔ ${d.dst}</strong><br>mean coherence ${d.mean_coherence.toFixed(3)}`;
+      container.style.cursor = 'pointer';
+    } else {
+      tooltip.style.display = 'none';
+      container.style.cursor = 'grab';
+    }
+  });
+  container.addEventListener('click', async e => {
+    setMouse(e);
+    raycaster.setFromCamera(mouse, camera);
+    const hits = raycaster.intersectObjects(clickable);
+    if (!hits.length) return;
+    const d = hits[0].object.userData;
+    await openModal(d.src, d.dst);
+  });
+
+  (function animate() {
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
+  })();
+  window.addEventListener('resize', () => {
+    camera.aspect = container.clientWidth / 640;
+    camera.updateProjectionMatrix();
+    renderer.setSize(container.clientWidth, 640);
+  });
+
+  // --- modal: coherence / significance / phase heatmaps from real per-edge data ---
+  const modalOverlay = document.getElementById('modal-overlay');
+  document.getElementById('modal-close').addEventListener('click', () => modalOverlay.classList.remove('open'));
+  modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) modalOverlay.classList.remove('open'); });
+
+  const edgeCache = {};
+  async function openModal(src, dst) {
+    const key = src + '__' + dst;
+    document.getElementById('modal-title').textContent = `${src} ↔ ${dst}`;
+    document.getElementById('modal-sub').textContent = `chb01, seizure 1_16_0 preictal window · ${coi.seizure_id ? '' : ''}real computed coherence, significance, and phase (8–40Hz, threshold ${coi.coherence_threshold})`;
+    const panelsEl = document.getElementById('modal-panels');
+    panelsEl.innerHTML = '<div id="loading">loading real data…</div>';
+    modalOverlay.classList.add('open');
+
+    let data = edgeCache[key];
+    if (!data) {
+      const f = featured.find(x => x.src === src && x.dst === dst);
+      if (!f) { panelsEl.innerHTML = '<div id="loading">no detail for this edge</div>'; return; }
+      data = await fetch(BASE + f.file).then(r => r.json());
+      edgeCache[key] = data;
+    }
+    renderPanels(panelsEl, data, coi);
+  }
+
+  function renderPanels(container, data, coiMeta) {
+    container.innerHTML = '';
+    const F = coiMeta.freqs_hz.length;
+    const T = coiMeta.n_time;
+    const cellW = Math.max(1, Math.floor(560 / T));
+    const cellH = 22;
+    const W = cellW * T, H = cellH * F;
+
+    function makeCanvas() {
+      const c = document.createElement('canvas');
+      c.className = 'heatmap';
+      c.width = W; c.height = H;
+      c.style.width = W + 'px'; c.style.height = H + 'px';
+      return c;
+    }
+
+    function coiInvalid(t, f) { return coiMeta.coi_valid[t][f] === 0; }
+
+    function drawHatch(ctx) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+      ctx.lineWidth = 1;
+      for (let t = 0; t < T; t++) {
+        for (let f = 0; f < F; f++) {
+          if (!coiInvalid(t, f)) continue;
+          const x = t * cellW, y = (F - 1 - f) * cellH;
+          ctx.beginPath();
+          ctx.moveTo(x, y + cellH); ctx.lineTo(x + cellW, y);
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
+    }
+
+    // sequential blue: coherence 0..1
+    function seqRGB(v) {
+      const stops = [[0, [13,54,107]], [0.4,[24,79,149]], [0.6,[37,135,229]], [0.8,[134,182,239]], [1,[205,226,251]]];
+      for (let i=0;i<stops.length-1;i++){
+        if (v<=stops[i+1][0]) {
+          const t=(v-stops[i][0])/Math.max(stops[i+1][0]-stops[i][0],1e-6);
+          const a=stops[i][1], b=stops[i+1][1];
+          return [a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t];
+        }
+      }
+      return stops[stops.length-1][1];
+    }
+    // diverging blue<->red, gray midpoint, centered at 0
+    function divRGB(v) {
+      const clamped = Math.max(-1, Math.min(0.15, v));
+      if (clamped >= 0) {
+        const t = clamped / 0.15;
+        const gray=[56,56,53], red=[230,103,103];
+        return [gray[0]+(red[0]-gray[0])*t, gray[1]+(red[1]-gray[1])*t, gray[2]+(red[2]-gray[2])*t];
+      } else {
+        const t = -clamped / 1.0;
+        const gray=[56,56,53], blue=[57,135,229];
+        return [gray[0]+(blue[0]-gray[0])*t, gray[1]+(blue[1]-gray[1])*t, gray[2]+(blue[2]-gray[2])*t];
+      }
+    }
+    // cyclic hue for phase (-pi..pi) -- circular data, standard HSL hue wheel
+    function phaseRGB(v) {
+      const hue = ((v + Math.PI) / (2*Math.PI)) * 360;
+      const c = document.createElement('canvas').getContext('2d');
+      c.fillStyle = `hsl(${hue}, 70%, 55%)`;
+      const m = c.fillStyle.match(/\d+/g);
+      // fallback simple hsl->rgb
+      return hslToRgb(hue/360, 0.7, 0.55);
+    }
+    function hslToRgb(h,s,l){
+      let r,g,b;
+      if(s===0){r=g=b=l;}else{
+        const hue2rgb=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p;};
+        const q=l<0.5?l*(1+s):l+s-l*s, p=2*l-q;
+        r=hue2rgb(p,q,h+1/3); g=hue2rgb(p,q,h); b=hue2rgb(p,q,h-1/3);
+      }
+      return [r*255,g*255,b*255];
+    }
+
+    function drawPanel(values, colorFn, invalidColor) {
+      const canvas = makeCanvas();
+      const ctx = canvas.getContext('2d');
+      for (let t = 0; t < T; t++) {
+        for (let f = 0; f < F; f++) {
+          let rgb;
+          if (coiInvalid(t, f)) rgb = invalidColor;
+          else rgb = colorFn(values[t][f]);
+          ctx.fillStyle = `rgb(${rgb[0]|0},${rgb[1]|0},${rgb[2]|0})`;
+          ctx.fillRect(t * cellW, (F - 1 - f) * cellH, cellW, cellH);
+        }
+      }
+      drawHatch(ctx);
+      return canvas;
+    }
+
+    const rows = [
+      { label: 'coherence |coh|', values: data.coh, colorFn: seqRGB, invalid: [20,20,20], legend: ['0', '1'], grad: 'linear-gradient(90deg,#0d366b,#3987e5,#cde2fb)' },
+      { label: 'significance', values: data.significance, colorFn: divRGB, invalid: [20,20,20], legend: ['below threshold', 'above threshold'], grad: 'linear-gradient(90deg,#3987e5,#383835,#e66767)' },
+      { label: 'phase (rad)', values: data.phase, colorFn: phaseRGB, invalid: [20,20,20], legend: ['−π', '+π'], grad: 'linear-gradient(90deg,hsl(0,70%,55%),hsl(120,70%,55%),hsl(240,70%,55%),hsl(360,70%,55%))' },
+    ];
+
+    rows.forEach(row => {
+      const rowEl = document.createElement('div');
+      rowEl.className = 'panel-row';
+      const label = document.createElement('div');
+      label.className = 'panel-label';
+      label.textContent = row.label;
+      const wrap = document.createElement('div');
+      wrap.className = 'panel-canvas-wrap';
+      const canvas = drawPanel(row.values, row.colorFn, row.invalid);
+      wrap.appendChild(canvas);
+      const legendEl = document.createElement('div');
+      legendEl.className = 'legend-strip';
+      legendEl.innerHTML = `<span class="legend-bar" style="background:${row.grad}"></span><span class="legend-label">${row.legend[0]} → ${row.legend[1]} &middot; hatched = COI-invalid</span>`;
+      wrap.appendChild(legendEl);
+      rowEl.appendChild(label);
+      rowEl.appendChild(wrap);
+      container.appendChild(rowEl);
+    });
+  }
+})();
+</script>
+</body>
+</html>
