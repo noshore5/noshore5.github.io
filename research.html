@@ -23,15 +23,6 @@
       font-size: 1.4rem;
       margin-top: 2.5rem;
     }
-    .status-note {
-      background: rgba(42, 42, 42, 0.7);
-      border-left: 4px solid #4a6583;
-      border-radius: 6px;
-      padding: 1.25rem 1.5rem;
-      margin: 1.5rem 0;
-      color: #ccc;
-      font-size: 0.98rem;
-    }
     .diagram-full {
       max-width: 100%;
       margin: 2rem 0;
@@ -115,24 +106,6 @@
         rotate, click any highlighted edge for the full coherence / significance / phase detail
         behind it. Moved to its own page: see <a href="visual.html">Visual</a>.
       </p>
-
-      <h2>Where things stand</h2>
-      <div class="status-note">
-        The model classifies active seizure state well. As of 2026-08-17 there's also a first real,
-        non-confounded result on the harder problem &mdash; predicting the <strong>preictal</strong>
-        (pre-seizure) window &mdash; on single-subject, leave-one-seizure-out evaluation: mean roc_auc
-        0.882, hit rate 6/7, with one fold in clinically-interesting territory (auc_pr 0.956, false
-        alarms/hr 1.2) and others weak to near-chance. A label-permutation null control and two
-        leakage-risk checks (fold-boundary exclusion, SPH warn-zone boundary) all came back clean &mdash;
-        real roc_auc 0.882 vs. a shuffled-label null at 0.491, chance. Still single-subject,
-        patient-specific evaluation only, and decision threshold is untuned; cross-patient generalization
-        is untested. Suggestive, not yet validated beyond this one subject &mdash; see
-        <a href="notes.html">Notes</a> for the full writeup. On standard motor-imagery
-        benchmark tasks, the architecture currently trails EEGNet by a small margin &mdash; the working
-        hypothesis is that the model spends representational capacity on time-ordering information that
-        isn't especially useful for motor-imagery classification specifically, even though it matters for
-        seizure propagation. Open thread, not a finished result.
-      </div>
 
       <h2>Devlog</h2>
       <p>
