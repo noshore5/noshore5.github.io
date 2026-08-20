@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="../resources/icon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>truong_stft_cnn prediction run, a comparison baseline — Noah Shore</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .nav-links a { text-decoration: none; }
+    .nav-links a.active { text-decoration: underline; }
+    .post {
+      max-width: 800px;
+      margin: 0 auto 3rem auto;
+      text-align: left;
+    }
+    .post-meta {
+      color: #888;
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+    .post h1 {
+      font-size: 1.9rem;
+      text-align: center;
+      color: #eaeaea;
+      margin-bottom: 0.25rem;
+    }
+    .post p { font-size: 1.02rem; line-height: 1.65; color: #ddd; }
+    .post h2 { color: #cccccc; font-size: 1.15rem; margin-top: 2rem; }
+    .post code {
+      background: rgba(255,255,255,0.08);
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      font-size: 0.92em;
+    }
+    .callout {
+      background: rgba(42, 42, 42, 0.7);
+      border-left: 4px solid #4a6583;
+      border-radius: 6px;
+      padding: 1rem 1.5rem;
+      margin: 1.5rem 0;
+      color: #ccc;
+      font-size: 0.98rem;
+    }
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-bottom: 2rem;
+      color: #7aa5d6 !important;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 0.92rem;
+    }
+    th, td {
+      padding: 0.5rem 0.7rem;
+      text-align: right;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      color: #ccc;
+    }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: #eaeaea; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div id="menu-container"></div>
+  <div class="container" style="max-width:900px; margin:0 auto;">
+    <a href="../notes.html" class="back-link">&larr; All notes</a>
+    <div class="post">
+      <h1>truong_stft_cnn as a real prediction-mode comparison baseline</h1>
+      <p class="post-meta">2026-08-19 &middot; EEG seizure prediction, baseline comparison</p>
+
+      <p>
+        Follow-on to <a href="2026-08-17-prediction-mode-oom-fix-and-results.html">2026-08-17's note</a>,
+        which left <code>dense_edge_gru</code> prediction mode with a completed, non-confounded real run.
+        This session first made <code>dense_edge_gru</code> and <code>truong_stft_cnn</code> runs
+        apples-to-apples, then ran <code>truong_stft_cnn</code>'s full prediction pipeline for real as a
+        comparison baseline.
+      </p>
+
+      <h2>Making the two pipelines comparable</h2>
+      <p>
+        Window length and step size were keyed off which pipeline was running rather than which task
+        &mdash; <code>dense_edge_gru</code> defaulted to its own untuned 4s/8s window instead of
+        <code>truong_stft_cnn</code>'s contiguous 30s/30s, so only about a third of the interictal signal
+        was being classified and false-alarm rate wasn't measuring the same monitored time across the two.
+        Now both use 30s/30s whenever the task is prediction mode, regardless of pipeline; detection mode is
+        untouched.
+      </p>
+
+      <h2>truong_stft_cnn real prediction run</h2>
+      <p>
+        Full (non-smoke) prediction-mode run, leave-one-seizure-out across chb01's six seizures, as a
+        baseline to compare <code>dense_edge_gru</code>'s numbers against. Completed, exit 0.
+      </p>
+      <table>
+        <tr><th>seizure</th><th>n_test</th><th>preictal</th><th>hit</th><th>precision</th><th>recall</th><th>f1</th><th>roc_auc</th><th>avg_precision</th><th>FAR/hr</th></tr>
+        <tr><td>03</td><td>750</td><td>30</td><td>&#10003;</td><td>0.206</td><td>0.867</td><td>0.333</td><td>0.887</td><td>0.147</td><td>13.0</td></tr>
+        <tr><td>04</td><td>650</td><td>30</td><td>&#10003;</td><td>0.169</td><td>0.733</td><td>0.275</td><td>0.871</td><td>0.150</td><td>14.3</td></tr>
+        <tr><td>15</td><td>718</td><td>30</td><td>&#10007;</td><td>0.000</td><td>0.000</td><td>0.000</td><td>0.967</td><td>0.369</td><td>1.2</td></tr>
+        <tr><td>16</td><td>743</td><td>23</td><td>&#10003;</td><td><strong>0.920</strong></td><td><strong>1.000</strong></td><td><strong>0.958</strong></td><td><strong>1.000</strong></td><td><strong>1.000</strong></td><td><strong>0.0</strong></td></tr>
+        <tr><td>18</td><td>750</td><td>30</td><td>&#10007;</td><td>0.000</td><td>0.000</td><td>0.000</td><td>0.979</td><td>0.504</td><td>0.0</td></tr>
+        <tr><td>26</td><td>630</td><td>30</td><td>&#10003;</td><td>0.628</td><td>0.900</td><td>0.740</td><td>0.990</td><td>0.833</td><td>1.8</td></tr>
+      </table>
+      <p>
+        Event-level hit rate: 4/6 (66.7%), at both raw and smoothed thresholds. Seizure 16 is the standout
+        &mdash; precision 0.92, recall 1.0, zero false alarms &mdash; the same seizure that stood out for
+        <code>dense_edge_gru</code> in the 2026-08-17 run. Seizures 15 and 18 missed at the operating
+        threshold but still rank well (roc_auc 0.967/0.979) &mdash; the same pattern as 2026-08-17's note:
+        threshold miscalibration on those folds, not an absence of signal. Mean smoothed false-alarm rate
+        across all six &asymp;5.1/hour.
+      </p>
+
+      <h2>Open items</h2>
+      <p>
+        No label-permutation null control has been run yet for this <code>truong_stft_cnn</code> result
+        &mdash; these numbers haven't been checked against a chance baseline the way 2026-08-17's
+        <code>dense_edge_gru</code> run was. The result files from this run are currently untracked in git
+        and will be lost on cleanup if not addressed.
+      </p>
+    </div>
+  </div>
+  <div id="footer-container"></div>
+</body>
+<script src="../menu-loader.js"></script>
+<script src="../footer-loader.js"></script>
+</html>

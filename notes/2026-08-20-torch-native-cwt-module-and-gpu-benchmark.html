@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="../resources/icon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A torch-native CWT module, and a real GPU benchmark — Noah Shore</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .nav-links a { text-decoration: none; }
+    .nav-links a.active { text-decoration: underline; }
+    .post {
+      max-width: 800px;
+      margin: 0 auto 3rem auto;
+      text-align: left;
+    }
+    .post-meta {
+      color: #888;
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+    .post h1 {
+      font-size: 1.9rem;
+      text-align: center;
+      color: #eaeaea;
+      margin-bottom: 0.25rem;
+    }
+    .post p { font-size: 1.02rem; line-height: 1.65; color: #ddd; }
+    .post h2 { color: #cccccc; font-size: 1.15rem; margin-top: 2rem; }
+    .post code {
+      background: rgba(255,255,255,0.08);
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      font-size: 0.92em;
+    }
+    .callout {
+      background: rgba(42, 42, 42, 0.7);
+      border-left: 4px solid #4a6583;
+      border-radius: 6px;
+      padding: 1rem 1.5rem;
+      margin: 1.5rem 0;
+      color: #ccc;
+      font-size: 0.98rem;
+    }
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-bottom: 2rem;
+      color: #7aa5d6 !important;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 0.92rem;
+    }
+    th, td {
+      padding: 0.5rem 0.7rem;
+      text-align: right;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      color: #ccc;
+    }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: #eaeaea; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div id="menu-container"></div>
+  <div class="container" style="max-width:900px; margin:0 auto;">
+    <a href="../notes.html" class="back-link">&larr; All notes</a>
+    <div class="post">
+      <h1>A torch-native CWT module, and a real GPU benchmark</h1>
+      <p class="post-meta">2026-08-20 &middot; performance, wavelet coherence, GPU</p>
+
+      <p>
+        The wavelet transform underneath every coherence computation in this project has always run
+        through <code>fcwt</code>, an FFTW-backed C++ library called from a plain, unbatched Python loop
+        &mdash; one (sample, channel) pair at a time, CPU-only, no GPU involvement at all. This session
+        started a plan to replace it with a torch-native (<code>torch.fft</code>) implementation: a
+        correctness-preserving swap, not a redesign, aimed at eventually running the same computation on a
+        GPU. Steps 0&ndash;5 of that plan are done and validated here; the actual pipeline swap (step 6)
+        hasn't happened yet.
+      </p>
+
+      <h2>Building the module, and two real calibration bugs</h2>
+      <p>
+        The new module (<code>utils/torch_cwt.py</code>) computes the CWT via the Fourier convolution
+        theorem &mdash; FFT the signal once, multiply against a precomputed frequency-domain Morlet filter
+        bank, inverse-FFT back. Two real bugs turned up while calibrating against actual <code>fcwt</code>
+        output rather than trusting the math in isolation: fcwt's frequency array runs high-to-low, the
+        opposite of the natural construction order, which silently compared the wrong frequency's column
+        against the wrong column until caught (magnitude correlation was ~0.22 until fixed, ~1.0 after); and
+        the filter's peak amplitude needed an empirically-calibrated flat constant across scale, since a
+        literal derivation gives an amplitude that wrongly grows at low frequency. That second bug alone
+        accounted for a worst-case coefficient error of ~53 inside the region that actually reaches the
+        model &mdash; high per-frequency correlation had been masking it, since correlation doesn't catch a
+        systematic amplitude bias.
+      </p>
+
+      <h2>Parity validation</h2>
+      <p>
+        Magnitude and phase correlation between the new module and real <code>fcwt</code> output on actual
+        CHB-MIT trials, restricted to the cone-of-influence region that's the only part that ever reaches
+        the model: 0.999950&ndash;0.999962 magnitude Pearson r. A broader sweep across 60 trials, every
+        channel, put the per-trial minimum at 0.99989 &mdash; every trial cleared the &gt;0.999 bar. A
+        stress test at 500 log-spaced scales on a real 300-second signal held the same correctness (median
+        relative error 0.005%, no NaN/Inf across 38 million valid samples) &mdash; if anything tighter at
+        high scale density than at the small canonical config.
+      </p>
+
+      <h2>The real GPU benchmark</h2>
+      <p>
+        Local Mac testing (CPU and Apple's MPS backend) gave a mixed, confusing picture &mdash; the naive
+        torch implementation sometimes lost to fcwt's own algorithmic edge on long signals. That story didn't
+        hold up on real hardware. A Runpod GPU pod (RTX 4090, ~8 minutes of uptime, about five cents) gave a
+        clean answer instead:
+      </p>
+      <table>
+        <tr><th>config</th><th>fcwt</th><th>torch_cwt (CUDA)</th><th>speedup</th></tr>
+        <tr><td>30s window, nfreqs=8</td><td>0.68 ms</td><td>0.16 ms</td><td>4.4&times;</td></tr>
+        <tr><td>30s window, nfreqs=200</td><td>7.35 ms</td><td>0.16 ms</td><td>47&times;</td></tr>
+        <tr><td>30s window, nfreqs=500</td><td>17.82 ms</td><td>0.23 ms</td><td>79&times;</td></tr>
+        <tr><td>1hr continuous, nfreqs=8</td><td>78.6 ms</td><td>0.79 ms</td><td>100&times;</td></tr>
+        <tr><td>1hr continuous, nfreqs=200</td><td>1422 ms</td><td>19.7 ms</td><td>72&times;</td></tr>
+        <tr><td>3hr continuous, nfreqs=8</td><td>343 ms</td><td>3.2 ms</td><td>106&times;</td></tr>
+      </table>
+      <p>
+        Correctness held throughout the sweep &mdash; magnitude/phase correlation 0.999998&ndash;1.000000,
+        no NaN or Inf at any size tested. The speedup grows with problem size rather than staying flat, which
+        matters here specifically because the project's direction is toward longer windows and higher
+        frequency resolution, not away from it &mdash; the win compounds with where this is headed rather
+        than fading as the workload changes.
+      </p>
+      <div class="callout">
+        Not yet true, and worth being precise about: this is a validated preview of the ceiling, not a
+        measured improvement to the real training pipeline. The classifier's actual feature-preparation code
+        still calls <code>fcwt</code>; the torch-native module lives on a separate branch, one commit, wired
+        into nothing yet. The benchmark above used synthetic signals shaped to match real data, not an
+        end-to-end run of the actual model.
+      </div>
+
+      <h2>Open items</h2>
+      <p>
+        The actual swap &mdash; pointing the classifier's feature preparation at the new module and
+        re-running the canonical evaluation to confirm scores don't move &mdash; hasn't started. The
+        canonical config used for most of this session's validation (4s windows) is already outdated; the
+        real target is 30s windows now, with a multi-hour continuous option to keep open, and the GPU
+        benchmark above already covers that config directly. A visual demo script and its output image exist
+        but aren't committed yet, and removing <code>fcwt</code> as a dependency entirely is explicitly
+        deferred until after the real swap is confirmed clean.
+      </p>
+    </div>
+  </div>
+  <div id="footer-container"></div>
+</body>
+<script src="../menu-loader.js"></script>
+<script src="../footer-loader.js"></script>
+</html>
