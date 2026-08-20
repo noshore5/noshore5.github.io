@@ -170,7 +170,7 @@
 <text x="220" y="165" class="box-title">Continuous wavelet transform (CWT)</text>
 <text x="220" y="183" class="box-body">Each channel convolved with a Morlet wavelet across scales — one complex</text>
 <text x="220" y="198" class="box-body">time-frequency map per channel, computed before any cross-channel step:</text>
-<text x="520" y="222" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12.5" fill="var(--text-primary)">W_x(f, t) = ∫ x(τ) · ψ*_{f,t}(τ) dτ</text>
+<text x="520" y="222" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="14" fill="var(--text-primary)"><tspan font-style="italic">W</tspan><tspan font-style="italic" font-size="10" dy="4">x</tspan><tspan font-size="14" dy="-4">(</tspan><tspan font-style="italic">f</tspan><tspan>, </tspan><tspan font-style="italic">t</tspan><tspan>)  =  </tspan><tspan font-size="17">∫</tspan><tspan font-style="italic"> x</tspan><tspan>(</tspan><tspan font-style="italic">τ</tspan><tspan>) · </tspan><tspan font-style="italic">ψ</tspan><tspan font-size="10" dy="-6">*</tspan><tspan font-style="italic" font-size="10" dy="10">f,t</tspan><tspan font-size="14" dy="-4">(</tspan><tspan font-style="italic">τ</tspan><tspan>) d</tspan><tspan font-style="italic">τ</tspan></text>
 </g>
 
 <g class="illus">
@@ -195,9 +195,14 @@
 <text x="220" y="311" class="box-title">Cross-wavelet coherence (WCT)</text>
 <text x="220" y="333" class="box-body">Combines each pair's CWTs into a smoothed, normalized coherence magnitude</text>
 <text x="220" y="350" class="box-body">and phase, across frequency and time:</text>
-<text x="520" y="378" text-anchor="middle" font-family="ui-monospace,monospace" font-size="13.5" fill="var(--text-primary)">R²_xy(f,t) = |S(W_xy)|² / ( S(|W_x|²) · S(|W_y|²) )</text>
-<text x="520" y="402" text-anchor="middle" font-family="ui-monospace,monospace" font-size="13.5" fill="var(--text-primary)">φ_xy(f,t) = arg( W_xy(f,t) )</text>
-<text x="220" y="428" class="box-body">This magnitude/phase pair feeds the surrogate-significance test next.</text>
+<g font-family="Georgia,'Times New Roman',serif" fill="var(--text-primary)">
+<text x="470" y="389" text-anchor="end" font-size="14"><tspan font-style="italic">R</tspan><tspan font-size="10" dy="-6">2</tspan><tspan font-style="italic" font-size="10" dy="10">xy</tspan><tspan font-size="14" dy="-4">(</tspan><tspan font-style="italic">f</tspan><tspan>,</tspan><tspan font-style="italic">t</tspan><tspan>)  =</tspan></text>
+<text x="560" y="376" text-anchor="middle" font-size="12"><tspan>|S(</tspan><tspan font-style="italic">W</tspan><tspan font-style="italic" font-size="9" dy="3">xy</tspan><tspan font-size="12" dy="-3">)|</tspan><tspan font-size="9" dy="-6">2</tspan></text>
+<line x1="490" y1="385" x2="630" y2="385" stroke="var(--text-primary)" stroke-width="1.2"></line>
+<text x="560" y="401" text-anchor="middle" font-size="12"><tspan>S(|</tspan><tspan font-style="italic">W</tspan><tspan font-style="italic" font-size="9" dy="3">x</tspan><tspan font-size="12" dy="-3">|</tspan><tspan font-size="9" dy="-6">2</tspan><tspan font-size="12" dy="6">)  ·  S(|</tspan><tspan font-style="italic">W</tspan><tspan font-style="italic" font-size="9" dy="3">y</tspan><tspan font-size="12" dy="-3">|</tspan><tspan font-size="9" dy="-6">2</tspan><tspan font-size="12" dy="6">)</tspan></text>
+<text x="520" y="425" text-anchor="middle" font-size="14"><tspan font-style="italic">φ</tspan><tspan font-style="italic" font-size="10" dy="4">xy</tspan><tspan font-size="14" dy="-4">(</tspan><tspan font-style="italic">f</tspan><tspan>,</tspan><tspan font-style="italic">t</tspan><tspan>)  =  arg(</tspan><tspan font-style="italic">W</tspan><tspan font-style="italic" font-size="10" dy="4">xy</tspan><tspan font-size="14" dy="-4">(</tspan><tspan font-style="italic">f</tspan><tspan>,</tspan><tspan font-style="italic">t</tspan><tspan>))</tspan></text>
+</g>
+<text x="220" y="452" class="box-body">This magnitude/phase pair feeds the surrogate-significance test next.</text>
 </g>
 
 <g class="illus">
