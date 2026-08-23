@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="../resources/icon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A full 6-fold real run, and a real k-of-n tradeoff — Noah Shore</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .nav-links a { text-decoration: none; }
+    .nav-links a.active { text-decoration: underline; }
+    .post {
+      max-width: 800px;
+      margin: 0 auto 3rem auto;
+      text-align: left;
+    }
+    .post-meta {
+      color: #888;
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+    .post h1 {
+      font-size: 1.9rem;
+      text-align: center;
+      color: #eaeaea;
+      margin-bottom: 0.25rem;
+    }
+    .post p { font-size: 1.02rem; line-height: 1.65; color: #ddd; }
+    .post h2 { color: #cccccc; font-size: 1.15rem; margin-top: 2rem; }
+    .post code {
+      background: rgba(255,255,255,0.08);
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      font-size: 0.92em;
+    }
+    .callout {
+      background: rgba(42, 42, 42, 0.7);
+      border-left: 4px solid #4a6583;
+      border-radius: 6px;
+      padding: 1rem 1.5rem;
+      margin: 1.5rem 0;
+      color: #ccc;
+      font-size: 0.98rem;
+    }
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-bottom: 2rem;
+      color: #7aa5d6 !important;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 0.92rem;
+    }
+    th, td {
+      padding: 0.5rem 0.7rem;
+      text-align: right;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      color: #ccc;
+    }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: #eaeaea; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div id="menu-container"></div>
+  <div class="container" style="max-width:900px; margin:0 auto;">
+    <a href="../notes.html" class="back-link">&larr; All notes</a>
+    <div class="post">
+      <h1>A full 6-fold real run &mdash; and a real recall cost hiding in the k-of-n win</h1>
+      <p class="post-meta">2026-08-23 &middot; EEG seizure prediction, alarm smoothing</p>
+
+      <p>
+        Follow-on to the same day's bf16 speedup and OOM fix. With both fixes in place, the first-ever
+        completed run of this exact configuration &mdash; full 23-channel data, uncapped test sets, both
+        bf16 flags on, k-of-n smoothing applied &mdash; finished in about 34 minutes with no crash. The
+        headline number looks great until the smoothing step is examined closely.
+      </p>
+
+      <h2>Per-fold results</h2>
+      <p>
+        Real leave-one-seizure-out cross-validation across all six of chb01's seizures, full-density test
+        sets (650&ndash;750 windows per fold, never subsampled).
+      </p>
+      <table>
+        <tr><th>seizure</th><th>preictal</th><th>hit (raw&rarr;smoothed)</th><th>FAR/hr (raw&rarr;smoothed)</th><th>precision</th><th>recall</th><th>f1</th><th>AUC-PR</th></tr>
+        <tr><td>03</td><td>30</td><td>&#10003; &rarr; &#10007;</td><td>8.33 &rarr; 2.17</td><td>0.038</td><td>0.067</td><td>0.049</td><td>0.108</td></tr>
+        <tr><td>04</td><td>30</td><td>&#10003; &rarr; &#10003;</td><td>22.26 &rarr; 9.29</td><td>0.190</td><td>0.900</td><td>0.314</td><td>0.458</td></tr>
+        <tr><td>15</td><td>30</td><td>&#10003; &rarr; &#10003;</td><td>6.45 &rarr; 1.22</td><td>0.413</td><td>0.867</td><td>0.559</td><td>0.536</td></tr>
+        <tr><td>16</td><td>23</td><td>&#10003; &rarr; &#10003;</td><td>1.67 &rarr; 0.00</td><td>0.667</td><td>0.870</td><td>0.755</td><td>0.803</td></tr>
+        <tr><td>18</td><td>30</td><td>&#10003; &rarr; &#10007;</td><td>1.00 &rarr; 0.00</td><td>0.500</td><td>0.200</td><td>0.286</td><td>0.447</td></tr>
+        <tr><td>26</td><td>30</td><td>&#10003; &rarr; &#10007;</td><td>3.40 &rarr; 0.00</td><td>0.056</td><td>0.033</td><td>0.042</td><td>0.123</td></tr>
+      </table>
+      <p>
+        Mean across folds: accuracy 0.921, precision 0.311, recall 0.489, f1 0.334, average_precision 0.413,
+        roc_auc 0.916. Event-level hit rate: <strong>6/6 (100%) raw</strong>, dropping to
+        <strong>3/6 (50%) after smoothing</strong>. False-alarm rate: 7.19/hr raw, down to 2.11/hr smoothed
+        &mdash; a ~70% reduction.
+      </p>
+
+      <div class="callout">
+        The tradeoff those two headline numbers hide: k-of-n smoothing erased three real detections
+        (seizures 03, 18, 26) along with the false positives it was meant to suppress. Those seizures'
+        preictal windows genuinely were flagged by the raw classifier &mdash; the positive predictions just
+        never sustained the required 8-of-10 consecutive-window density to register as a smoothed alarm.
+        Cutting false alarms by 70% cost half the event-level hit rate. That's a real recall cost on this
+        subject, not a free win.
+      </div>
+
+      <h2>Why this didn't show up earlier</h2>
+      <p>
+        Two smaller diagnostic checks run earlier the same day &mdash; a quick sanity-scale run and a
+        comparison against the Truong baseline itself &mdash; both showed 6/6 hit rate at both raw and
+        smoothed thresholds, no apparent cost. Neither of those used this run's real, full-density test
+        sets; the tradeoff only became visible at real scale. The smoothing window (k=8 of n=10) was
+        inherited as-is from the published baseline's own paper defaults, never independently tuned for this
+        pipeline's own window and step size &mdash; whether that's actually the right smoothing window here,
+        or needs its own tuning pass, is now a genuinely open, undecided question rather than something to
+        assume is fine because it came from a credible source.
+      </p>
+
+      <h2>Open items</h2>
+      <p>
+        The k-of-n tuning question above needs a deliberate decision, not just a bigger run. This is subject
+        1 (chb01) only &mdash; no claim here about how any of this generalizes to other subjects. Neither
+        this run's code (the bf16 and OOM fixes from the companion session) nor its results are committed
+        yet.
+      </p>
+    </div>
+  </div>
+  <div id="footer-container"></div>
+</body>
+<script src="../menu-loader.js"></script>
+<script src="../footer-loader.js"></script>
+</html>

@@ -73,17 +73,16 @@
   <div class="container" style="max-width:900px; margin:0 auto;">
     <a href="../notes.html" class="back-link">&larr; All notes</a>
     <div class="post">
-      <h1>A torch-native CWT module, and a real GPU benchmark</h1>
+      <h1>A torch-native CWT module, a real GPU benchmark, and the bottleneck it uncovered</h1>
       <p class="post-meta">2026-08-20 &middot; performance, wavelet coherence, GPU</p>
 
       <p>
         The wavelet transform underneath every coherence computation in this project has always run
         through <code>fcwt</code>, an FFTW-backed C++ library called from a plain, unbatched Python loop
         &mdash; one (sample, channel) pair at a time, CPU-only, no GPU involvement at all. This session
-        started a plan to replace it with a torch-native (<code>torch.fft</code>) implementation: a
-        correctness-preserving swap, not a redesign, aimed at eventually running the same computation on a
-        GPU. Steps 0&ndash;5 of that plan are done and validated here; the actual pipeline swap (step 6)
-        hasn't happened yet.
+        replaced it with a torch-native (<code>torch.fft</code>) implementation, wired it in as the real
+        default, and along the way found and fixed a genuine bottleneck that had nothing to do with the CWT
+        itself.
       </p>
 
       <h2>Building the module, and two real calibration bugs</h2>
@@ -106,18 +105,17 @@
         Magnitude and phase correlation between the new module and real <code>fcwt</code> output on actual
         CHB-MIT trials, restricted to the cone-of-influence region that's the only part that ever reaches
         the model: 0.999950&ndash;0.999962 magnitude Pearson r. A broader sweep across 60 trials, every
-        channel, put the per-trial minimum at 0.99989 &mdash; every trial cleared the &gt;0.999 bar. A
-        stress test at 500 log-spaced scales on a real 300-second signal held the same correctness (median
-        relative error 0.005%, no NaN/Inf across 38 million valid samples) &mdash; if anything tighter at
-        high scale density than at the small canonical config.
+        channel, put the per-trial minimum at 0.99989. A stress test at 500 log-spaced scales on a real
+        300-second signal held the same correctness (median relative error 0.005%, no NaN/Inf across 38
+        million valid samples).
       </p>
 
       <h2>The real GPU benchmark</h2>
       <p>
-        Local Mac testing (CPU and Apple's MPS backend) gave a mixed, confusing picture &mdash; the naive
-        torch implementation sometimes lost to fcwt's own algorithmic edge on long signals. That story didn't
-        hold up on real hardware. A Runpod GPU pod (RTX 4090, ~8 minutes of uptime, about five cents) gave a
-        clean answer instead:
+        Local Mac testing (CPU and Apple's MPS backend) gave a mixed picture &mdash; a naive torch
+        implementation sometimes lost to fcwt's own algorithmic edge on long signals. That didn't hold up on
+        real hardware. A Runpod GPU pod (RTX 4090, ~8 minutes of uptime, about five cents) gave a clean
+        answer instead:
       </p>
       <table>
         <tr><th>config</th><th>fcwt</th><th>torch_cwt (CUDA)</th><th>speedup</th></tr>
@@ -129,29 +127,95 @@
         <tr><td>3hr continuous, nfreqs=8</td><td>343 ms</td><td>3.2 ms</td><td>106&times;</td></tr>
       </table>
       <p>
-        Correctness held throughout the sweep &mdash; magnitude/phase correlation 0.999998&ndash;1.000000,
-        no NaN or Inf at any size tested. The speedup grows with problem size rather than staying flat, which
-        matters here specifically because the project's direction is toward longer windows and higher
-        frequency resolution, not away from it &mdash; the win compounds with where this is headed rather
-        than fading as the workload changes.
+        Correctness held throughout &mdash; magnitude/phase correlation 0.999998&ndash;1.000000, no NaN or
+        Inf at any size tested.
       </p>
+
+      <h2>Wiring it in for real: batching, not a naive swap</h2>
+      <p>
+        Pointing the classifier at the new module unchanged would have erased most of the measured speedup
+        &mdash; every real call site invoked the transform one single-channel signal at a time, and that
+        per-item host&harr;device transfer and kernel launch is exactly the overhead the batched benchmark
+        above didn't pay. So the call sites themselves were reworked: a batched transform function, a
+        vectorized sibling of the existing feature-preparation code, and cache-key resolution done in a
+        first pass so only actual cache misses get batched through the transform. A new
+        <code>cwt_backend</code> flag (<code>"fcwt"</code> default, <code>"torch"</code> opt-in) keeps the
+        old path byte-for-byte available as a revert switch rather than requiring a git revert.
+      </p>
+      <p>
+        Verified bit-for-bit identical output between the looped and batched call paths on synthetic data,
+        then end-to-end on a trained classifier (predict_proba max absolute difference 0.0023, 100% class
+        agreement between backends) &mdash; consistent with the CWT-level correlation propagating cleanly
+        through training, not a bug.
+      </p>
+
+      <h2>A cache-key bug that silently no-op'd the first real comparison</h2>
+      <p>
+        The first real-data before/after comparison between backends came back with bit-identical scores for
+        both &mdash; which turned out to be wrong, for a specific, findable reason. The disk caches for CWT
+        and dense-edge features were keyed on signal content and config, but not on which backend actually
+        computed the entry. This machine already had a populated cache from earlier fcwt-only sessions, so
+        the "torch" backend's run was silently reading back fcwt-computed values on every lookup and never
+        actually exercising the new module at all &mdash; both runs' progress bars showing 100% cache reuse
+        is what gave it away. Fixed by folding the backend name into the cache key, which forces a one-time,
+        harmless full recompute on the next run anywhere a cache already existed. With that fixed, the real
+        comparison showed small, non-systematic differences in the continuous-score metrics per fold &mdash;
+        consistent with the already-established near-perfect coefficient-level correlation, not a bug.
+      </p>
+
+      <h2>Default flipped, fcwt removed &mdash; and the real bottleneck surfaces</h2>
+      <p>
+        With the swap validated, <code>cwt_backend="torch"</code> became the real default for every
+        pipeline, <code>fcwt</code> and its unused FFTW dependency were dropped entirely, and a pod image was
+        built with the new, simpler dependency set baked in. But a real, full-scale attempt at the actual
+        target evaluation (30s windows, prediction mode, full chb01) told a more important story: the CWT
+        step itself was genuinely fast and batched, exactly as benchmarked &mdash; but a downstream step,
+        dense-edge coherence computation, took about as long per batch regardless of how fast the CWT
+        feeding it ran. Projected total time for the full evaluation: roughly 20 hours, essentially
+        unchanged from the estimate before any of this session's work. The run was killed once that was
+        clear, not because anything crashed.
+      </p>
+
+      <h2>Root cause: not the GPU math, the compressed cache write</h2>
+      <p>
+        The dense-edge computation itself &mdash; genuinely vectorized torch, no hidden Python loops &mdash;
+        was confirmed correct by reading it in full before measuring anything. The actual cost turned out to
+        be one line: every trial's computed dense-edge tensor was being written to disk with
+        <code>np.savez_compressed</code>, synchronous single-threaded DEFLATE compression, timed inside the
+        same loop as the GPU compute. Measured directly on a fresh pod with GPU-only timing isolated via
+        <code>torch.cuda.synchronize()</code>:
+      </p>
+      <table>
+        <tr><th></th><th>before (compressed)</th><th>after (uncompressed)</th></tr>
+        <tr><td>GPU compute, 6 chunks</td><td>0.70s</td><td>0.50s</td></tr>
+        <tr><td>disk cache write, 24 trials</td><td>12.73s</td><td>0.26s</td></tr>
+        <tr><td>write as % of compute+write</td><td>94.8%</td><td>34.4%</td></tr>
+        <tr><td><code>fit()</code> wall time, this slice</td><td>16.08s</td><td>3.24s</td></tr>
+      </table>
       <div class="callout">
-        Not yet true, and worth being precise about: this is a validated preview of the ceiling, not a
-        measured improvement to the real training pipeline. The classifier's actual feature-preparation code
-        still calls <code>fcwt</code>; the torch-native module lives on a separate branch, one commit, wired
-        into nothing yet. The benchmark above used synthetic signals shaped to match real data, not an
-        end-to-end run of the actual model.
+        A single-tensor A/B on the real cached shape made the tradeoff explicit: compressed write took
+        499ms for a 13.73MB file; uncompressed took 6.6ms for 15.51MB &mdash; an 11% size reduction bought at
+        75&times; the write time. The compression cost had been justified by a size-reduction figure from an
+        earlier note that was never re-validated against the config real runs actually use. Fixed by
+        switching to uncompressed writes; existing compressed cache entries still read back fine, only new
+        writes changed.
       </div>
+      <p>
+        With the disk-write cost roughly 14&times; cheaper and GPU compute already fast, dense-edge should no
+        longer dominate &mdash; but that's a projection from a 24-window slice, not a re-measurement of the
+        full evaluation. The full run that was killed earlier hasn't been re-attempted yet, left for a
+        future session rather than run overnight unmeasured.
+      </p>
 
       <h2>Open items</h2>
       <p>
-        The actual swap &mdash; pointing the classifier's feature preparation at the new module and
-        re-running the canonical evaluation to confirm scores don't move &mdash; hasn't started. The
-        canonical config used for most of this session's validation (4s windows) is already outdated; the
-        real target is 30s windows now, with a multi-hour continuous option to keep open, and the GPU
-        benchmark above already covers that config directly. A visual demo script and its output image exist
-        but aren't committed yet, and removing <code>fcwt</code> as a dependency entirely is explicitly
-        deferred until after the real swap is confirmed clean.
+        The full real evaluation hasn't been re-run end-to-end since the cache-write fix, so there's no
+        fresh measured wall-clock number yet, only the projection above. The cache-key fix means every
+        pre-existing on-disk CWT/dense-edge cache entry (this machine and any Runpod volume that
+        accumulated one earlier) gets invalidated once, forcing a one-time full recompute on next use &mdash;
+        expected, not a regression. A demo script and its output image exist but aren't committed.
+        <code>run_pipelines.py</code>'s window-length and frequency-resolution defaults still reflect the
+        outdated canonical config, not yet updated to match the real 30s-window target.
       </p>
     </div>
   </div>

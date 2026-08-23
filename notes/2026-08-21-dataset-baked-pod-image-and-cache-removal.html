@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="../resources/icon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A dataset-baked pod image, and a cache removed entirely — Noah Shore</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .nav-links a { text-decoration: none; }
+    .nav-links a.active { text-decoration: underline; }
+    .post {
+      max-width: 800px;
+      margin: 0 auto 3rem auto;
+      text-align: left;
+    }
+    .post-meta {
+      color: #888;
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+    .post h1 {
+      font-size: 1.9rem;
+      text-align: center;
+      color: #eaeaea;
+      margin-bottom: 0.25rem;
+    }
+    .post p { font-size: 1.02rem; line-height: 1.65; color: #ddd; }
+    .post h2 { color: #cccccc; font-size: 1.15rem; margin-top: 2rem; }
+    .post code {
+      background: rgba(255,255,255,0.08);
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      font-size: 0.92em;
+    }
+    .callout {
+      background: rgba(42, 42, 42, 0.7);
+      border-left: 4px solid #4a6583;
+      border-radius: 6px;
+      padding: 1rem 1.5rem;
+      margin: 1.5rem 0;
+      color: #ccc;
+      font-size: 0.98rem;
+    }
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-bottom: 2rem;
+      color: #7aa5d6 !important;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 0.92rem;
+    }
+    th, td {
+      padding: 0.5rem 0.7rem;
+      text-align: right;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      color: #ccc;
+    }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: #eaeaea; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div id="menu-container"></div>
+  <div class="container" style="max-width:900px; margin:0 auto;">
+    <a href="../notes.html" class="back-link">&larr; All notes</a>
+    <div class="post">
+      <h1>A dataset-baked pod image, a safer launch script, and a cache removed entirely</h1>
+      <p class="post-meta">2026-08-21 &middot; infrastructure, performance, GPU</p>
+
+      <p>
+        Follow-on to the torch-native CWT work. This session baked the dataset into the GPU pod image,
+        hardened the pod-launch script against a real orphaning bug, then went further than expected on
+        caching &mdash; removing the CWT and dense-edge disk caches entirely rather than just tuning them.
+        It ended by explicit request partway through a live investigation, so the most interesting question
+        it raised is still open.
+      </p>
+
+      <h2>Dataset baked into the pod image</h2>
+      <p>
+        Rather than a network volume, the CHB-MIT data for the one subject this project currently trains on
+        (~1.6GB, 42 recordings) now gets downloaded straight into the Docker image at build time, driven by
+        the same public mirror's own file listing rather than a hardcoded filename list so it can't silently
+        drift from what the pipeline expects. Build time grew from ~25 to ~43 minutes as a result; validated
+        in-build that all 42 files actually landed.
+      </p>
+
+      <h2>A real orphaned-pod bug, found and fixed live</h2>
+      <p>
+        The new launch script is built to always tear a pod down, success or failure, via two independent
+        layers &mdash; a local exit trap and a platform-side wall-clock cap. A live bad-machine draw (SSH
+        never became reachable) exposed a real gap: the pod-creation call failing non-zero aborted the
+        script before the pod's ID was ever parsed out of the response, so the cleanup trap had nothing to
+        act on and the pod sat running, unbilled-for, until caught and stopped by hand. Fixed by parsing the
+        pod ID out of either a success or a timeout-error response before deciding whether to bail, so a
+        bad draw gets stopped going forward instead of orphaned.
+      </p>
+
+      <h2>Reopening the caching question &mdash; and removing it entirely</h2>
+      <p>
+        Having hit versions of "why is this still slow" across many prior sessions, the question got asked
+        directly this time: if the CWT itself is now sub-millisecond, why cache it on disk at all? A first,
+        narrower attempt &mdash; disabling only the CWT cache for the torch backend &mdash; measured no
+        real improvement on a real pod (5m34s cached vs. 5m55s uncached, within noise). A more aggressive
+        change, discovered mid-session as a concurrent local commit and pushed to make it usable, removed
+        both the CWT and dense-edge disk caches outright rather than toggling them. The reasoning matched
+        this session's own measurements: with raw CWT compute now measured at 0.16&ndash;0.23ms per call on
+        real CUDA hardware, the caches' own hashing and disk I/O had become the dominant cost, not the
+        computation they were protecting.
+      </p>
+      <table>
+        <tr><th>config</th><th>epoch_time sum, 14 epochs</th></tr>
+        <tr><td>both caches enabled (baseline)</td><td>145.5s</td></tr>
+        <tr><td>CWT cache only removed</td><td>155.5s</td></tr>
+        <tr><td>both caches removed</td><td>95.6s</td></tr>
+      </table>
+      <p>
+        Removing both caches measured ~34% less training-loop time than baseline, with live GPU utilization
+        at 74% &mdash; versus near-zero in every prior observation across this and past sessions. Correctness
+        held throughout: identical hit rate and metrics across every config tested, confirming caching had
+        always been a pure performance layer, never load-bearing for the actual output.
+      </p>
+
+      <h2>The open question this session didn't answer</h2>
+      <div class="callout">
+        Pushed back on directly, and fairly: 95.6s at smoke scale with GPU utilization at 74% still isn't
+        good enough against a real, non-smoke run clocking 60 seconds per epoch the day before. If CWT itself
+        is confirmed sub-millisecond, a whole batch's worth shouldn't meaningfully contribute to a 6&ndash;8
+        second epoch at smoke scale at all. Smoke-scale and real-scale numbers aren't a clean comparison
+        (smoke uses a coarser step size and a capped recording count), and this session never actually
+        isolated where smoke-scale epoch time goes &mdash; CWT vs. dense-edge computation vs. the model's own
+        forward/backward pass vs. per-batch overhead.
+      </div>
+      <p>
+        A live profiling attempt to answer this directly was started and not finished &mdash; a stopped pod
+        was restarted to investigate, which surfaced its own gotcha (a git-cloned repo doesn't survive a
+        pod stop/start cycle, only image-baked content does), and the session was called off entirely before
+        a phase-by-phase timing breakdown could be collected. No conclusion was reached about whether
+        tonight's cache removal actually matters at real scale.
+      </p>
+
+      <h2>Open items</h2>
+      <p>
+        Getting a real CWT-vs-dense-edge-vs-model-step timing breakdown at smoke scale is the genuinely
+        unfinished work here, before drawing further conclusions about the cache removal or comparing
+        against the previous day's real-scale numbers. All pods were terminated and confirmed empty at
+        session's end (~$0.62 total spend across the night's experiments). The launch script now defaults
+        to stopping rather than deleting a pod on teardown, which means a stopped pod's disk billing can
+        quietly continue unless checked periodically.
+      </p>
+    </div>
+  </div>
+  <div id="footer-container"></div>
+</body>
+<script src="../menu-loader.js"></script>
+<script src="../footer-loader.js"></script>
+</html>

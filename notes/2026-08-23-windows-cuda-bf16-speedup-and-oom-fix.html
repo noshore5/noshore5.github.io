@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="../resources/icon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Windows/CUDA bf16: an 8&ndash;11x speedup and a real OOM fix — Noah Shore</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .nav-links a { text-decoration: none; }
+    .nav-links a.active { text-decoration: underline; }
+    .post {
+      max-width: 800px;
+      margin: 0 auto 3rem auto;
+      text-align: left;
+    }
+    .post-meta {
+      color: #888;
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+    .post h1 {
+      font-size: 1.9rem;
+      text-align: center;
+      color: #eaeaea;
+      margin-bottom: 0.25rem;
+    }
+    .post p { font-size: 1.02rem; line-height: 1.65; color: #ddd; }
+    .post h2 { color: #cccccc; font-size: 1.15rem; margin-top: 2rem; }
+    .post code {
+      background: rgba(255,255,255,0.08);
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      font-size: 0.92em;
+    }
+    .callout {
+      background: rgba(42, 42, 42, 0.7);
+      border-left: 4px solid #4a6583;
+      border-radius: 6px;
+      padding: 1rem 1.5rem;
+      margin: 1.5rem 0;
+      color: #ccc;
+      font-size: 0.98rem;
+    }
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-bottom: 2rem;
+      color: #7aa5d6 !important;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 0.92rem;
+    }
+    th, td {
+      padding: 0.5rem 0.7rem;
+      text-align: right;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      color: #ccc;
+    }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: #eaeaea; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div id="menu-container"></div>
+  <div class="container" style="max-width:900px; margin:0 auto;">
+    <a href="../notes.html" class="back-link">&larr; All notes</a>
+    <div class="post">
+      <h1>Windows/CUDA bf16: an 8&ndash;11x speedup, a real OOM fix, and k-of-n smoothing</h1>
+      <p class="post-meta">2026-08-23 &middot; performance, GPU, prediction mode</p>
+
+      <p>
+        First real Windows/CUDA session on a local RTX 3070 Ti (8GB VRAM). Three threads: turning a
+        previously-abandoned bf16 speedup attempt into a genuine ~10x win, root-causing a CUDA
+        out-of-memory crash in prediction mode, and adding the same alarm-smoothing post-process the
+        Truong baseline already uses, so the two pipelines' event-level numbers are directly comparable.
+        Driven throughout by pushing back on unverified timing claims &mdash; every number below came from
+        a log, not an estimate, including one of the write-up's own mislabeled figures caught and
+        corrected mid-session.
+      </p>
+
+      <h2>Why CUDA wasn't even available</h2>
+      <p>
+        Root cause of "CUDA doesn't work on this machine yet": plain PyPI only hosts CPU-only <code>torch</code>
+        wheels for Windows, so a bare <code>pip install torch==2.8.0</code> silently installs a build where
+        <code>torch.cuda.is_available()</code> returns False even with a working GPU and driver. Fixed by
+        pointing at PyTorch's own CUDA wheel index and pinning the exact CUDA build.
+      </p>
+
+      <h2>Turning a documented non-win into a real ~10x fix</h2>
+      <p>
+        A bf16 speedup flag for the dense-edge computation had previously been left in place but broken
+        &mdash; wrapping the computation in bf16 autocast crashed the moment downstream code tried to build
+        a complex tensor from bf16 output, since <code>torch.complex()</code> only accepts a few specific
+        dtypes. Two real bugs, not just the crash, were behind it: the elementwise cross-spectrum math
+        wasn't actually autocast-eligible in the first place (autocast only downcasts convolution/matmul
+        ops, not plain multiply/subtract), so those tensors stayed full-precision regardless of the flag
+        &mdash; exactly what was overflowing memory. And even after fixing that, the smoothing step was
+        forcing its output back to float32 just to build a complex number, silently re-inflating the exact
+        memory the change existed to shrink, since a complex tensor is always 8 bytes per element regardless
+        of the precision feeding it. Fixed by dropping the complex-tensor representation entirely in favor
+        of the equivalent real-valued math (phase via <code>atan2</code>, magnitude-squared via a sum of
+        squares) &mdash; algebraically identical, but lets every stage genuinely stay in bf16.
+      </p>
+      <p>
+        Verified numerically first: bf16 output matched full-precision output to within noise-level
+        difference on a synthetic test signal, consistent with an existing precision-tolerance precedent
+        already in the pipeline. Measured speedup on the dense-edge computation stage alone, full 23-channel
+        real data:
+      </p>
+      <table>
+        <tr><th></th><th>compute per chunk</th><th>per trial</th></tr>
+        <tr><td>fp32 (before)</td><td>2.9&ndash;5.9s</td><td>91&ndash;183ms</td></tr>
+        <tr><td>bf16 (after)</td><td>0.45&ndash;0.56s</td><td>14&ndash;17ms</td></tr>
+      </table>
+      <p>
+        About 11&times; faster on that stage. A separate flag brought the same bf16 autocast to the model's
+        actual trainable forward pass, which the first flag didn't touch at all (it only covers precompute,
+        outside the autograd graph). Combined, real GPU, 23 channels, per-epoch wall time:
+      </p>
+      <table>
+        <tr><th>config</th><th>epoch time</th></tr>
+        <tr><td>fp32 baseline</td><td>119.73s</td></tr>
+        <tr><td>dense-edge bf16 only</td><td>23.95&ndash;33.49s</td></tr>
+        <tr><td>both flags</td><td>10.51&ndash;15.36s</td></tr>
+      </table>
+      <p>
+        Roughly 8&ndash;11&times; faster overall at smoke scale, with metrics matching prior full-precision
+        runs closely &mdash; no divergence beyond the expected bf16 noise floor.
+      </p>
+
+      <h2>A real CUDA out-of-memory crash, root-caused</h2>
+      <p>
+        The prediction-mode classifier prepares features for an entire test set in one un-chunked call
+        before any batching happens &mdash; fine for a small test set, wrong here, because test windows are
+        deliberately never subsampled the way training negatives are, so a real leave-one-seizure-out test
+        fold can be as large as a training fold. The first full 6-fold run crashed exactly there, right
+        after the first fold's training completed cleanly, trying to allocate under a gigabyte with the GPU
+        already full. Fixed by overriding prediction to reuse the same lazy, batch-at-a-time feature loader
+        already built for training, in sequential rather than shuffled order, so only one batch's features
+        are ever materialized in memory at once. Verified against a known-good prior run before trusting it
+        at real scale &mdash; metrics matched almost exactly.
+      </p>
+
+      <h2>k-of-n alarm smoothing, added for a fair comparison</h2>
+      <p>
+        To make this pipeline's event-level numbers directly comparable to the Truong baseline's own
+        smoothed numbers, added the identical post-process it uses &mdash; requiring k of the last n
+        consecutive window predictions to be positive before registering an alarm, applied per held-out
+        recording in chronological order, never across recordings, using the same published defaults rather
+        than inventing new ones. A diagnostic-scale check showed a substantial false-alarm reduction with no
+        cost to detections at that scale &mdash; though as the companion real-run note found, that didn't
+        hold at full scale (see the next entry).
+      </p>
+
+      <h2>Open items</h2>
+      <p>
+        None of this session's code changes were committed at write time. A one-off 417-second epoch outlier
+        showed up once in the combined-bf16 timing log and wasn't reproduced on a re-run &mdash; flagged as
+        a likely one-time driver stall rather than silently dropped. The complex-tensor-to-real-valued
+        rewrite touches every caller of the smoothing step, not just the bf16 path &mdash; verified correct
+        with the flag off, but flagged as worth a second look given how many call sites it touches.
+      </p>
+    </div>
+  </div>
+  <div id="footer-container"></div>
+</body>
+<script src="../menu-loader.js"></script>
+<script src="../footer-loader.js"></script>
+</html>

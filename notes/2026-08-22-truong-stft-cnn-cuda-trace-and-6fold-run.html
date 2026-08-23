@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="../resources/icon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>truong_stft_cnn: a CUDA trace and a real 6-fold run — Noah Shore</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .nav-links a { text-decoration: none; }
+    .nav-links a.active { text-decoration: underline; }
+    .post {
+      max-width: 800px;
+      margin: 0 auto 3rem auto;
+      text-align: left;
+    }
+    .post-meta {
+      color: #888;
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+    .post h1 {
+      font-size: 1.9rem;
+      text-align: center;
+      color: #eaeaea;
+      margin-bottom: 0.25rem;
+    }
+    .post p { font-size: 1.02rem; line-height: 1.65; color: #ddd; }
+    .post h2 { color: #cccccc; font-size: 1.15rem; margin-top: 2rem; }
+    .post code {
+      background: rgba(255,255,255,0.08);
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      font-size: 0.92em;
+    }
+    .callout {
+      background: rgba(42, 42, 42, 0.7);
+      border-left: 4px solid #4a6583;
+      border-radius: 6px;
+      padding: 1rem 1.5rem;
+      margin: 1.5rem 0;
+      color: #ccc;
+      font-size: 0.98rem;
+    }
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-bottom: 2rem;
+      color: #7aa5d6 !important;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 0.92rem;
+    }
+    th, td {
+      padding: 0.5rem 0.7rem;
+      text-align: right;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      color: #ccc;
+    }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: #eaeaea; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div id="menu-container"></div>
+  <div class="container" style="max-width:900px; margin:0 auto;">
+    <a href="../notes.html" class="back-link">&larr; All notes</a>
+    <div class="post">
+      <h1>truong_stft_cnn: a single-fold CUDA trace, and a real 6-fold run</h1>
+      <p class="post-meta">2026-08-22 &middot; baseline comparison, performance</p>
+
+      <p>
+        Two distinct <code>truong_stft_cnn</code> prediction-mode runs happened in the same session, at
+        different scales and for different purposes &mdash; worth keeping separate since both are easy to
+        conflate under the same pipeline name.
+      </p>
+
+      <h2>A fast, fully-instrumented single-fold trace</h2>
+      <p>
+        A debug harness forces exactly one fold and one epoch to get a fast, verbose look at a single
+        training pass rather than a real result. On real CUDA hardware: dataset construction 3.62s, model
+        fit 6.12s (including one-time model build), test prediction 0.79s &mdash; training throughput 101.8
+        windows/sec, test throughput 188.8 windows/sec. CUDA memory after fit: 17.0MB allocated, 214.0MB
+        reserved. That's a genuinely tiny working set, and it's architectural, not incidental: this
+        pipeline runs a single 2D/3D CNN over a compact STFT tensor, not a 253-edge dense coherence graph
+        &mdash; which is exactly why it's so much cheaper than <code>dense_edge_gru</code> to begin with,
+        independent of anything about caching or GPU utilization.
+      </p>
+
+      <h2>A real 6-fold leave-one-seizure-out run</h2>
+      <p>
+        Separately, a full run across the subject's six seizures, real epoch schedule, completed
+        successfully.
+      </p>
+      <table>
+        <tr><th>seizure</th><th>preictal</th><th>hit (smoothed)</th><th>precision</th><th>recall</th><th>f1</th><th>roc_auc</th><th>avg_precision</th><th>FAR/hr</th></tr>
+        <tr><td>03</td><td>30</td><td>&#10003;</td><td>0.181</td><td>0.700</td><td>0.288</td><td>0.875</td><td>0.136</td><td>12.3</td></tr>
+        <tr><td>04</td><td>30</td><td>&#10003;</td><td>0.201</td><td>0.933</td><td>0.331</td><td>0.919</td><td>0.227</td><td>13.9</td></tr>
+        <tr><td>15</td><td>30</td><td>&#10007;</td><td>0.000</td><td>0.000</td><td>0.000</td><td>0.971</td><td>0.400</td><td>1.6</td></tr>
+        <tr><td>16</td><td>23</td><td>&#10003;</td><td>0.259</td><td>0.957</td><td>0.407</td><td>0.980</td><td>0.616</td><td>3.2</td></tr>
+        <tr><td>18</td><td>30</td><td>&#10007;</td><td>0.857</td><td>0.200</td><td>0.324</td><td>0.995</td><td>0.852</td><td>0.0</td></tr>
+        <tr><td>26</td><td>30</td><td>&#10003;</td><td>0.558</td><td>0.967</td><td>0.707</td><td>0.983</td><td>0.619</td><td>2.8</td></tr>
+      </table>
+      <p>
+        Event-level hit rate: raw 5/6, smoothed 4/6 &mdash; the same hit/miss pattern (misses on seizures 15
+        and 18) as the earlier <code>truong_stft_cnn</code> run on the same subject and folds. Per-fold
+        numbers shifted somewhat from that run (seizure 03's precision, for instance, moved from 0.206 to
+        0.181) but not investigated further here, since the pipeline itself changed materially in between
+        &mdash; the torch-native CWT swap and the disk cache removal both landed in that window. The
+        qualitative shape held steady across both runs regardless: seizures 16 and 26 strong, 15 and 18
+        missing at threshold despite ranking well, 03 and 04 borderline.
+      </p>
+
+      <h2>Open items</h2>
+      <p>
+        The real 6-fold run has no accompanying verbose log, only result CSVs &mdash; if it needs to be
+        reproduced or debugged later, it will need a fresh run. No label-permutation null control has been
+        run yet for any <code>truong_stft_cnn</code> prediction run to date. The precision/recall drift
+        against the earlier run on the same folds hasn't been attributed to a specific one of the intervening
+        changes. Result CSVs from this run are untracked in git.
+      </p>
+    </div>
+  </div>
+  <div id="footer-container"></div>
+</body>
+<script src="../menu-loader.js"></script>
+<script src="../footer-loader.js"></script>
+</html>
