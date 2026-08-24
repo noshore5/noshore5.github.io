@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="../resources/icon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A third temporal backend: Mamba, and its real cost — Noah Shore</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .nav-links a { text-decoration: none; }
+    .nav-links a.active { text-decoration: underline; }
+    .post { max-width: 800px; margin: 0 auto 3rem auto; text-align: left; }
+    .post-meta { color: #888; font-size: 0.9rem; margin-bottom: 2rem; text-align: center; }
+    .post h1 { font-size: 1.9rem; text-align: center; color: #eaeaea; margin-bottom: 0.25rem; }
+    .post p { font-size: 1.02rem; line-height: 1.65; color: #ddd; }
+    .post h2 { color: #cccccc; font-size: 1.15rem; margin-top: 2rem; }
+    .post code { background: rgba(255,255,255,0.08); padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.92em; }
+    .callout { background: rgba(42, 42, 42, 0.7); border-left: 4px solid #4a6583; border-radius: 6px; padding: 1rem 1.5rem; margin: 1.5rem 0; color: #ccc; font-size: 0.98rem; }
+    .back-link { display: block; text-align: center; margin-bottom: 2rem; color: #7aa5d6 !important; }
+    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.92rem; }
+    th, td { padding: 0.5rem 0.7rem; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.1); color: #ccc; }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: #eaeaea; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div id="menu-container"></div>
+  <div class="container" style="max-width:900px; margin:0 auto;">
+    <a href="../notes.html" class="back-link">&larr; All notes</a>
+    <div class="post">
+      <h1>A third temporal backend: Mamba, and its real cost</h1>
+      <p class="post-meta">2026-08-24 &middot; architecture, sequence modeling</p>
+
+      <p>
+        The model has two existing ways to compress each coherence edge's behavior over time into one
+        vector: a small convolutional block, or a per-edge GRU. This session added a third, interchangeable
+        option using Mamba, the selective state-space sequence model &mdash; slotted into the exact same
+        position the other two already occupy, with everything downstream of it completely unchanged. It
+        works, converges, and trains cleanly on real data. It's also, at least in this first implementation,
+        roughly 14 times slower per epoch than the GRU it's being compared against.
+      </p>
+
+      <h2>Where it actually plugs in</h2>
+      <p>
+        Worth being precise about, since the natural assumption is wrong: this is not "run the graph
+        message-passing step at every timestep, then feed that sequence to Mamba." The real architecture
+        resolves time entirely inside this one module, before the graph's message passing ever runs once
+        &mdash; each edge's raw coherence/phase/significance sequence goes in, one summary vector per edge
+        comes out, and only then does the unmodified graph aggregation and classifier see anything. Mamba
+        was built to slot into exactly that same per-edge position the GRU already occupies, confirmed by
+        having the existing graph code run identically and untouched underneath all three backends.
+      </p>
+
+      <h2>The library choice, and why the obvious one doesn't fit here</h2>
+      <p>
+        The standard, official Mamba package ships no Windows build at all and depends on custom CUDA
+        kernels that need compiling from source with a Linux toolchain &mdash; a nonstarter both for this
+        session's Windows/CUDA machine and for keeping the existing Apple Silicon development path working,
+        since those kernels can't run on MPS or CPU under any circumstances. Rather than fight a fragile,
+        possibly hours-long build for a first, modest experiment, a pure-PyTorch reimplementation of the
+        same selective-scan math was used instead &mdash; same core recurrence, no custom kernels, installs
+        cleanly everywhere torch already does. A documented tradeoff, not a silent substitution.
+      </p>
+
+      <h2>A real memory problem, and a real fix for it</h2>
+      <p>
+        The first attempt to actually run it hit an immediate out-of-memory crash trying to allocate more
+        than 7 gigabytes on an 8-gigabyte card. The cause traced cleanly: a pure-PyTorch selective scan has
+        to materialize several large intermediate tensors whose size scales directly with edge count times
+        sequence length times state size &mdash; and because every one of the graph's 253 possible edges
+        always "fires" in this architecture regardless of how many are actually live, that edge count never
+        shrinks no matter what channel-subsetting is in effect. This isn't a hyperparameter problem
+        &mdash; changing the state size or expansion factor only scales the constant, not the underlying
+        edges-times-time factor causing the blowup. Fixed by splitting the batch into smaller chunks run
+        sequentially rather than all at once &mdash; a pure memory tactic, verified to produce numerically
+        identical output to an unchunked run before trusting it, the same pattern an existing chunking
+        mechanism elsewhere in the codebase already established.
+      </p>
+
+      <h2>Smoke-scale: it trains, but it's slow</h2>
+      <p>
+        With the memory issue resolved, a matched comparison against the GRU backend on identical data,
+        same hyperparameters, one fold:
+      </p>
+      <table>
+        <tr><th></th><th>mean epoch time</th><th>total wall time</th><th>F1</th><th>AP</th><th>AUC</th></tr>
+        <tr><td>Mamba</td><td>42.78s</td><td>264.03s</td><td>0.688</td><td>0.618</td><td>0.927</td></tr>
+        <tr><td>GRU</td><td>2.97s</td><td>21.16s</td><td>0.697</td><td>0.663</td><td>0.932</td></tr>
+      </table>
+      <p>
+        About 14&times; slower per epoch, roughly 12.5&times; slower overall. Prediction quality at this
+        trivial six-epoch scale is essentially indistinguishable between the two &mdash; which is the point
+        of this run: confirmation both backends train and converge sanely on the same data, not a real
+        accuracy comparison. The slowdown is a direct, understood cost of running dozens of small sequential
+        chunks through a pure-PyTorch scan (each recomputed a second time for the backward pass, on top of
+        the memory-saving chunking itself) versus a single fused, hardware-optimized GRU call over the whole
+        batch at once &mdash; not a mysterious inefficiency, and not evidence about whether the underlying
+        Mamba architecture is a good fit here.
+      </p>
+
+      <div class="callout">
+        No accuracy-chasing or protocol tuning was done to make Mamba look better &mdash; the dataset,
+        labeling, graph construction, and every training hyperparameter besides the temporal block itself
+        stayed identical to the GRU configuration, deliberately, so that if a real full evaluation later
+        shows Mamba genuinely losing to the GRU or the convolutional block, that's meant to stand as a real
+        result rather than something quietly tuned away.
+      </div>
+
+      <h2>A second data point: full channel count, run to real convergence</h2>
+      <p>
+        A follow-up run at the full 23-channel mesh (rather than the smoke-scale 4-channel subset), with a
+        real epoch budget and early stopping rather than a truncated smoke check, converged dramatically:
+        training loss and accuracy hit a perfect 1.0/1.0 by epoch 8 and held there, with early stopping
+        firing at epoch 15 after five epochs with no further improvement past the best checkpoint at epoch
+        10. On the held-out seizure: recall 1.0, ROC-AUC 0.94, raw false-alarm rate 27 per hour dropping to
+        0 after smoothing. Mean epoch time came in at 50.74s &mdash; about 19% slower than the smoke-scale
+        run, a modest increase rather than a multiplicative one, consistent with the memory analysis above:
+        the fixed 253-edge count (not how many are "live") is what mainly drives the Mamba scan's cost, so
+        going from a 4-channel subset to the full mesh mostly adds downstream coherence-computation cost
+        rather than materially changing the scan itself.
+      </p>
+      <p>
+        Read this the same way as any other single-fold, single-subject result: a real convergence and
+        timing data point for the Mamba backend at full scale, not a benchmark claim. Perfect training
+        accuracy alongside a real-looking held-out result on one fold is worth noting, not generalizing from.
+      </p>
+
+      <h2>Open items</h2>
+      <p>
+        No real leave-one-seizure-out six-fold comparison has been run yet &mdash; deliberately not launched
+        automatically this session, left as an explicit decision for later. Whether the ~14&times; slowdown
+        is worth paying for a real evaluation, whether a bigger GPU would make the chunk size less punishing,
+        or whether it's worth revisiting the CUDA-kernel version of Mamba if this project ever runs on a
+        Linux pod again, are all flagged as open options rather than decided here.
+      </p>
+    </div>
+  </div>
+  <div id="footer-container"></div>
+</body>
+<script src="../menu-loader.js"></script>
+<script src="../footer-loader.js"></script>
+</html>
