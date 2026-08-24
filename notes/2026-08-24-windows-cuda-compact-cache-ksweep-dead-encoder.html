@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="../resources/icon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A compact cache, a k-sweep, and a dead encoder removed — Noah Shore</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .nav-links a { text-decoration: none; }
+    .nav-links a.active { text-decoration: underline; }
+    .post { max-width: 800px; margin: 0 auto 3rem auto; text-align: left; }
+    .post-meta { color: #888; font-size: 0.9rem; margin-bottom: 2rem; text-align: center; }
+    .post h1 { font-size: 1.9rem; text-align: center; color: #eaeaea; margin-bottom: 0.25rem; }
+    .post p { font-size: 1.02rem; line-height: 1.65; color: #ddd; }
+    .post h2 { color: #cccccc; font-size: 1.15rem; margin-top: 2rem; }
+    .post code { background: rgba(255,255,255,0.08); padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.92em; }
+    .callout { background: rgba(42, 42, 42, 0.7); border-left: 4px solid #4a6583; border-radius: 6px; padding: 1rem 1.5rem; margin: 1.5rem 0; color: #ccc; font-size: 0.98rem; }
+    .back-link { display: block; text-align: center; margin-bottom: 2rem; color: #7aa5d6 !important; }
+    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.92rem; }
+    th, td { padding: 0.5rem 0.7rem; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.1); color: #ccc; }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: #eaeaea; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div id="menu-container"></div>
+  <div class="container" style="max-width:900px; margin:0 auto;">
+    <a href="../notes.html" class="back-link">&larr; All notes</a>
+    <div class="post">
+      <h1>A compact cache, a k-sweep, and a dead encoder removed</h1>
+      <p class="post-meta">2026-08-24 &middot; performance, ablation, GPU</p>
+
+      <p>
+        One continuous Windows/CUDA session with three chapters: a caching bug that made a 100%-hit cache
+        slower than no cache at all, a systematic sweep of how many live coherence edges the model actually
+        needs, and the discovery that an entire encoder module had been running, uselessly, on every batch
+        for over a week.
+      </p>
+
+      <h2>A cache that hurt more than it helped</h2>
+      <p>
+        The live-clique channel-subset design (previous entry) scatters a handful of real coherence edges
+        into an otherwise-zero tensor sized for the full 253-edge mesh. The disk cache had been storing that
+        full-size tensor as-is &mdash; meaning a cache read for a 6-edge live clique was still loading a
+        file that was 97% zeros. On this GPU, reading that file took about 26 milliseconds; actually
+        recomputing the same 6 live edges from scratch took about 2.3 milliseconds. The cache had become
+        slower than not having one. Fixed by storing only the nonzero edge slots on disk and scattering them
+        back to full size on load &mdash; cache files shrank from 15.5MB to 0.37MB, and disk usage for the
+        full dataset dropped from roughly 12GB to 0.28GB. A second fix skipped the wavelet transform
+        entirely on a batch where every trial was a complete cache hit, since it had been computed and then
+        silently discarded on every cache hit until now.
+      </p>
+      <table>
+        <tr><th>config</th><th>epoch time</th><th>what was happening</th></tr>
+        <tr><td>original (100% cache hits)</td><td>27.87s</td><td>loading 15.5MB files, mostly zeros; transform still ran</td></tr>
+        <tr><td>after compact rewrite</td><td>11.06s</td><td>fat files treated as misses, cheap recompute, compact files written</td></tr>
+        <tr><td>after compact + skip-transform</td><td>8.61s</td><td>100% compact hits, transform skipped entirely</td></tr>
+      </table>
+      <div class="callout">
+        The right policy turned out to be device-dependent, not universal. On Apple Silicon, the same fat
+        15MB files are cheap to read after a couple of epochs thanks to unified-memory page caching, so
+        treating them as a miss there would force an unnecessary recompute. On this CUDA machine, recompute
+        is cheap enough that a fat file is genuinely better treated as a miss. Both behaviors are now handled
+        by one explicit device-dependent switch rather than a single hardcoded policy. Following the same
+        logic to its conclusion, the disk cache is now off by default on CUDA entirely for the full,
+        non-subsetted mesh too &mdash; consistent with an earlier finding on a rented GPU pod that removing
+        the cache altogether cut training time by roughly a third there as well.
+      </div>
+
+      <h2>How many live edges does the model actually need?</h2>
+      <p>
+        With the cache question settled, a systematic sweep across k = 4, 8, 12, 16, and 20 live channels
+        (6 up to 190 live edges, out of a possible 253), on the real uncapped dataset across all six
+        seizures:
+      </p>
+      <table>
+        <tr><th>k</th><th>live edges</th><th>~s/epoch</th><th>AP</th><th>AUC</th><th>k-of-n hits</th></tr>
+        <tr><td>4</td><td>6</td><td>3.9</td><td>0.167</td><td>0.809</td><td>5/6</td></tr>
+        <tr><td>8</td><td>28</td><td>4.4</td><td>0.186</td><td>0.854</td><td>4/6</td></tr>
+        <tr><td>12</td><td>66</td><td>6.2</td><td>0.457</td><td>0.932</td><td><strong>6/6</strong></td></tr>
+        <tr><td>16</td><td>120</td><td>9.2</td><td>0.534</td><td>0.950</td><td>5/6</td></tr>
+        <tr><td>20</td><td>190</td><td>12.1</td><td><strong>0.567</strong></td><td><strong>0.953</strong></td><td>5/6</td></tr>
+      </table>
+      <p>
+        Ranking quality climbs steadily with more live edges &mdash; k=20 edged out the documented
+        full-23-channel run on both AP and AUC, and came close to matching the Truong baseline's own AP on
+        this data. But event-level hit rate after smoothing doesn't move in the same direction: k=12 is the
+        only setting that caught all six seizures after smoothing, while both k=16 and k=20 missed one that
+        k=12 caught. More live edges gave better ranking, not simply a better detector. Larger k also
+        stopped earlier via early stopping, which is why the wall-clock gap between k=4 and k=20 was only
+        about 2&times; despite the per-epoch cost being roughly 3&times;.
+      </p>
+      <div class="callout">
+        Not a clean k-vs-full-mesh comparison as run: this sweep used a held-out validation split with
+        early stopping, while the documented full-23-channel baseline trained on 100% of each fold for all
+        20 epochs with no early stopping. The gap between k=20 and full mesh above is partly a training
+        protocol difference, not purely an edge-count effect &mdash; flagged directly as needing a
+        same-protocol full-mesh rerun before treating it as settled.
+      </div>
+
+      <h2>An encoder that had been running for a week and doing nothing</h2>
+      <p>
+        Digging into where epoch time was actually going surfaced something unrelated to caching or edge
+        count entirely: a per-channel raw-signal encoder module had been constructed and run on every single
+        training and prediction batch since a configuration change over a week earlier &mdash; two dilated
+        convolutions over the raw 23-channel signal, computed in full &mdash; and then its output was
+        discarded and replaced with zeros before ever reaching the classifier. Because that replacement used
+        a detaching zero-fill, no gradient flowed through it either. The module was pure wasted compute,
+        silently, the whole time. Removed entirely rather than left in place: the classifier's input layer
+        shrank accordingly, and every model trained before this fix is now a different shape and can't be
+        reloaded &mdash; a clean break rather than a compatibility shim.
+      </p>
+      <p>
+        Removing it did not meaningfully speed anything up, which was itself informative: the module's own
+        weights were tiny, and what disappeared was peak memory from its intermediate activations, not a
+        persistent cost. Steady-state epoch time at k=4 and k=20 landed within noise of the pre-removal
+        numbers. The real remaining cost, confirmed directly, is the wavelet transform running on all 23
+        channels every batch regardless of how few edges are live &mdash; edge count changes the coherence
+        computation's cost, not the transform's.
+      </p>
+      <p>
+        A matched fp32-vs-bf16 comparison run partway through (before the removal) reinforced an earlier
+        finding: thresholded metrics matched exactly between precisions, continuous ranking scores differed
+        by about a hundredth of a point, and epoch time roughly tripled without bf16 &mdash; the speedup
+        flags are a clear, safe win with no accuracy cost at real scale, even though they don't show up as
+        a difference at smoke scale, where the GPU never gets full enough for the precision choice to
+        matter.
+      </p>
+
+      <h2>Open items</h2>
+      <p>
+        A same-protocol full-mesh rerun (validation split, early stopping, encoder-free) is needed before
+        the k-sweep's win over "23 channels" can be trusted as a real edge-count effect rather than a
+        training-protocol artifact. An in-memory compact cache for the live-edge tensors is flagged as the
+        next real lever &mdash; disk already lost to recompute on this hardware, and the full-precision
+        tensors at higher k don't comfortably fit in this card's 8GB of VRAM. The k-sweep's own AP table was
+        run with the now-removed dead encoder still in the graph and would need a rerun to be the
+        encoder-free numbers.
+      </p>
+    </div>
+  </div>
+  <div id="footer-container"></div>
+</body>
+<script src="../menu-loader.js"></script>
+<script src="../footer-loader.js"></script>
+</html>

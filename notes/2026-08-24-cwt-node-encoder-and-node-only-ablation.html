@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="../resources/icon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A CWT node encoder, and what node_only actually tests — Noah Shore</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .nav-links a { text-decoration: none; }
+    .nav-links a.active { text-decoration: underline; }
+    .post { max-width: 800px; margin: 0 auto 3rem auto; text-align: left; }
+    .post-meta { color: #888; font-size: 0.9rem; margin-bottom: 2rem; text-align: center; }
+    .post h1 { font-size: 1.9rem; text-align: center; color: #eaeaea; margin-bottom: 0.25rem; }
+    .post p { font-size: 1.02rem; line-height: 1.65; color: #ddd; }
+    .post h2 { color: #cccccc; font-size: 1.15rem; margin-top: 2rem; }
+    .post code { background: rgba(255,255,255,0.08); padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.92em; }
+    .callout { background: rgba(42, 42, 42, 0.7); border-left: 4px solid #4a6583; border-radius: 6px; padding: 1rem 1.5rem; margin: 1.5rem 0; color: #ccc; font-size: 0.98rem; }
+    .back-link { display: block; text-align: center; margin-bottom: 2rem; color: #7aa5d6 !important; }
+    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.92rem; }
+    th, td { padding: 0.5rem 0.7rem; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.1); color: #ccc; }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: #eaeaea; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div id="menu-container"></div>
+  <div class="container" style="max-width:900px; margin:0 auto;">
+    <a href="../notes.html" class="back-link">&larr; All notes</a>
+    <div class="post">
+      <h1>A CWT node encoder, and what node_only actually tests</h1>
+      <p class="post-meta">2026-08-24 &middot; architecture, ablation</p>
+
+      <p>
+        A new, opt-in encoder module was added on top of the existing coherence-graph model: a small
+        convolutional network that learns a per-channel embedding directly from each channel's own
+        time-frequency wavelet representation, independent of any cross-channel coherence. The natural
+        question it raises &mdash; does this add anything the coherence features don't already provide,
+        or could it stand in for the STFT-CNN baseline's own per-channel view &mdash; got a direct test this
+        session, and the answer for the "stand in" framing turned out to be no.
+      </p>
+
+      <h2>What it is, and what it isn't</h2>
+      <p>
+        Each channel's wavelet coefficients get pooled down in time, run through a couple of small
+        convolutions, then globally pooled to a single 8-number summary per channel. Those per-channel
+        summaries feed into the same message-passing head the coherence-based model already uses. An
+        ablation mode strips out the coherence features entirely, leaving only these per-channel summaries
+        &mdash; the hope going in was that this would approximate what the project's STFT-CNN baseline sees:
+        a per-channel time-frequency view with no explicit cross-channel structure.
+      </p>
+      <p>
+        That comparison doesn't actually hold up on inspection. The baseline's own convolution mixes all
+        electrodes together directly on local time-frequency patches, over roughly 114 frequency bins, and
+        its classifier reads a full spectrogram-like representation the whole way through. This new
+        encoder looks at each channel completely alone, over only 8 frequency bins, and collapses everything
+        down to 8 numbers per channel before any classification happens &mdash; and those 8 numbers still
+        get routed through the coherence model's own edge-pair readout, which was built to summarize
+        coherence vectors, not to classify from per-channel embeddings directly. It's a real ablation of the
+        coherence-based model with its coherence stripped out, not a good-faith stand-in for the baseline
+        architecture.
+      </p>
+
+      <h2>The direct test: does coherence-free ranking work at all?</h2>
+      <p>
+        Trained and evaluated on one real fold with coherence features removed entirely (only the per-channel
+        encoder feeding the existing edge-pair head), against the same fold's numbers from the working
+        coherence-only model and from the project's STFT-CNN baseline:
+      </p>
+      <table>
+        <tr><th></th><th>AP</th><th>ROC</th><th>hit (raw&rarr;smoothed)</th></tr>
+        <tr><td>coherence-free encoder only</td><td>0.032</td><td>~0.50</td><td>miss &rarr; miss</td></tr>
+        <tr><td>coherence-only model</td><td>0.108&ndash;0.141</td><td>0.83&ndash;0.88</td><td>hit (mixed after smoothing)</td></tr>
+        <tr><td>STFT-CNN baseline</td><td>0.147</td><td>0.887</td><td>hit &rarr; hit</td></tr>
+      </table>
+      <p>
+        Chance-level average precision on this fold's class balance is about 0.04. The coherence-free
+        encoder landed right at chance; both the existing coherence-only model and the baseline clearly rank
+        this fold well above it. Training loss on the coherence-free run stayed flat around chance for every
+        epoch before early stopping ended it &mdash; not a crash or a broken gradient (verified the encoder's
+        gradients do flow, and confirmed via direct log output that it really was running), just a signal
+        that never learned to rank anything on this data in the time it was given.
+      </p>
+
+      <h2>Why adding it to the working model probably won't help either</h2>
+      <p>
+        The natural next question &mdash; if it doesn't work alone, does concatenating it onto the coherence
+        model's existing, working edge features help or hurt? &mdash; wasn't run at real scale this session,
+        but the reasoning against it is fairly direct. The coherence-based edge features already rank this
+        data well and converge quickly; the new encoder is a randomly-initialized network that would need
+        substantially more training to learn anything useful, so by the time the coherence side has a good
+        checkpoint, the encoder side is still close to its starting point. And structurally, the model's
+        readout was built around coherence-pair vectors, which isn't obviously the right place to route
+        useful per-channel information even if the encoder had learned something. The most likely outcome of
+        adding it to the working model is a small, hard-to-attribute change in either direction from the
+        extra parameters and different initialization, not a meaningful capability gain.
+      </p>
+
+      <h2>Open items</h2>
+      <p>
+        The combined coherence-plus-encoder model hasn't actually been run at real scale to confirm the
+        reasoning above, though it's treated as low priority given the direct evidence that the encoder
+        alone doesn't rank this data. A genuinely fair "does raw per-channel time-frequency information add
+        anything" test would need a baseline-style architecture &mdash; a shared convolution mixing channels
+        directly, classifying from something spectrogram-like, no graph &mdash; rather than routing through
+        the coherence model's edge-pair head; that was discussed and explicitly deferred, not built. And the
+        channel-subset selector used elsewhere in the project doesn't shrink the channel count here either
+        way &mdash; this encoder always runs on the full 23 channels regardless of that setting, only
+        affecting how many coherence pairs get computed on top of it.
+      </p>
+    </div>
+  </div>
+  <div id="footer-container"></div>
+</body>
+<script src="../menu-loader.js"></script>
+<script src="../footer-loader.js"></script>
+</html>

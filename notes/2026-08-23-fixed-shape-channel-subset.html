@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="../resources/icon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A fixed-shape channel subset — Noah Shore</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .nav-links a { text-decoration: none; }
+    .nav-links a.active { text-decoration: underline; }
+    .post { max-width: 800px; margin: 0 auto 3rem auto; text-align: left; }
+    .post-meta { color: #888; font-size: 0.9rem; margin-bottom: 2rem; text-align: center; }
+    .post h1 { font-size: 1.9rem; text-align: center; color: #eaeaea; margin-bottom: 0.25rem; }
+    .post p { font-size: 1.02rem; line-height: 1.65; color: #ddd; }
+    .post h2 { color: #cccccc; font-size: 1.15rem; margin-top: 2rem; }
+    .post code { background: rgba(255,255,255,0.08); padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.92em; }
+    .callout { background: rgba(42, 42, 42, 0.7); border-left: 4px solid #4a6583; border-radius: 6px; padding: 1rem 1.5rem; margin: 1.5rem 0; color: #ccc; font-size: 0.98rem; }
+    .back-link { display: block; text-align: center; margin-bottom: 2rem; color: #7aa5d6 !important; }
+    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.92rem; }
+    th, td { padding: 0.5rem 0.7rem; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.1); color: #ccc; }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: #eaeaea; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div id="menu-container"></div>
+  <div class="container" style="max-width:900px; margin:0 auto;">
+    <a href="../notes.html" class="back-link">&larr; All notes</a>
+    <div class="post">
+      <h1>A fixed-shape channel subset: full graph, live clique only</h1>
+      <p class="post-meta">2026-08-23 &middot; architecture, channel selection</p>
+
+      <p>
+        Earlier work on a "shrinking subset" idea had the graph itself shrink to k nodes when a
+        top-k channel selection was applied &mdash; a k-node graph with k(k-1)/2 edges. That's not what
+        this session built. The ask instead: the GNN always sees the full 23 channels and all 253 possible
+        edges; a per-window selection just decides which small clique of those edges actually gets real
+        coherence features computed. Everything else is zero.
+      </p>
+
+      <h2>How it works</h2>
+      <p>
+        Per window, the top-k channels by absolute cosine affinity are found, and the "live" edges are the
+        undirected clique among just those k channels &mdash; for k=4, that's 6 edges out of 253. Real
+        wavelet-coherence features get computed only for that clique and scattered into an otherwise-zero
+        tensor at the correct fixed positions; every other edge slot stays exactly zero. Different windows
+        in the same training batch can pick entirely different cliques, computed independently. The edge
+        ordering had to match the model's own internal registration exactly &mdash; a mismatch there would
+        silently scramble which slot a live feature lands in, so this was checked directly against the
+        model's own index arrays before trusting anything downstream, along with confirming k=23 (full
+        mesh) reproduces the unmodified path exactly and inactive slots really are exact zeros, not just
+        small numbers.
+      </p>
+
+      <h2>Three smoke runs to confirm it actually trains</h2>
+      <p>
+        A single fold at k=4 completed cleanly, correctly reporting the full 23-node/253-edge graph shape
+        rather than a shrunk one, and reached ROC-AUC 0.936 on its held-out seizure. A six-fold run at the
+        same setting (smoke-scale interictal cap, not the real uncapped data) hit 6/6 raw event detection,
+        5/6 after alarm smoothing, with one fold behaving as a known smoke-scale artifact from the reduced
+        interictal pool rather than anything wrong with k=4 itself. A separate run added a genuinely
+        computed validation split &mdash; the streaming classifier had previously just raised an error if
+        asked for one &mdash; and confirmed a best-checkpoint restore working correctly, at a modest recall
+        cost versus training on the full fold.
+      </p>
+
+      <div class="callout">
+        None of these numbers are comparable to the real, uncapped 6-fold run from two days before &mdash;
+        different interictal pool, fewer epochs, k=4 versus the full mesh. They're a correctness check that
+        the fixed-shape design trains and produces sane numbers, not a result to read against the project's
+        real benchmarks.
+      </div>
+
+      <h2>Open items</h2>
+      <p>
+        This session ran entirely on Apple Silicon (MPS), so neither of the bf16 speedup flags from the
+        Windows/CUDA work were exercised here at all &mdash; how this design performs on CUDA hardware,
+        where those flags matter, is a separate open question the next session picks up.
+      </p>
+    </div>
+  </div>
+  <div id="footer-container"></div>
+</body>
+<script src="../menu-loader.js"></script>
+<script src="../footer-loader.js"></script>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="../resources/icon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>dense_edge (conv) vs dense_edge_gru: a smoke comparison — Noah Shore</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .nav-links a { text-decoration: none; }
+    .nav-links a.active { text-decoration: underline; }
+    .post { max-width: 800px; margin: 0 auto 3rem auto; text-align: left; }
+    .post-meta { color: #888; font-size: 0.9rem; margin-bottom: 2rem; text-align: center; }
+    .post h1 { font-size: 1.9rem; text-align: center; color: #eaeaea; margin-bottom: 0.25rem; }
+    .post p { font-size: 1.02rem; line-height: 1.65; color: #ddd; }
+    .post h2 { color: #cccccc; font-size: 1.15rem; margin-top: 2rem; }
+    .post code { background: rgba(255,255,255,0.08); padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.92em; }
+    .callout { background: rgba(42, 42, 42, 0.7); border-left: 4px solid #4a6583; border-radius: 6px; padding: 1rem 1.5rem; margin: 1.5rem 0; color: #ccc; font-size: 0.98rem; }
+    .back-link { display: block; text-align: center; margin-bottom: 2rem; color: #7aa5d6 !important; }
+    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.92rem; }
+    th, td { padding: 0.5rem 0.7rem; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.1); color: #ccc; }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: #eaeaea; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div id="menu-container"></div>
+  <div class="container" style="max-width:900px; margin:0 auto;">
+    <a href="../notes.html" class="back-link">&larr; All notes</a>
+    <div class="post">
+      <h1>dense_edge (conv) vs dense_edge_gru: a smoke-scale comparison</h1>
+      <p class="post-meta">2026-08-24 &middot; architecture ablation</p>
+
+      <p>
+        The model has always had two ways to summarize a coherence edge's behavior over time into a single
+        vector: a small convolutional block, or a per-edge GRU. Only the GRU path had actually been wired
+        into the real pipeline's command-line interface; this session finished wiring up the convolutional
+        alternative and ran the same smoke-scale six-fold comparison against it, alongside turning on
+        validation-based early stopping for the first time.
+      </p>
+
+      <h2>Not an isolated ablation</h2>
+      <div class="callout">
+        Worth being upfront about before the numbers: this is not a clean head-to-head. The GRU numbers
+        being compared against were trained for a fixed 10 epochs on the full training set with no
+        validation split; the conv run added a validation split and early stopping in the same pass, so most
+        folds trained on 80% of the data and restored an earlier checkpoint instead of running the full
+        schedule. Any difference below reflects both the temporal-block choice and this protocol change
+        together, not the temporal block in isolation.
+      </div>
+
+      <h2>Results, on the folds without known smoke-scale artifacts</h2>
+      <p>
+        Two of the six folds in this smoke-scale run are known artifacts of the reduced interictal sample
+        used here (one is a persistent outlier under both architectures, one has a degenerate all-positive
+        test set from the sampling scheme) &mdash; excluded from this comparison to avoid reading noise as
+        signal:
+      </p>
+      <table>
+        <tr><th>metric</th><th>GRU (10 epochs, no val)</th><th>conv (early-stopped)</th></tr>
+        <tr><td>accuracy</td><td>0.828</td><td><strong>0.862</strong></td></tr>
+        <tr><td>F1</td><td>0.608</td><td><strong>0.697</strong></td></tr>
+        <tr><td>average precision</td><td>0.586</td><td><strong>0.674</strong></td></tr>
+        <tr><td>ROC-AUC</td><td>0.902</td><td><strong>0.919</strong></td></tr>
+        <tr><td>k-of-n hits</td><td>3/4</td><td><strong>4/4</strong></td></tr>
+      </table>
+      <p>
+        The convolutional block came out ahead on every metric here, including catching a seizure the GRU
+        run missed after smoothing. On the one fold where a closer protocol match was possible &mdash; the
+        GRU also run with the same validation split and full epoch schedule, no early stopping &mdash; the
+        two architectures landed close together (F1 0.697 GRU vs. 0.754 conv on that fold), a smaller gap
+        than the headline numbers suggest. Both architectures agreed on which fold is a genuine problem: the
+        outlier fold stayed a false-alarm disaster under either temporal block, around 100 false alarms per
+        hour that smoothing couldn't meaningfully fix, though the convolutional block's ranking score on
+        that fold was noticeably better even while still being unusable as an actual predictor there.
+      </p>
+
+      <h2>What would make this a real ablation</h2>
+      <p>
+        The same six folds, same live-edge channel subset, same validation split and early-stopping
+        patience, with only the temporal block itself changed between runs &mdash; that head-to-head hasn't
+        been run yet. This session's comparison is suggestive that the convolutional block isn't behind the
+        GRU and plausibly ahead of it, but the protocol confound needs to be removed before treating that as
+        a real finding rather than a training-schedule artifact.
+      </p>
+
+      <h2>Open items</h2>
+      <p>
+        A matched-protocol conv-vs-GRU rerun is the direct next step. Neither architecture was tested with
+        the bf16 speedup flags in this session &mdash; both ran on Apple Silicon, where those CUDA-specific
+        flags are no-ops. Results here used a smoke-scale interictal cap, not the real uncapped dataset.
+      </p>
+    </div>
+  </div>
+  <div id="footer-container"></div>
+</body>
+<script src="../menu-loader.js"></script>
+<script src="../footer-loader.js"></script>
+</html>
