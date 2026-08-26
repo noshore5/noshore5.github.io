@@ -55,15 +55,15 @@
 
       <h2>Architecture</h2>
       <p>
-        The diagram below is a direct read of the code path actually instantiated for training
-        &mdash; <code>SparseEvidenceGNNCore</code>'s forward pass under the <code>dense_edge_gru</code>
-        config: a dilated Conv1d channel encoder running alongside a coherence/event lane (cross-wavelet
-        transform &rarr; cone-of-influence masking and surrogate significance &rarr; smoothing/downsampling
-        &rarr; a per-edge GRU), which merge and pass through a message network, destination-node
-        aggregation, and a final classifier.
+        The diagram below is a generalized read of the current dense-edge pipeline: a coherence/event
+        lane (cross-wavelet transform &rarr; cone-of-influence masking and surrogate significance &rarr;
+        smoothing/downsampling &rarr; a per-edge selective state-space model), which passes through a
+        message network, destination-node aggregation, and a final classifier. An earlier version of
+        this pipeline used a per-edge GRU instead of the state-space block; that diagram has been
+        superseded and moved to <code>resources/stale pipelines/</code> for reference.
       </p>
       <div class="diagram-full" style="background:#0d0d0d; border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,0.08);">
-        <iframe id="arch-frame" src="resources/architecture-diagram.html" style="width:100%; border:none; display:block;" title="SparseEvidenceGNNCore architecture diagram" scrolling="no"
+        <iframe id="arch-frame" src="resources/architecture-diagram-mamba.html" style="width:100%; border:none; display:block;" title="Dense-edge Mamba pipeline diagram" scrolling="no"
         onload="this.style.height = this.contentWindow.document.body.scrollHeight + 'px';"
         style="width: 100%; border: none; overflow: hidden;"></iframe>
       </div>

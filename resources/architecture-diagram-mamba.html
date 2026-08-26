@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<title>SparseEvidenceGNNClassifier — dense_edge_mamba pipeline</title>
+<style>
+  .viz-root {
+    color-scheme: light;
+    --surface-1:      #fcfcfb;
+    --page:           #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --gridline:       #e1e0d9;
+    --border:         rgba(11,11,11,0.10);
+    --blue:           #2a78d6;   /* trainable */
+    --blue-soft:      #eaf2fc;
+    --orange:         #eb6834;   /* aggregation */
+    --orange-soft:    #fdeee7;
+    --aqua:           #1baf7a;   /* data / tensor flow */
+    --aqua-soft:      #e7f7f0;
+    --gray-soft:      #f1f0ec;   /* cached / non-trainable */
+    --green:          #0ca30c;   /* output */
+    --green-soft:     #e8f7e8;
+    --purple:         #8a5cd6;   /* state / sequence model */
+    --purple-soft:    #f1eafb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .viz-root {
+      color-scheme: dark;
+      --surface-1:      #1a1a19;
+      --page:           #0d0d0d;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --gridline:       #2c2c2a;
+      --border:         rgba(255,255,255,0.10);
+      --blue:           #3987e5;
+      --blue-soft:      #17263a;
+      --orange:         #d95926;
+      --orange-soft:    #33221a;
+      --aqua:           #199e70;
+      --aqua-soft:      #142b22;
+      --gray-soft:      #232320;
+      --green:          #0ca30c;
+      --green-soft:     #16241a;
+      --purple:         #a684e0;
+      --purple-soft:    #241c33;
+    }
+  }
+  :root[data-theme="dark"] .viz-root {
+    color-scheme: dark;
+    --surface-1:      #1a1a19;
+    --page:           #0d0d0d;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --gridline:       #2c2c2a;
+    --border:         rgba(255,255,255,0.10);
+    --blue:           #3987e5;
+    --blue-soft:      #17263a;
+    --orange:         #d95926;
+    --orange-soft:    #33221a;
+    --aqua:           #199e70;
+    --aqua-soft:      #142b22;
+    --gray-soft:      #232320;
+    --green:          #0ca30c;
+    --green-soft:     #16241a;
+    --purple:         #a684e0;
+    --purple-soft:    #241c33;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    background: var(--page);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: var(--text-primary);
+  }
+  .viz-root { padding: 28px 16px 40px; }
+  .wrap { max-width: 1100px; margin: 0 auto; }
+
+  .header { margin-bottom: 6px; }
+  .eyebrow {
+    font-size: 12px; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--text-muted); font-weight: 600; margin: 0 0 4px;
+  }
+  h1 { font-size: 21px; margin: 0 0 6px; font-weight: 700; }
+  .sub { font-size: 13.5px; color: var(--text-secondary); margin: 0 0 14px; max-width: 820px; line-height: 1.5; }
+
+  .card {
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px;
+    padding: 8px; overflow: visible;
+  }
+
+  svg { width: 100%; height: auto; display: block; }
+
+  .box rect { stroke-width: 1.4; }
+  .box-title { font-size: 13px; font-weight: 700; fill: var(--text-primary); }
+  .box-body { font-size: 11.3px; fill: var(--text-secondary); line-height: 1.4; }
+  .box-tag {
+    font-size: 9.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+  }
+  .lane-label {
+    font-size: 11.5px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase;
+    fill: var(--text-muted);
+  }
+  .arrow-path { fill: none; stroke: var(--text-muted); stroke-width: 1.6; }
+  .arrow-path.dashed { stroke-dasharray: 4 3; }
+
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 14px 22px; margin-top: 16px;
+    font-size: 12px; color: var(--text-secondary);
+  }
+  .legend .item { display: flex; align-items: center; gap: 7px; }
+  .swatch { width: 13px; height: 13px; border-radius: 3.5px; flex: none; border: 1.4px solid transparent; }
+
+  .foot {
+    margin-top: 16px; font-size: 11.5px; color: var(--text-muted); line-height: 1.6;
+    max-width: 900px;
+  }
+</style>
+</head>
+<body>
+<div class="viz-root">
+<div class="wrap">
+<div class="header">
+<p class="eyebrow">EEG seizure prediction · Epilepsy pipeline</p>
+<h1>SparseEvidenceGNNCore — forward pass (dense_edge_mamba config, current)</h1>
+<p class="sub">
+        Same dense-edge graph pipeline as before, with the per-edge recurrent block swapped for a
+        selective state-space sequence model (Mamba). Numbers below are illustrative, not tied to any
+        one run's specific config. One raw EEG epoch in, one set of class logits out.
+</p>
+</div>
+
+<div class="card">
+<svg viewBox="0 0 1040 2152" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pipeline diagram">
+<defs>
+<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+<path d="M0,0 L10,5 L0,10 z" fill="var(--text-muted)"></path>
+</marker>
+<marker id="arrow-orange" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+<path d="M0,0 L10,5 L0,10 z" fill="var(--orange)"></path>
+</marker>
+<marker id="arrow-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+<path d="M0,0 L10,5 L0,10 z" fill="var(--blue)"></path>
+</marker>
+<marker id="arrow-purple" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+<path d="M0,0 L10,5 L0,10 z" fill="var(--purple)"></path>
+</marker>
+<marker id="arrow-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+<path d="M0,0 L10,5 L0,10 z" fill="var(--green)"></path>
+</marker>
+</defs>
+
+<!-- ============ INPUT ============ -->
+<g class="box">
+<rect x="200" y="10" width="640" height="62" rx="12" fill="var(--aqua-soft)" stroke="var(--aqua)"></rect>
+<text x="520" y="34" text-anchor="middle" class="box-title">Raw EEG epoch</text>
+<text x="520" y="53" text-anchor="middle" class="box-body">Multichannel EEG recording window</text>
+</g>
+
+<g class="illus">
+<rect x="855" y="14" width="165" height="54" rx="8" fill="var(--surface-1)" stroke="var(--aqua)" stroke-opacity="0.4"></rect>
+<path d="M 865 24 Q 872.5 16 880 24 T 895 24 T 910 24 T 925 24 T 940 24 T 955 24 T 970 24 T 985 24 T 1000 24 T 1015 24" fill="none" stroke="var(--aqua)" stroke-width="1.2" opacity="0.9"></path>
+<path d="M 865 36 Q 872.5 44 880 36 T 895 36 T 910 36 T 925 36 T 940 36 T 955 36 T 970 36 T 985 36 T 1000 36 T 1015 36" fill="none" stroke="var(--aqua)" stroke-width="1.2" opacity="0.65"></path>
+<path d="M 865 48 Q 877.5 38 890 48 T 915 48 T 940 48 T 965 48 T 990 48 T 1015 48" fill="none" stroke="var(--aqua)" stroke-width="1.2" opacity="0.75"></path>
+<path d="M 865 60 Q 872.5 65 880 60 T 895 60 T 910 60 T 925 60 T 940 60 T 955 60 T 970 60 T 985 60 T 1000 60 T 1015 60" fill="none" stroke="var(--aqua)" stroke-width="1.2" opacity="0.5"></path>
+</g>
+
+<path class="arrow-path" d="M 520 72 L 520 120" marker-end="url(#arrow)"></path>
+
+<g class="box">
+<rect x="200" y="122" width="640" height="112" rx="12" fill="var(--gray-soft)" stroke="var(--text-muted)"></rect>
+<text x="220" y="145" class="box-tag" fill="var(--text-muted)">non-trainable · per channel, independently</text>
+<text x="220" y="165" class="box-title">Continuous wavelet transform (CWT)</text>
+<text x="220" y="183" class="box-body">Each channel convolved with a Morlet wavelet across scales — one complex</text>
+<text x="220" y="198" class="box-body">time-frequency map per channel, computed before any cross-channel step:</text>
+<text x="520" y="222" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="14" fill="var(--text-primary)"><tspan font-style="italic">W</tspan><tspan font-style="italic" font-size="10" dy="4">x</tspan><tspan font-size="14" dy="-4">(</tspan><tspan font-style="italic">f</tspan><tspan>, </tspan><tspan font-style="italic">t</tspan><tspan>)  =  </tspan><tspan font-size="17">∫</tspan><tspan font-style="italic"> x</tspan><tspan>(</tspan><tspan font-style="italic">τ</tspan><tspan>) · </tspan><tspan font-style="italic">ψ</tspan><tspan font-size="10" dy="-6">*</tspan><tspan font-style="italic" font-size="10" dy="10">f,t</tspan><tspan font-size="14" dy="-4">(</tspan><tspan font-style="italic">τ</tspan><tspan>) d</tspan><tspan font-style="italic">τ</tspan></text>
+</g>
+
+<g class="illus">
+<rect x="855" y="126" width="165" height="104" rx="8" fill="var(--surface-1)" stroke="var(--text-muted)" stroke-opacity="0.4"></rect>
+<path d="M 865 148 Q 878 134 891 148 T 917 148 T 943 148 T 969 148 T 995 148" fill="none" stroke="var(--aqua)" stroke-width="1.3" opacity="0.85"></path>
+<rect x="864" y="168" width="16" height="12" fill="#0ca30c" opacity="0.75"></rect>
+<rect x="882" y="168" width="16" height="12" fill="#4a9e1f" opacity="0.6"></rect>
+<rect x="900" y="168" width="16" height="12" fill="#8a9c1a" opacity="0.5"></rect>
+<rect x="918" y="168" width="16" height="12" fill="#c98a1a" opacity="0.4"></rect>
+<rect x="864" y="182" width="16" height="12" fill="#4a9e1f" opacity="0.55"></rect>
+<rect x="882" y="182" width="16" height="12" fill="#0ca30c" opacity="0.8"></rect>
+<rect x="900" y="182" width="16" height="12" fill="#4a9e1f" opacity="0.6"></rect>
+<rect x="918" y="182" width="16" height="12" fill="#8a9c1a" opacity="0.45"></rect>
+<text x="864" y="212" font-size="11" fill="var(--text-muted)">one map per channel</text>
+</g>
+
+<path class="arrow-path" d="M 520 234 L 520 264" marker-end="url(#arrow)"></path>
+
+<g class="box">
+<rect x="200" y="266" width="640" height="200" rx="12" fill="var(--gray-soft)" stroke="var(--text-muted)"></rect>
+<text x="220" y="289" class="box-tag" fill="var(--text-muted)">non-trainable · per channel-pair</text>
+<text x="220" y="311" class="box-title">Cross-wavelet coherence (WCT)</text>
+<text x="220" y="333" class="box-body">Combines each pair's CWTs into a smoothed, normalized coherence magnitude</text>
+<text x="220" y="350" class="box-body">and phase, across frequency and time:</text>
+<g font-family="Georgia,'Times New Roman',serif" fill="var(--text-primary)">
+<text x="470" y="389" text-anchor="end" font-size="14"><tspan font-style="italic">R</tspan><tspan font-size="10" dy="-6">2</tspan><tspan font-style="italic" font-size="10" dy="10">xy</tspan><tspan font-size="14" dy="-4">(</tspan><tspan font-style="italic">f</tspan><tspan>,</tspan><tspan font-style="italic">t</tspan><tspan>)  =</tspan></text>
+<text x="560" y="376" text-anchor="middle" font-size="12"><tspan>|S(</tspan><tspan font-style="italic">W</tspan><tspan font-style="italic" font-size="9" dy="3">xy</tspan><tspan font-size="12" dy="-3">)|</tspan><tspan font-size="9" dy="-6">2</tspan></text>
+<line x1="490" y1="385" x2="630" y2="385" stroke="var(--text-primary)" stroke-width="1.2"></line>
+<text x="560" y="401" text-anchor="middle" font-size="12"><tspan>S(|</tspan><tspan font-style="italic">W</tspan><tspan font-style="italic" font-size="9" dy="3">x</tspan><tspan font-size="12" dy="-3">|</tspan><tspan font-size="9" dy="-6">2</tspan><tspan font-size="12" dy="6">)  ·  S(|</tspan><tspan font-style="italic">W</tspan><tspan font-style="italic" font-size="9" dy="3">y</tspan><tspan font-size="12" dy="-3">|</tspan><tspan font-size="9" dy="-6">2</tspan><tspan font-size="12" dy="6">)</tspan></text>
+<text x="520" y="425" text-anchor="middle" font-size="14"><tspan font-style="italic">φ</tspan><tspan font-style="italic" font-size="10" dy="4">xy</tspan><tspan font-size="14" dy="-4">(</tspan><tspan font-style="italic">f</tspan><tspan>,</tspan><tspan font-style="italic">t</tspan><tspan>)  =  arg(</tspan><tspan font-style="italic">W</tspan><tspan font-style="italic" font-size="10" dy="4">xy</tspan><tspan font-size="14" dy="-4">(</tspan><tspan font-style="italic">f</tspan><tspan>,</tspan><tspan font-style="italic">t</tspan><tspan>))</tspan></text>
+</g>
+<text x="220" y="452" class="box-body">This magnitude/phase pair feeds the surrogate-significance test next.</text>
+</g>
+
+<g class="illus">
+<rect x="850" y="272" width="175" height="186" rx="8" fill="var(--surface-1)" stroke="var(--text-muted)" stroke-opacity="0.4"></rect>
+<text x="862" y="291" font-size="14.5" font-weight="600" fill="var(--aqua)">channel i</text>
+<path d="M 862 305  Q 872 295 882 305  T 902 305  T 922 305  T 942 305  T 962 305  T 982 305  T 1002 305" fill="none" stroke="var(--aqua)" stroke-width="1.8"></path>
+<text x="862" y="326" font-size="14.5" font-weight="600" fill="var(--orange)">channel j</text>
+<path d="M 862 340  Q 874 328 886 340  T 910 340  T 934 340  T 958 340  T 982 340  T 1006 340" fill="none" stroke="var(--orange)" stroke-width="1.8" stroke-dasharray="4 3"></path>
+<path d="M 933 350 L 933 366" stroke="var(--text-muted)" stroke-width="1.4" marker-end="url(#arrow)"></path>
+<text x="862" y="384" font-size="14.5" fill="var(--text-secondary)">coherence(f, t)</text>
+<rect x="862" y="392" width="20" height="16" fill="#0ca30c" opacity="0.85"></rect>
+<rect x="884" y="392" width="20" height="16" fill="#4a9e1f" opacity="0.7"></rect>
+<rect x="906" y="392" width="20" height="16" fill="#8a9c1a" opacity="0.55"></rect>
+<rect x="928" y="392" width="20" height="16" fill="#c98a1a" opacity="0.4"></rect>
+<rect x="950" y="392" width="20" height="16" fill="#c9601a" opacity="0.3"></rect>
+<rect x="862" y="410" width="20" height="16" fill="#4a9e1f" opacity="0.75"></rect>
+<rect x="884" y="410" width="20" height="16" fill="#0ca30c" opacity="0.9"></rect>
+<rect x="906" y="410" width="20" height="16" fill="#4a9e1f" opacity="0.65"></rect>
+<rect x="928" y="410" width="20" height="16" fill="#8a9c1a" opacity="0.5"></rect>
+<rect x="950" y="410" width="20" height="16" fill="#c98a1a" opacity="0.35"></rect>
+<rect x="862" y="428" width="20" height="16" fill="#8a9c1a" opacity="0.6"></rect>
+<rect x="884" y="428" width="20" height="16" fill="#4a9e1f" opacity="0.7"></rect>
+<rect x="906" y="428" width="20" height="16" fill="#0ca30c" opacity="0.85"></rect>
+<rect x="928" y="428" width="20" height="16" fill="#4a9e1f" opacity="0.6"></rect>
+<rect x="950" y="428" width="20" height="16" fill="#8a9c1a" opacity="0.45"></rect>
+<text x="982" y="404" font-size="13" fill="var(--text-muted)">freq ↑</text>
+<text x="912" y="454" text-anchor="middle" font-size="13" fill="var(--text-muted)">time →</text>
+</g>
+
+<path class="arrow-path" d="M 520 466 L 520 496" marker-end="url(#arrow)"></path>
+
+<g class="box">
+<rect x="200" y="498" width="640" height="90" rx="12" fill="var(--gray-soft)" stroke="var(--text-muted)"></rect>
+<text x="220" y="521" class="box-tag" fill="var(--text-muted)">non-trainable</text>
+<text x="220" y="541" class="box-title">COI mask + surrogate significance</text>
+<text x="220" y="558" class="box-body">Phase-randomized surrogate null establishes a per-(edge,freq) significance threshold.</text>
+<text x="220" y="573" class="box-body">Stack: [coh, sinφ, cosφ, significance], zeroed outside the cone of influence.</text>
+</g>
+
+<g class="illus">
+<rect x="855" y="506" width="165" height="76" rx="8" fill="var(--surface-1)" stroke="var(--text-muted)" stroke-opacity="0.4"></rect>
+<rect x="868" y="514" width="140" height="52" rx="4" fill="var(--gray-soft)"></rect>
+<rect x="900" y="520" width="16" height="12" fill="#0ca30c" opacity="0.6"></rect>
+<rect x="918" y="520" width="16" height="12" fill="#4a9e1f" opacity="0.55"></rect>
+<rect x="900" y="534" width="16" height="12" fill="#4a9e1f" opacity="0.5"></rect>
+<rect x="918" y="534" width="16" height="12" fill="#8a9c1a" opacity="0.45"></rect>
+<rect x="960" y="520" width="16" height="12" fill="#8a9c1a" opacity="0.4"></rect>
+<rect x="978" y="520" width="16" height="12" fill="#0ca30c" opacity="0.55"></rect>
+<polygon points="868,566 868,530 912,566" fill="var(--page)" opacity="0.82"></polygon>
+<polygon points="1008,566 1008,530 964,566" fill="var(--page)" opacity="0.82"></polygon>
+<path d="M 868 530 L 912 566" stroke="var(--text-muted)" stroke-width="1.2" stroke-dasharray="3 2"></path>
+<path d="M 1008 530 L 964 566" stroke="var(--text-muted)" stroke-width="1.2" stroke-dasharray="3 2"></path>
+<text x="868" y="577" font-size="10.5" fill="var(--text-muted)">masked (edge effects)</text>
+</g>
+
+<path class="arrow-path" d="M 520 588 L 520 618" marker-end="url(#arrow)"></path>
+
+<g class="box">
+<rect x="200" y="620" width="640" height="82" rx="12" fill="var(--gray-soft)" stroke="var(--text-muted)"></rect>
+<text x="220" y="643" class="box-tag" fill="var(--text-muted)">non-trainable · cached once/trial</text>
+<text x="220" y="662" class="box-title">Smooth + downsample</text>
+<text x="220" y="679" class="box-body">Gaussian smoothing, then downsampled in time before the sequence model</text>
+</g>
+
+<path class="arrow-path" d="M 520 702 L 520 732" marker-end="url(#arrow)"></path>
+
+<g class="box">
+<rect x="200" y="734" width="640" height="118" rx="12" fill="var(--purple-soft)" stroke="var(--purple)"></rect>
+<text x="220" y="757" class="box-tag" fill="var(--purple)">trainable · selective state-space model</text>
+<text x="220" y="777" class="box-title">Per-edge Mamba block</text>
+<text x="220" y="794" class="box-body">Weight-shared across edges (edges folded into batch dim). Input-dependent gating</text>
+<text x="220" y="809" class="box-body">selects what a compact running state remembers or forgets at each step — a linear-time</text>
+<text x="220" y="824" class="box-body">scan rather than a fixed recurrent cell. Runs as either a chunked parallel scan or a</text>
+<text x="220" y="839" class="box-body">fused kernel; final state = pooled edge summary, repacked one row per edge below.</text>
+</g>
+
+<g class="illus">
+<rect x="855" y="738" width="165" height="106" rx="8" fill="var(--surface-1)" stroke="var(--purple)" stroke-opacity="0.4"></rect>
+<rect x="915" y="758" width="80" height="40" rx="8" fill="var(--purple-soft)" stroke="var(--purple)" stroke-width="1.2"></rect>
+<text x="955" y="782" text-anchor="middle" font-size="12" fill="var(--text-primary)">selective</text>
+<text x="955" y="794" text-anchor="middle" font-size="10" fill="var(--text-secondary)">scan</text>
+<path d="M 915 770 L 898 770" stroke="var(--text-muted)" stroke-width="1.2" marker-end="url(#arrow)"></path>
+<text x="878" y="766" font-size="10.5" fill="var(--text-muted)" text-anchor="middle">x_t</text>
+<path d="M 935 758 L 935 746" stroke="var(--text-muted)" stroke-width="1.2" marker-end="url(#arrow)"></path>
+<text x="935" y="742" font-size="10.5" fill="var(--text-muted)" text-anchor="middle">gate(x_t)</text>
+<path d="M 995 774 C 1012 774 1012 792 995 792" fill="none" stroke="var(--orange)" stroke-width="1.4" marker-end="url(#arrow-orange)"></path>
+<text x="1012" y="806" font-size="9.5" fill="var(--text-muted)" text-anchor="middle" transform="rotate(90 1012 806)">state</text>
+<circle cx="880" cy="818" r="4" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1"></circle>
+<path d="M 884 818 L 896 818" stroke="var(--text-muted)" stroke-width="1"></path>
+<circle cx="900" cy="818" r="4" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1"></circle>
+<path d="M 904 818 L 916 818" stroke="var(--text-muted)" stroke-width="1"></path>
+<circle cx="920" cy="818" r="4" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1"></circle>
+<path d="M 924 818 L 936 818" stroke="var(--text-muted)" stroke-width="1"></path>
+<circle cx="944" cy="818" r="4.5" fill="var(--green-soft)" stroke="var(--green)" stroke-width="1.2"></circle>
+</g>
+
+<path class="arrow-path" d="M 520 852 L 520 882" marker-end="url(#arrow)"></path>
+
+<!-- ============ REPACK: separate feature branches, then concat ============ -->
+<text x="200" y="878" class="lane-label" style="text-transform:none; font-size:11px;">each edge's features travel as separate branches until this point</text>
+
+<g class="box">
+<rect x="205" y="884" width="148" height="100" rx="10" fill="var(--aqua-soft)" stroke="var(--aqua)"></rect>
+<text x="279" y="904" text-anchor="middle" class="box-tag" fill="var(--aqua)">branch</text>
+<text x="279" y="924" text-anchor="middle" class="box-title" style="font-size:12px;">Magnitude</text>
+<text x="279" y="941" text-anchor="middle" class="box-body" style="font-size:10px;">coherence |coh|</text>
+<text x="279" y="956" text-anchor="middle" class="box-body" style="font-size:10px;">how strongly the</text>
+<text x="279" y="969" text-anchor="middle" class="box-body" style="font-size:10px;">pair co-varies</text>
+</g>
+
+<g class="box">
+<rect x="363" y="884" width="148" height="100" rx="10" fill="var(--aqua-soft)" stroke="var(--aqua)"></rect>
+<text x="437" y="904" text-anchor="middle" class="box-tag" fill="var(--aqua)">branch</text>
+<text x="437" y="924" text-anchor="middle" class="box-title" style="font-size:12px;">Phase (sin)</text>
+<text x="437" y="941" text-anchor="middle" class="box-body" style="font-size:10px;">sin(φ)</text>
+<text x="437" y="956" text-anchor="middle" class="box-body" style="font-size:10px;">phase encoded on</text>
+<text x="437" y="969" text-anchor="middle" class="box-body" style="font-size:10px;">the unit circle</text>
+</g>
+
+<g class="box">
+<rect x="521" y="884" width="148" height="100" rx="10" fill="var(--aqua-soft)" stroke="var(--aqua)"></rect>
+<text x="595" y="904" text-anchor="middle" class="box-tag" fill="var(--aqua)">branch</text>
+<text x="595" y="924" text-anchor="middle" class="box-title" style="font-size:12px;">Phase (cos)</text>
+<text x="595" y="941" text-anchor="middle" class="box-body" style="font-size:10px;">cos(φ)</text>
+<text x="595" y="956" text-anchor="middle" class="box-body" style="font-size:10px;">paired with sin(φ) to</text>
+<text x="595" y="969" text-anchor="middle" class="box-body" style="font-size:10px;">avoid a phase wraparound</text>
+</g>
+
+<g class="box">
+<rect x="679" y="884" width="161" height="100" rx="10" fill="var(--aqua-soft)" stroke="var(--aqua)"></rect>
+<text x="759" y="904" text-anchor="middle" class="box-tag" fill="var(--aqua)">branch</text>
+<text x="759" y="924" text-anchor="middle" class="box-title" style="font-size:12px;">Significance</text>
+<text x="759" y="941" text-anchor="middle" class="box-body" style="font-size:10px;">surrogate-test mask</text>
+<text x="759" y="956" text-anchor="middle" class="box-body" style="font-size:10px;">is this (edge, freq, t)</text>
+<text x="759" y="969" text-anchor="middle" class="box-body" style="font-size:10px;">reading trustworthy?</text>
+</g>
+
+<path class="arrow-path" d="M 279 984 L 460 1014" marker-end="url(#arrow)"></path>
+<path class="arrow-path" d="M 437 984 L 500 1014" marker-end="url(#arrow)"></path>
+<path class="arrow-path" d="M 595 984 L 540 1014" marker-end="url(#arrow)"></path>
+<path class="arrow-path" d="M 759 984 L 580 1014" marker-end="url(#arrow)"></path>
+
+<g class="box">
+<circle cx="520" cy="1034" r="24" fill="var(--aqua-soft)" stroke="var(--aqua)" stroke-width="1.6"></circle>
+<text x="520" y="1030" text-anchor="middle" font-size="11" font-weight="700" fill="var(--aqua)">concat</text>
+<text x="520" y="1042" text-anchor="middle" font-size="9" fill="var(--text-secondary)">per edge</text>
+</g>
+<text x="520" y="1078" text-anchor="middle" class="box-body" style="font-size:10.5px;">branches rejoin here as one per-edge message vector</text>
+
+<path class="arrow-path" d="M 520 1058 L 520 1090" marker-end="url(#arrow)"></path>
+
+<g class="box">
+<rect x="200" y="1094" width="640" height="66" rx="12" fill="var(--blue-soft)" stroke="var(--blue)"></rect>
+<text x="220" y="1117" class="box-tag" fill="var(--blue)">trainable</text>
+<text x="220" y="1137" class="box-title">Message network</text>
+<text x="220" y="1152" class="box-body">Linear layer → activation → per-edge message</text>
+</g>
+
+<g class="illus">
+<rect x="855" y="1100" width="165" height="54" rx="8" fill="var(--surface-1)" stroke="var(--blue)" stroke-opacity="0.4"></rect>
+<circle cx="880" cy="1114" r="4" fill="var(--blue-soft)" stroke="var(--blue)" stroke-width="1"></circle>
+<circle cx="880" cy="1126" r="4" fill="var(--blue-soft)" stroke="var(--blue)" stroke-width="1"></circle>
+<circle cx="880" cy="1138" r="4" fill="var(--blue-soft)" stroke="var(--blue)" stroke-width="1"></circle>
+<circle cx="950" cy="1120" r="4.5" fill="var(--blue)" stroke="var(--blue)" stroke-width="1"></circle>
+<circle cx="950" cy="1132" r="4.5" fill="var(--blue)" stroke="var(--blue)" stroke-width="1"></circle>
+<path d="M 884 1114  L 946 1120" stroke="var(--text-muted)" stroke-width="0.7"></path>
+<path d="M 884 1114  L 946 1132" stroke="var(--text-muted)" stroke-width="0.7"></path>
+<path d="M 884 1126  L 946 1120" stroke="var(--text-muted)" stroke-width="0.7"></path>
+<path d="M 884 1126  L 946 1132" stroke="var(--text-muted)" stroke-width="0.7"></path>
+<path d="M 884 1138  L 946 1120" stroke="var(--text-muted)" stroke-width="0.7"></path>
+<path d="M 884 1138  L 946 1132" stroke="var(--text-muted)" stroke-width="0.7"></path>
+<path d="M 955 1120  L 985 1123" stroke="var(--text-muted)" stroke-width="1" marker-end="u  r  l  a  r  r  o  w"></path>
+<path d="M 955 1132  L 985 1129" stroke="var(--text-muted)" stroke-width="1" marker-end="u  r  l  a  r  r  o  w"></path>
+</g>
+
+<path class="arrow-path" d="M 520 1160  L 520 1190" marker-end="u  r  l  a  r  r  o  w"></path>
+
+<g class="box">
+<rect x="200" y="1192" width="640" height="92" rx="12" fill="var(--orange-soft)" stroke="var(--orange)"></rect>
+<text x="220" y="1215" class="box-tag" fill="var(--orange)">aggregation</text>
+<text x="220" y="1235" class="box-title">Scatter to destination channel nodes</text>
+<text x="220" y="1252" class="box-body">Aggregation mode ∈ {mean, concat, gated softmax} — canonical run uses concat</text>
+<text x="220" y="1267" class="box-body">Produces one evidence vector per channel node (or a stack of them, for concat)</text>
+</g>
+
+<g class="illus">
+<rect x="855" y="1200" width="165" height="76" rx="8" fill="var(--surface-1)" stroke="var(--orange)" stroke-opacity="0.4"></rect>
+<circle cx="875" cy="1212" r="4" fill="var(--surface-1)" stroke="var(--orange)" stroke-width="1"></circle>
+<circle cx="875" cy="1232" r="4" fill="var(--surface-1)" stroke="var(--orange)" stroke-width="1"></circle>
+<circle cx="875" cy="1252" r="4" fill="var(--surface-1)" stroke="var(--orange)" stroke-width="1"></circle>
+<circle cx="900" cy="1222" r="4" fill="var(--surface-1)" stroke="var(--orange)" stroke-width="1"></circle>
+<circle cx="900" cy="1262" r="4" fill="var(--surface-1)" stroke="var(--orange)" stroke-width="1"></circle>
+<circle cx="965" cy="1237" r="9" fill="var(--orange-soft)" stroke="var(--orange)" stroke-width="1.4"></circle>
+<text x="965" y="1240" text-anchor="middle" font-size="10.5" fill="var(--text-primary)">dst</text>
+<path d="M 879 1212  L 954 1234" stroke="var(--orange)" stroke-width="1" marker-end="u  r  l  a  r  r  o  w  o  r  a  n  g  e" opacity="0.7"></path>
+<path d="M 879 1232  L 956 1237" stroke="var(--orange)" stroke-width="1" marker-end="u  r  l  a  r  r  o  w  o  r  a  n  g  e" opacity="0.7"></path>
+<path d="M 879 1252  L 954 1241" stroke="var(--orange)" stroke-width="1" marker-end="u  r  l  a  r  r  o  w  o  r  a  n  g  e" opacity="0.7"></path>
+<path d="M 904 1222  L 958 1232" stroke="var(--orange)" stroke-width="1" marker-end="u  r  l  a  r  r  o  w  o  r  a  n  g  e" opacity="0.7"></path>
+<path d="M 904 1262  L 958 1243" stroke="var(--orange)" stroke-width="1" marker-end="u  r  l  a  r  r  o  w  o  r  a  n  g  e" opacity="0.7"></path>
+</g>
+
+<path class="arrow-path dashed" d="M 520 1284  L 520 1314" marker-end="u  r  l  a  r  r  o  w"></path>
+
+<g class="box">
+<rect x="200" y="1316" width="640" height="54" rx="12" fill="var(--gray-soft)" stroke="var(--text-muted)" stroke-dasharray="4 3"></rect>
+<text x="220" y="1337" class="box-tag" fill="var(--text-muted)">inactive at 1 hop</text>
+<text x="220" y="1355" class="box-body">Extra message-passing rounds beyond the first — skipped in the canonical config.</text>
+</g>
+
+<path class="arrow-path" d="M 520 1370  L 520 1400" marker-end="u  r  l  a  r  r  o  w"></path>
+
+<g class="box">
+<rect x="200" y="1402" width="640" height="66" rx="12" fill="var(--blue-soft)" stroke="var(--blue)"></rect>
+<text x="220" y="1425" class="box-tag" fill="var(--blue)">trainable</text>
+<text x="220" y="1445" class="box-title">Flatten → classifier</text>
+<text x="220" y="1460" class="box-body">Linear layer → class logits</text>
+</g>
+
+<g class="illus">
+<rect x="855" y="1408" width="165" height="54" rx="8" fill="var(--surface-1)" stroke="var(--blue)" stroke-opacity="0.4"></rect>
+<rect x="868" y="1438" width="14" height="16" fill="var(--blue)" opacity="0.5"></rect>
+<rect x="888" y="1424" width="14" height="30" fill="var(--blue)" opacity="0.7"></rect>
+<rect x="908" y="1448" width="14" height="6" fill="var(--blue)" opacity="0.4"></rect>
+<rect x="928" y="1432" width="14" height="22" fill="var(--blue)" opacity="0.6"></rect>
+<rect x="948" y="1418" width="14" height="36" fill="var(--blue)" opacity="0.85"></rect>
+<line x1="864" y1="1454" x2="968" y2="1454" stroke="var(--text-muted)" stroke-width="1"></line>
+<text x="985" y="1440" font-size="10.5" fill="var(--text-muted)">logits</text>
+</g>
+
+<path class="arrow-path" d="M 520 1468  L 520 1498" marker-end="u  r  l  a  r  r  o  w"></path>
+
+<g class="box">
+<rect x="200" y="1500" width="640" height="85" rx="12" fill="var(--green-soft)" stroke="var(--green)"></rect>
+<text x="220" y="1523" class="box-tag" fill="var(--green)">output</text>
+<text x="220" y="1543" class="box-title">Class logits  +  event_density (aux)</text>
+<text x="220" y="1558" class="box-body">event_density: a fixed constant in this mode — not a meaningful signal here,</text>
+<text x="220" y="1573" class="box-body">kept for API parity with alternative event-aggregation modes.</text>
+</g>
+
+<g class="illus">
+<rect x="855" y="1508" width="165" height="71" rx="8" fill="var(--surface-1)" stroke="var(--green)" stroke-opacity="0.4"></rect>
+<rect x="868" y="1540" width="16" height="18" fill="var(--text-muted)" opacity="0.4"></rect>
+<rect x="890" y="1520" width="16" height="38" fill="var(--green)" opacity="0.85"></rect>
+<rect x="912" y="1548" width="16" height="10" fill="var(--text-muted)" opacity="0.35"></rect>
+<line x1="864" y1="1558" x2="936" y2="1558" stroke="var(--text-muted)" stroke-width="1"></line>
+<path d="M 950 1538  L 1006 1538" stroke="var(--text-muted)" stroke-width="1.2" stroke-dasharray="3 2"></path>
+<text x="945" y="1530" font-size="10" fill="var(--text-muted)">flat (aux)</text>
+<text x="898" y="1572" text-anchor="middle" font-size="10.5" fill="var(--green)">predicted class</text>
+</g>
+
+<!-- ============ SUPPLEMENTARY ILLUSTRATIONS ============ -->
+<line x1="20" y1="1615" x2="1020" y2="1615" stroke="var(--gridline)" stroke-width="1"></line>
+<text x="20" y="1638" class="lane-label">illustrative supplements — not a code diagram</text>
+
+<!-- ---- Panel 1: channel graph ---- -->
+<g class="box">
+<rect x="20" y="1647" width="320" height="480" rx="12" fill="var(--gray-soft)" stroke="var(--text-muted)"></rect>
+<text x="40" y="1670" class="box-tag" fill="var(--text-muted)">what the data looks like</text>
+<text x="40" y="1690" class="box-title">The graph the state-space model messages ride on</text>
+<text x="40" y="1707" class="box-body">Channels are nodes. Every ordered pair (i,j) is its</text>
+<text x="40" y="1721" class="box-body">own directed edge, carrying [coh, sinφ, cosφ, sig].</text>
+
+<circle cx="180" cy="1785" r="14" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.4"></circle>
+<text x="180" y="1789" text-anchor="middle" font-size="12.5" fill="var(--text-secondary)">C1</text>
+<circle cx="266" cy="1835" r="14" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.4"></circle>
+<text x="266" y="1839" text-anchor="middle" font-size="12.5" fill="var(--text-secondary)">C2</text>
+<circle cx="266" cy="1935" r="14" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.4"></circle>
+<text x="266" y="1939" text-anchor="middle" font-size="12.5" fill="var(--text-secondary)">C3</text>
+<circle cx="180" cy="1985" r="14" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.4"></circle>
+<text x="180" y="1989" text-anchor="middle" font-size="12.5" fill="var(--text-secondary)">C4</text>
+<circle cx="94" cy="1935" r="14" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.4"></circle>
+<text x="94" y="1939" text-anchor="middle" font-size="12.5" fill="var(--text-secondary)">C5</text>
+<circle cx="94" cy="1835" r="14" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.4"></circle>
+<text x="94" y="1839" text-anchor="middle" font-size="12.5" fill="var(--text-secondary)">C6</text>
+
+<path class="arrow-path" d="M 192 1796  L 254 1824" marker-end="u  r  l  a  r  r  o  w"></path>
+<path class="arrow-path" d="M 266 1849  L 266 1921" marker-end="u  r  l  a  r  r  o  w"></path>
+<path class="arrow-path" d="M 254 1946  L 192 1974" marker-end="u  r  l  a  r  r  o  w"></path>
+<path class="arrow-path" d="M 168 1974  L 106 1946" marker-end="u  r  l  a  r  r  o  w"></path>
+<path class="arrow-path" d="M 94 1921  L 94 1849" marker-end="u  r  l  a  r  r  o  w"></path>
+
+<path d="M 100 1824  Q 130 1799 168 1790" fill="none" stroke="var(--orange)" stroke-width="1.8" marker-end="u  r  l  a  r  r  o  w  o  r  a  n  g  e"></path>
+<path d="M 168 1784  Q 132 1796 106 1826" fill="none" stroke="var(--blue)" stroke-width="1.8" marker-end="u  r  l  a  r  r  o  w  b  l  u  e"></path>
+<text x="180" y="2030" text-anchor="middle" font-size="12.5" fill="var(--text-muted)">C6→C1 and C1→C6 are separate edges —</text>
+<text x="180" y="2043" text-anchor="middle" font-size="12.5" fill="var(--text-muted)">opposite-sign phase, same coherence magnitude.</text>
+<text x="180" y="2056" text-anchor="middle" font-size="12.5" fill="var(--text-muted)">Every channel pair contributes two directed edges.</text>
+</g>
+
+<!-- ---- Panel 2: selective scan ---- -->
+<g class="box">
+<rect x="360" y="1647" width="320" height="480" rx="12" fill="var(--gray-soft)" stroke="var(--text-muted)"></rect>
+<text x="380" y="1670" class="box-tag" fill="var(--text-muted)">what the data looks like</text>
+<text x="380" y="1690" class="box-title">How the per-edge selective scan runs</text>
+<text x="380" y="1707" class="box-body">One shared state-space block, stepped across</text>
+<text x="380" y="1721" class="box-body">downsampled timesteps per edge. Unlike a fixed</text>
+<text x="380" y="1735" class="box-body">recurrent cell, the input itself modulates how much</text>
+<text x="380" y="1749" class="box-body">of the running state carries forward each step.</text>
+
+<rect x="430" y="1775" width="180" height="66" rx="10" fill="var(--purple-soft)" stroke="var(--purple)"></rect>
+<text x="520" y="1803" text-anchor="middle" font-size="14" font-weight="700" fill="var(--text-primary)">selective scan</text>
+<text x="520" y="1819" text-anchor="middle" font-size="12.5" fill="var(--text-secondary)">(shared across edges)</text>
+
+<path class="arrow-path" d="M 500 1873  L 500 1841" marker-end="u  r  l  a  r  r  o  w"></path>
+<text x="500" y="1889" text-anchor="middle" font-size="13" fill="var(--text-secondary)">x_t (edge feature at t)</text>
+
+<path class="arrow-path" d="M 540 1775  L 540 1743" marker-end="u  r  l  a  r  r  o  w"></path>
+<text x="580" y="1739" text-anchor="middle" font-size="13" fill="var(--text-secondary)">s_t</text>
+
+<path d="M 610 1795  C 660 1795 660 1865 610 1865" fill="none" stroke="var(--orange)" stroke-width="1.8" marker-end="u  r  l  a  r  r  o  w  o  r  a  n  g  e"></path>
+<text x="672" y="1833" text-anchor="middle" font-size="12.5" fill="var(--orange)" transform="rotate(90 672 1833)">s_(t−1), gated by x_t, feeds forward</text>
+
+<text x="520" y="1923" text-anchor="middle" font-size="13" fill="var(--text-secondary)">as a linear-time parallel scan:</text>
+
+<rect x="378" y="1941" width="32" height="24" rx="5" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.2"></rect>
+<text x="394" y="1957" text-anchor="middle" font-size="12" fill="var(--text-secondary)">s0</text>
+<path class="arrow-path" d="M 410 1953  L 434 1953" marker-end="u  r  l  a  r  r  o  w"></path>
+<rect x="436" y="1941" width="32" height="24" rx="5" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.2"></rect>
+<text x="452" y="1957" text-anchor="middle" font-size="12" fill="var(--text-secondary)">s1</text>
+<path class="arrow-path" d="M 468 1953  L 492 1953" marker-end="u  r  l  a  r  r  o  w"></path>
+<rect x="494" y="1941" width="32" height="24" rx="5" fill="var(--surface-1)" stroke="var(--text-secondary)" stroke-width="1.2"></rect>
+<text x="510" y="1957" text-anchor="middle" font-size="12" fill="var(--text-secondary)">s2</text>
+<path class="arrow-path" d="M 526 1953  L 550 1953" marker-end="u  r  l  a  r  r  o  w"></path>
+<text x="562" y="1957" text-anchor="middle" font-size="14.5" fill="var(--text-muted)">⋯</text>
+<path class="arrow-path" d="M 574 1953  L 598 1953" marker-end="u  r  l  a  r  r  o  w"></path>
+<rect x="600" y="1937" width="60" height="32" rx="6" fill="var(--green-soft)" stroke="var(--green)" stroke-width="1.4"></rect>
+<text x="630" y="1958" text-anchor="middle" font-size="12" fill="var(--text-primary)">s_n</text>
+
+<text x="520" y="1997" text-anchor="middle" font-size="12.5" fill="var(--text-muted)">final state = pooled edge summary,</text>
+<text x="520" y="2011" text-anchor="middle" font-size="12.5" fill="var(--text-muted)">passed on to repack per-edge features above.</text>
+<text x="520" y="2035" text-anchor="middle" font-size="12.5" fill="var(--text-muted)">Chunked / fused-kernel scan modes compute this</text>
+<text x="520" y="2048" text-anchor="middle" font-size="12.5" fill="var(--text-muted)">equivalently, trading memory for wall-clock cost.</text>
+</g>
+
+<!-- ---- Panel 3: wavelet coherence ---- -->
+<g class="box">
+<rect x="700" y="1647" width="320" height="480" rx="12" fill="var(--gray-soft)" stroke="var(--text-muted)"></rect>
+<text x="720" y="1670" class="box-tag" fill="var(--text-muted)">what the data looks like</text>
+<text x="720" y="1690" class="box-title">Wavelet coherence, cross-spectrum</text>
+<text x="720" y="1707" class="box-body">Two channel signals → per-frequency phase &amp;</text>
+<text x="720" y="1721" class="box-body">coherence between them, at every timestep.</text>
+
+<path d="M 720 1755  Q 735 1739 750 1755  T 780 1755  T 810 1755  T 840 1755" fill="none" stroke="var(--aqua)" stroke-width="1.6"></path>
+<text x="846" y="1759" font-size="12.5" fill="var(--aqua)">ch i</text>
+<path d="M 720 1779  Q 738 1767 756 1779  T 792 1779  T 828 1779" fill="none" stroke="var(--orange)" stroke-width="1.6" stroke-dasharray="3 2"></path>
+<text x="846" y="1783" font-size="12.5" fill="var(--orange)">ch j</text>
+
+<path class="arrow-path" d="M 780 1795  L 780 1819" marker-end="u  r  l  a  r  r  o  w"></path>
+
+<text x="720" y="1837" font-size="12.5" fill="var(--text-secondary)">coherence(f, t):</text>
+<g>
+<rect x="720" y="1845" width="18" height="18" fill="#0ca30c" opacity="0.85"></rect>
+<rect x="738" y="1845" width="18" height="18" fill="#4a9e1f" opacity="0.85"></rect>
+<rect x="756" y="1845" width="18" height="18" fill="#8a9c1a" opacity="0.7"></rect>
+<rect x="774" y="1845" width="18" height="18" fill="#c98a1a" opacity="0.55"></rect>
+<rect x="792" y="1845" width="18" height="18" fill="#c9601a" opacity="0.4"></rect>
+<rect x="810" y="1845" width="18" height="18" fill="#c9401a" opacity="0.25"></rect>
+<rect x="720" y="1863" width="18" height="18" fill="#4a9e1f" opacity="0.8"></rect>
+<rect x="738" y="1863" width="18" height="18" fill="#0ca30c" opacity="0.9"></rect>
+<rect x="756" y="1863" width="18" height="18" fill="#4a9e1f" opacity="0.75"></rect>
+<rect x="774" y="1863" width="18" height="18" fill="#8a9c1a" opacity="0.6"></rect>
+<rect x="792" y="1863" width="18" height="18" fill="#c98a1a" opacity="0.45"></rect>
+<rect x="810" y="1863" width="18" height="18" fill="#c9601a" opacity="0.3"></rect>
+<rect x="720" y="1881" width="18" height="18" fill="#8a9c1a" opacity="0.65"></rect>
+<rect x="738" y="1881" width="18" height="18" fill="#4a9e1f" opacity="0.75"></rect>
+<rect x="756" y="1881" width="18" height="18" fill="#0ca30c" opacity="0.85"></rect>
+<rect x="774" y="1881" width="18" height="18" fill="#4a9e1f" opacity="0.7"></rect>
+<rect x="792" y="1881" width="18" height="18" fill="#8a9c1a" opacity="0.55"></rect>
+<rect x="810" y="1881" width="18" height="18" fill="#c98a1a" opacity="0.4"></rect>
+</g>
+<text x="720" y="1917" font-size="12" fill="var(--text-muted)">rows = frequency, cols = time — one such</text>
+<text x="720" y="1929" font-size="12" fill="var(--text-muted)">grid per directed edge, per trial.</text>
+
+<circle cx="860" cy="1995" r="62" fill="none" stroke="var(--gridline)" stroke-width="1.2"></circle>
+<line x1="798" y1="1995" x2="922" y2="1995" stroke="var(--gridline)" stroke-width="1"></line>
+<line x1="860" y1="1933" x2="860" y2="2057" stroke="var(--gridline)" stroke-width="1"></line>
+<path d="M 860 1995  L 918 1980" stroke="var(--orange)" stroke-width="1.8" marker-end="u  r  l  a  r  r  o  w  o  r  a  n  g  e"></path>
+<path d="M 860 1995  L 918 2010" stroke="var(--blue)" stroke-width="1.8" marker-end="u  r  l  a  r  r  o  w  b  l  u  e"></path>
+<text x="924" y="1975" font-size="12" fill="var(--orange)">phase(i→j)</text>
+<text x="924" y="2024" font-size="12" fill="var(--blue)">phase(j→i)</text>
+<text x="860" y="2081" text-anchor="middle" font-size="12" fill="var(--text-muted)">phase(j→i) = −phase(i→j), same |coherence| —</text>
+<text x="860" y="2094" text-anchor="middle" font-size="12" fill="var(--text-muted)">the antisymmetric part this representation relies on.</text>
+</g>
+</svg>
+</div>
+
+<div class="legend">
+<div class="item"><span class="swatch" style="background:var(--blue-soft);border-color:var(--blue);"></span>Trainable module</div>
+<div class="item"><span class="swatch" style="background:var(--purple-soft);border-color:var(--purple);"></span>Sequence / state-space model</div>
+<div class="item"><span class="swatch" style="background:var(--gray-soft);border-color:var(--text-muted);"></span>Non-trainable / cached</div>
+<div class="item"><span class="swatch" style="background:var(--aqua-soft);border-color:var(--aqua);"></span>Tensor / data flow</div>
+<div class="item"><span class="swatch" style="background:var(--orange-soft);border-color:var(--orange);"></span>Aggregation (scatter to nodes)</div>
+<div class="item"><span class="swatch" style="background:var(--green-soft);border-color:var(--green);"></span>Output</div>
+</div>
+
+<div class="foot">
+      Current dense-edge pipeline: same coherence-graph front end as before, with the per-edge temporal
+      block replaced by a selective state-space model (Mamba) in place of the earlier recurrent (GRU)
+      block — see "stale pipelines" for that earlier diagram. Magnitude, sin(phase), cos(phase), and the
+      significance mask are shown here as the separate feature branches they conceptually are — each
+      carries different information about an edge — concatenated into a single per-edge vector right
+      before the message network and classifier. Numbers and specific module names here are
+      illustrative/generalized, not pinned to one exact run's configuration.
+</div>
+</div>
+</div>
+</body>
+</html>
