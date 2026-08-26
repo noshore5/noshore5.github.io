@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="../resources/icon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GRU, Mamba, DBConformer, SlimSeiz — Noah Shore</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .nav-links a { text-decoration: none; }
+    .nav-links a.active { text-decoration: underline; }
+    .post { max-width: 800px; margin: 0 auto 3rem auto; text-align: left; }
+    .post-meta { color: #888; font-size: 0.9rem; margin-bottom: 2rem; text-align: center; }
+    .post h1 { font-size: 1.9rem; text-align: center; color: #eaeaea; margin-bottom: 0.25rem; }
+    .post p { font-size: 1.02rem; line-height: 1.65; color: #ddd; }
+    .post h2 { color: #cccccc; font-size: 1.15rem; margin-top: 2rem; }
+    .post code { background: rgba(255,255,255,0.08); padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.92em; }
+    .callout { background: rgba(42, 42, 42, 0.7); border-left: 4px solid #4a6583; border-radius: 6px; padding: 1rem 1.5rem; margin: 1.5rem 0; color: #ccc; font-size: 0.98rem; }
+    .back-link { display: block; text-align: center; margin-bottom: 2rem; color: #7aa5d6 !important; }
+    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.92rem; }
+    th, td { padding: 0.5rem 0.7rem; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.1); color: #ccc; }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: #eaeaea; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div id="menu-container"></div>
+  <div class="container" style="max-width:900px; margin:0 auto;">
+    <a href="../notes.html" class="back-link">&larr; All notes</a>
+    <div class="post">
+      <h1>Four models, one shared blind spot: a full GRU / Mamba / DBConformer / SlimSeiz comparison</h1>
+      <p class="post-meta">2026-08-25 &middot; architecture comparison, seizure prediction</p>
+
+      <p>
+        With GRU, Mamba, DBConformer, and SlimSeiz each independently tuned to their own best-known
+        configuration under the same six-fold, chb01, leave-one-seizure-out protocol, this note lines all
+        four up side by side for the first time. The headline aggregate numbers tell one story. Looking at
+        them fold-by-fold tells a very different one &mdash; and overturns which model actually "wins."
+      </p>
+
+      <div class="callout">
+        Caveat up front: this isn't a controlled experiment. GRU and Mamba ran on Windows/CUDA and consume
+        this repo's own CWT+dense-edge-graph features; DBConformer and SlimSeiz ran on a Mac (MPS) and
+        classify raw EEG windows directly. Four different runs, four different seeds, no error bars &mdash;
+        single-run point estimates, each pipeline's own best-known config rather than a symmetric sweep
+        applied evenly across all four.
+      </div>
+
+      <h2>The aggregate table</h2>
+      <table>
+        <tr><th>metric</th><th>GRU</th><th>Mamba</th><th>DBConformer</th><th>SlimSeiz</th></tr>
+        <tr><td>accuracy</td><td>0.878</td><td>0.896</td><td>0.897</td><td><strong>0.913</strong></td></tr>
+        <tr><td>precision</td><td><strong>0.343</strong></td><td>0.348</td><td>0.273</td><td>0.286</td></tr>
+        <tr><td>recall</td><td><strong>0.807</strong></td><td>0.750</td><td>0.772</td><td>0.556</td></tr>
+        <tr><td>f1</td><td><strong>0.436</strong></td><td>0.389</td><td>0.366</td><td>0.340</td></tr>
+        <tr><td>average precision</td><td>0.423</td><td><strong>0.499</strong></td><td>0.442</td><td>0.431</td></tr>
+        <tr><td>ROC-AUC</td><td>0.944</td><td><strong>0.953</strong></td><td>0.952</td><td>0.951</td></tr>
+        <tr><td>FAR/hr, raw</td><td>14.26</td><td>11.73</td><td>11.73</td><td><strong>8.56</strong></td></tr>
+        <tr><td>FAR/hr, smoothed</td><td>9.21</td><td>6.39</td><td>7.95</td><td><strong>6.31</strong></td></tr>
+        <tr><td>hit rate, raw</td><td><strong>6/6</strong></td><td><strong>6/6</strong></td><td><strong>6/6</strong></td><td>5/6</td></tr>
+        <tr><td>hit rate, smoothed</td><td>5/6</td><td>5/6</td><td>5/6</td><td>4/6</td></tr>
+      </table>
+      <p>
+        Read at face value: Mamba wins on average precision, the metric treated as primary throughout this
+        project. GRU wins recall and f1. SlimSeiz is the quietest alarm stream but misses the most seizures.
+        DBConformer sits in the middle everywhere &mdash; unsurprising for an unmodified off-the-shelf
+        architecture adapted to this protocol rather than tuned for it.
+      </p>
+
+      <h2>One fold breaks the aggregate story</h2>
+      <p>
+        Average precision is threshold-independent; recall and f1 aren't. Breaking those two down by fold
+        shows something the aggregate table hides completely &mdash; a single seizure, <code>1_18_0</code>,
+        where every raw-EEG model's recall collapses to almost nothing, while GRU aces it:
+      </p>
+      <table>
+        <tr><th>seizure</th><th>GRU recall</th><th>Mamba recall</th><th>DBConformer recall</th><th>SlimSeiz recall</th></tr>
+        <tr><td><code>1_03_0</code></td><td>0.900</td><td>0.800</td><td>0.900</td><td>0.967</td></tr>
+        <tr><td><code>1_04_0</code></td><td>1.000</td><td>0.967</td><td>1.000</td><td>0.867</td></tr>
+        <tr><td><code>1_15_0</code></td><td>1.000</td><td>0.900</td><td>1.000</td><td>0.100</td></tr>
+        <tr><td><code>1_16_0</code></td><td>0.739</td><td>1.000</td><td>1.000</td><td>1.000</td></tr>
+        <tr><td><strong><code>1_18_0</code></strong></td><td><strong>0.767</strong></td><td><strong>0.100</strong></td><td><strong>0.067</strong></td><td><strong>0.000</strong></td></tr>
+        <tr><td><code>1_26_0</code></td><td>0.433</td><td>0.733</td><td>0.667</td><td>0.400</td></tr>
+      </table>
+      <p>
+        <code>1_18_0</code> is GRU's single best fold on both recall and f1, and it's every other pipeline's
+        worst or tied-worst fold. That's not a subtle effect on the aggregate &mdash; it's most of the gap
+        that made GRU look like the recall/f1 winner in the first place. Dropping that one fold and
+        recomputing the mean over the other five inverts the ranking:
+      </p>
+      <table>
+        <tr><th>pipeline</th><th>f1, 6 folds (reported)</th><th>f1, 5 folds (excl. <code>1_18_0</code>)</th></tr>
+        <tr><td>GRU</td><td><strong>0.436</strong></td><td>0.372</td></tr>
+        <tr><td>Mamba</td><td>0.389</td><td><strong>0.433</strong></td></tr>
+        <tr><td>DBConformer</td><td>0.366</td><td>0.418</td></tr>
+        <tr><td>SlimSeiz</td><td>0.340</td><td>0.408</td></tr>
+      </table>
+      <p>
+        Same flip on recall specifically for Mamba, the pipeline whose 6-fold recall trailed GRU's by the
+        widest margin: exclude <code>1_18_0</code> and GRU barely moves (0.807&rarr;0.814, it was already
+        fine on the other five), while Mamba jumps from 0.750 to 0.880 &mdash; a lead that flips to Mamba
+        by 0.066.
+      </p>
+      <div class="callout">
+        <strong>The "GRU has the best recall/f1" finding is substantially an artifact of one fold, not a
+        consistent five-of-six advantage.</strong> Drop <code>1_18_0</code> and GRU goes from best f1 to
+        worst of the four, while Mamba, DBConformer, and SlimSeiz all pull ahead of it. It cuts the other
+        way from the story you'd tell about Mamba being "dragged down by one bad fold": Mamba's f1 <em>was</em>
+        pulled down by <code>1_18_0</code> in absolute terms, but so was DBConformer's and SlimSeiz's, by
+        similar amounts. GRU is the actual outlier here &mdash; propped up by a fold none of the raw-EEG
+        models can get any recall on at all.
+      </div>
+      <p>
+        The AP table tells a subtler version of the same story. On AP specifically, <code>1_18_0</code>
+        isn't uniformly catastrophic &mdash; Mamba scores 0.618 there, its second-best fold, and DBConformer's
+        0.362 is genuinely its worst. So the models aren't failing to <em>rank</em> preictal windows above
+        interictal ones on this fold; they're failing at the fixed 0.5 decision threshold specifically. That
+        points at a calibration or threshold problem on this one fold rather than the raw-EEG representations
+        having no signal there at all &mdash; worth checking directly, and flagged now in three separate
+        session notes without being investigated.
+      </p>
+
+      <h2>Reading each model on its own terms</h2>
+      <p>
+        <strong>Mamba</strong> wins on AP (0.499, next-best DBConformer at 0.442) and ties for the best
+        smoothed hit-rate reliability, at the best raw FAR/hr among the two dense-edge models. It's the
+        strongest single number here on the metric this project treats as primary, at roughly 4.6&times;
+        GRU's per-epoch wall-clock cost on this hardware (a pure-PyTorch scan, no fused kernel) &mdash; real,
+        but not something that changes which model performs best.
+      </p>
+      <p>
+        <strong>GRU</strong> has the best raw recall/f1 headline numbers but the worst AP and highest FAR/hr
+        of the four &mdash; it over-predicts positive more than the others, a pattern also flagged (more
+        mildly) for DBConformer. As shown above, its f1 lead is mostly one fold; excluding it, GRU has the
+        worst f1 of the four.
+      </p>
+      <p>
+        <strong>DBConformer</strong> never leads and never trails on any metric &mdash; consistent with being
+        an unmodified architecture adapted to this protocol rather than purpose-built or tuned for it.
+      </p>
+      <p>
+        <strong>SlimSeiz</strong> is a different operating point rather than uniformly worse: best smoothed
+        FAR/hr and best raw accuracy, but the lowest recall and the only pipeline to miss two of six seizures
+        under smoothing instead of one. Its AP (0.431) is inflated somewhat by one outlier fold &mdash;
+        <code>1_16_0</code> scores a perfect AP of 1.000, its easiest fold by a wide margin across all four
+        pipelines &mdash; while <code>1_15_0</code> and <code>1_18_0</code> are among its weakest. The mean
+        does some work papering over a wide per-fold spread.
+      </p>
+      <p>
+        <code>1_26_0</code> is worth a brief mention too: every pipeline's second- or third-lowest AP, and
+        GRU's only smoothed miss here &mdash; but not a shared miss across pipelines the way
+        <code>1_18_0</code> is. Just a hard fold for everyone, in absolute terms.
+      </p>
+
+      <h2>Open items</h2>
+      <p>
+        What's actually different about <code>1_18_0</code>'s preictal windows &mdash; in whichever feature
+        space each model sees them &mdash; that only GRU's dense-edge CWT+graph representation handles at the
+        default decision threshold, remains unexplained after three notes flagging it. Nothing here has error
+        bars: every number is a single run at each pipeline's own best-known config, not a hyperparameter
+        search applied evenly across all four, so none of this should be read as a hard ceiling for any
+        architecture. And SlimSeiz's number here is its adaptive-channel-selection variant specifically
+        (the one with complete data) &mdash; its fixed-montage variant tied it on most metrics and is
+        operationally safer, but isn't the headline only because part of its result set was lost to an
+        unrelated crash.
+      </p>
+    </div>
+  </div>
+  <div id="footer-container"></div>
+</body>
+<script src="../menu-loader.js"></script>
+<script src="../footer-loader.js"></script>
+</html>

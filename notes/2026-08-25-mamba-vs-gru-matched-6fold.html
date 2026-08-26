@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="../resources/icon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mamba vs. GRU: a real matched comparison — Noah Shore</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .nav-links a { text-decoration: none; }
+    .nav-links a.active { text-decoration: underline; }
+    .post { max-width: 800px; margin: 0 auto 3rem auto; text-align: left; }
+    .post-meta { color: #888; font-size: 0.9rem; margin-bottom: 2rem; text-align: center; }
+    .post h1 { font-size: 1.9rem; text-align: center; color: #eaeaea; margin-bottom: 0.25rem; }
+    .post p { font-size: 1.02rem; line-height: 1.65; color: #ddd; }
+    .post h2 { color: #cccccc; font-size: 1.15rem; margin-top: 2rem; }
+    .post code { background: rgba(255,255,255,0.08); padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.92em; }
+    .callout { background: rgba(42, 42, 42, 0.7); border-left: 4px solid #4a6583; border-radius: 6px; padding: 1rem 1.5rem; margin: 1.5rem 0; color: #ccc; font-size: 0.98rem; }
+    .back-link { display: block; text-align: center; margin-bottom: 2rem; color: #7aa5d6 !important; }
+    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.92rem; }
+    th, td { padding: 0.5rem 0.7rem; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.1); color: #ccc; }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: #eaeaea; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div id="menu-container"></div>
+  <div class="container" style="max-width:900px; margin:0 auto;">
+    <a href="../notes.html" class="back-link">&larr; All notes</a>
+    <div class="post">
+      <h1>Mamba vs. GRU: a real matched comparison, and a debunked earlier result</h1>
+      <p class="post-meta">2026-08-25 &middot; architecture ablation, seizure prediction</p>
+
+      <p>
+        Two threads converge here. First, a real, protocol-matched six-fold comparison between the GRU and
+        Mamba temporal backends &mdash; the head-to-head that the previous Mamba session deliberately
+        hadn't run yet. Second, a correction: the earlier single-fold Mamba result that looked almost too
+        good turns out to have been testing a seizure that doesn't exist.
+      </p>
+
+      <h2>A result that needed debunking first</h2>
+      <div class="callout">
+        The earlier Mamba full-mesh run held out a seizure labeled <code>1_02_0</code>, and its training
+        curve hit exactly 0.0 validation loss and 100% validation accuracy by epoch 8, holding there through
+        the early-stopping window &mdash; a suspicious signature. Checking chb01's own documentation directly
+        settled it: the dataset has exactly seven real seizures, and the recording that run's driver labeled
+        as holding out <code>1_02_0</code> has zero documented seizures in it at all. The seizure ID was an
+        artifact of an indexing bug in the smoke-test driver's capped-interictal path, not a real held-out
+        fold. That earlier result should be read as "the code ran and produced output," nothing more.
+      </div>
+      <p>
+        A separate discovery, run to ground the same day: a second Mamba run on different hardware showed
+        the identical too-perfect signature. Once that pattern showed up twice, the working theory was that
+        it's specific to the smoke-test driver's small, capped train/validation split &mdash; not a real
+        problem with Mamba's training path. A full, uncapped run on the real six seizures settled it: the
+        exact-zero pattern never appeared once across any fold. Validation loss curves looked ordinary
+        everywhere. That closes the concern.
+      </p>
+
+      <h2>Getting the GRU side onto equal footing first</h2>
+      <p>
+        Before Mamba could be compared fairly, the GRU side needed its own fix: an earlier ablation had
+        removed a dead, do-nothing channel encoder from the model, but that fix had only been tested on one
+        fold. This session ran the same encoder-free model across all six real seizures, with a validation
+        split and early stopping, matching the protocol already used elsewhere:
+      </p>
+      <table>
+        <tr><th>metric</th><th>value</th></tr>
+        <tr><td>accuracy</td><td>0.878</td></tr>
+        <tr><td>average precision</td><td>0.423</td></tr>
+        <tr><td>ROC-AUC</td><td>0.944</td></tr>
+        <tr><td>false alarms/hr, raw&rarr;smoothed</td><td>14.26&rarr;9.21</td></tr>
+        <tr><td>hit rate, raw / smoothed</td><td>6/6 / 5/6</td></tr>
+      </table>
+      <p>
+        That's essentially on top of the old, un-fixed full-mesh number (0.413) despite being a genuinely
+        different model and training protocol &mdash; the two changes partly cancelled out. It also sits well
+        below every channel-subset point from an earlier sweep, meaning the "does a smaller live-edge subset
+        actually beat the full mesh" question still isn't cleanly answered &mdash; that sweep still needs a
+        rerun with the encoder removed before it's a fair fight.
+      </p>
+
+      <h2>The real comparison: GRU vs. Mamba, matched</h2>
+      <p>
+        With a corrected fold set, a real epoch budget, and identical everything else, a proper Mamba run
+        finally happened &mdash; same six seizures, same validation split, same precision flags, same
+        encoder-free model:
+      </p>
+      <table>
+        <tr><th>metric</th><th>GRU</th><th>Mamba</th><th>&Delta;</th></tr>
+        <tr><td>accuracy</td><td>0.878</td><td>0.896</td><td>+0.018</td></tr>
+        <tr><td>precision</td><td>0.343</td><td>0.348</td><td>+0.004</td></tr>
+        <tr><td>recall</td><td>0.807</td><td>0.750</td><td>&minus;0.057</td></tr>
+        <tr><td>f1</td><td>0.436</td><td>0.389</td><td>&minus;0.046</td></tr>
+        <tr><td><strong>average precision</strong></td><td>0.423</td><td><strong>0.499</strong></td><td><strong>+0.076</strong></td></tr>
+        <tr><td>ROC-AUC</td><td>0.944</td><td>0.953</td><td>+0.008</td></tr>
+        <tr><td>FAR/hr, raw&rarr;smoothed</td><td>14.26&rarr;9.21</td><td>11.73&rarr;6.39</td><td>better both ways</td></tr>
+        <tr><td>hit rate (k-of-n)</td><td>5/6</td><td>5/6</td><td>different seizure missed</td></tr>
+        <tr><td>mean epoch time</td><td>~14.3s</td><td>~65.97s</td><td>~4.6&times; slower</td></tr>
+      </table>
+      <p>
+        Mamba wins on the metric that matters most for this task &mdash; average precision, by a real margin
+        &mdash; and on both false-alarm numbers, at the same overall detection reliability. Broken down by
+        fold, that AP advantage isn't riding on one lucky result: Mamba beats GRU's ranking on five of the
+        six seizures, several by a wide margin, and loses meaningfully on only one. That's a reasonably
+        broad-based win, not noise from a single fold.
+      </p>
+      <div class="callout">
+        The recall and F1 losses tell a narrower story. Almost the entire gap traces to one seizure, where
+        Mamba's recall collapses to 0.100 against GRU's 0.767 &mdash; far larger than the difference on any
+        other fold. Mamba's ranking score on that same seizure (AP 0.618) isn't a collapse, just somewhat
+        weaker than GRU's &mdash; the combination of a still-reasonable ranking with a catastrophic recall at
+        the default decision threshold points at a calibration or threshold problem on that one fold, not
+        necessarily a model that failed to learn anything there. Worth checking directly before drawing a
+        conclusion either way.
+      </div>
+      <p>
+        One more thing worth being honest about: an earlier note described one particular seizure as a
+        "persistent miss across every model variant." This comparison broke that claim in one run &mdash;
+        GRU still misses it, but Mamba catches it, while missing a different seizure instead. With only six
+        folds on one subject, a pattern that looks architectural can just be which combinations happened to
+        get tried so far. Worth treating both this session's win and its one loss as provisional rather than
+        settled, and rerunning with a different seed before leaning on either as a real finding.
+      </p>
+
+      <h2>Open items</h2>
+      <p>
+        The channel-subset sweep still needs an encoder-free rerun before k-versus-full-mesh is a genuine
+        same-model comparison. Mamba's recall collapse on its one weak fold hasn't been investigated directly
+        &mdash; whether that seizure's underlying features look unusual, or it's a threshold-calibration
+        artifact, is still open. No null-control run exists for either architecture in this specific
+        comparison. And the ~4.6&times; per-epoch cost is a real, current-scale number, not a smoke-inflated
+        one &mdash; closing that gap depends on infrastructure work (a CUDA-kernel-backed build) that hasn't
+        happened yet.
+      </p>
+    </div>
+  </div>
+  <div id="footer-container"></div>
+</body>
+<script src="../menu-loader.js"></script>
+<script src="../footer-loader.js"></script>
+</html>

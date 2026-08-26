@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="../resources/icon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fused Mamba rescues the one bad fold — Noah Shore</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .nav-links a { text-decoration: none; }
+    .nav-links a.active { text-decoration: underline; }
+    .post { max-width: 800px; margin: 0 auto 3rem auto; text-align: left; }
+    .post-meta { color: #888; font-size: 0.9rem; margin-bottom: 2rem; text-align: center; }
+    .post h1 { font-size: 1.9rem; text-align: center; color: #eaeaea; margin-bottom: 0.25rem; }
+    .post p { font-size: 1.02rem; line-height: 1.65; color: #ddd; }
+    .post h2 { color: #cccccc; font-size: 1.15rem; margin-top: 2rem; }
+    .post code { background: rgba(255,255,255,0.08); padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.92em; }
+    .callout { background: rgba(42, 42, 42, 0.7); border-left: 4px solid #4a6583; border-radius: 6px; padding: 1rem 1.5rem; margin: 1.5rem 0; color: #ccc; font-size: 0.98rem; }
+    .back-link { display: block; text-align: center; margin-bottom: 2rem; color: #7aa5d6 !important; }
+    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.92rem; }
+    th, td { padding: 0.5rem 0.7rem; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.1); color: #ccc; }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: #eaeaea; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div id="menu-container"></div>
+  <div class="container" style="max-width:900px; margin:0 auto;">
+    <a href="../notes.html" class="back-link">&larr; All notes</a>
+    <div class="post">
+      <h1>Fused Mamba rescues the one bad fold, and CG-MambaNet hits a real mambapy wall</h1>
+      <p class="post-meta">2026-08-26 &middot; architecture ablation, infrastructure, seizure prediction</p>
+
+      <p>
+        Yesterday's GRU-vs-Mamba comparison ended on an open question: Mamba's average precision beat GRU
+        broadly, but its recall and F1 lagged almost entirely because of one seizure, <code>1_18_0</code>,
+        where recall collapsed to 0.100 despite a perfectly reasonable ranking score (AP 0.618). That looked
+        like a calibration problem specific to one fold rather than a real weakness, but it was untested.
+        This session tested it directly &mdash; and separately, hit a hard scaling wall trying to reproduce a
+        published architecture locally.
+      </p>
+
+      <h2>Swapping the Mamba implementation, not the model</h2>
+      <p>
+        The original run used <code>mambapy</code>, a pure-PyTorch Mamba scan, at the repo's normal precision.
+        A second run repeated the exact same six-fold protocol &mdash; same seizures, same channel subset, same
+        epoch budget &mdash; but swapped in the <code>mamba-ssm</code> fused CUDA kernel with bf16 mixed
+        precision for both the dense-edge stage and training. Two things changed at once (kernel and
+        precision), so this isn't a clean ablation of either one alone &mdash; but it's a fast way to check
+        whether the <code>1_18_0</code> failure was configuration-sensitive at all.
+      </p>
+      <p>It was.</p>
+      <table>
+        <tr><th>fold</th><th>mambapy F1</th><th>fused F1</th><th>&Delta;</th></tr>
+        <tr><td><code>1_03_0</code></td><td>0.310</td><td>0.341</td><td>+0.031</td></tr>
+        <tr><td><code>1_04_0</code></td><td>0.283</td><td>0.244</td><td>&minus;0.039</td></tr>
+        <tr><td><code>1_15_0</code></td><td>0.551</td><td>0.496</td><td>&minus;0.055</td></tr>
+        <tr><td><code>1_16_0</code></td><td>0.657</td><td>0.622</td><td>&minus;0.035</td></tr>
+        <tr><td><strong><code>1_18_0</code></strong></td><td>0.171</td><td><strong>0.704</strong></td><td><strong>+0.533</strong></td></tr>
+        <tr><td><code>1_26_0</code></td><td>0.364</td><td>0.387</td><td>+0.023</td></tr>
+      </table>
+      <p>
+        Five of six folds move by less than 0.06 F1 in either direction &mdash; noise-scale. The sixth,
+        <code>1_18_0</code>, jumps from Mamba's worst fold to its best: recall 0.100&rarr;0.633, precision
+        up to 0.792, F1 0.171&rarr;0.704, false-alarm rate falling to zero after smoothing. For comparison,
+        GRU's own F1 on that fold was 0.754 &mdash; fused Mamba lands in the same regime, closing almost the
+        entire gap that made GRU look categorically better on recall.
+      </p>
+      <div class="callout">
+        The other fold that completed this session, <code>1_26_0</code>, stayed nearly identical to the
+        original (AP 0.229&rarr;0.231, F1 0.364&rarr;0.387) &mdash; useful as a negative control. If the fused
+        configuration were just generically better across the board, you'd expect every fold to move.
+        Instead the change is concentrated almost entirely on the one fold that was failing, which is the
+        signature of a fix, not a general improvement.
+      </div>
+      <p>
+        Across the completed six folds, fused Mamba now leads GRU, the original Mamba, DBConformer, and
+        SlimSeiz on the project's primary metric:
+      </p>
+      <table>
+        <tr><th>metric</th><th>GRU</th><th>mambapy</th><th>fused Mamba</th></tr>
+        <tr><td>precision</td><td>0.343</td><td>0.348</td><td><strong>0.363</strong></td></tr>
+        <tr><td>recall</td><td>0.807</td><td>0.750</td><td><strong>0.895</strong></td></tr>
+        <tr><td>f1</td><td>0.436</td><td>0.389</td><td><strong>0.466</strong></td></tr>
+        <tr><td><strong>average precision</strong></td><td>0.423</td><td>0.499</td><td><strong>0.572</strong></td></tr>
+        <tr><td>raw / k-of-n hit rate</td><td>6/6, 5/6</td><td>6/6, 5/6</td><td><strong>6/6, 6/6</strong></td></tr>
+      </table>
+      <p>
+        The honest caveat: kernel and precision changed together, so this doesn't prove which one did the
+        rescuing, or whether it's the interaction of both. The next controlled step is separating them &mdash;
+        fused kernel at full precision, or <code>mambapy</code> at bf16 &mdash; but the headline claim from
+        yesterday's note (that this looked like a threshold/calibration artifact on one fold, not a real
+        architectural weakness) held up.
+      </p>
+
+      <h2>A second thread: CG-MambaNet, built but stuck on CPU</h2>
+      <p>
+        Separately, this session built <code>CG-MambaNet</code> &mdash; a CNN&ndash;GCN&ndash;Mamba&ndash;BiLSTM
+        architecture from a recent preprint reporting 0.8152 cross-patient AUC on CHB-MIT, with no public code
+        to work from. The build came from the paper's own methods section (unusually detailed for a preprint)
+        wired into this repo's existing leave-one-seizure-out protocol for a fast, same-protocol read against
+        the existing backbones &mdash; not an attempt to reproduce the paper's own multi-patient number, which
+        would need montage unification across subjects that doesn't exist here yet.
+      </p>
+      <p>
+        The architecture wired up cleanly and passed a CPU smoke test end-to-end. Scaling it to the paper's
+        real hyperparameters did not go as smoothly. A first sizing bug (reading the paper's embedding width
+        as the raw per-patch sample count, giving <code>d_model=256</code> instead of a sane <code>64</code>)
+        was found and fixed &mdash; a 21&times; speedup on its own. What was left after that fix wasn't fixable
+        by tuning: a 12-layer, bidirectional Mamba encoder at the paper's real sequence length showed severely
+        super-linear backward-pass scaling under <code>mambapy</code>'s pure-PyTorch scan &mdash; on CPU, doubling
+        batch size roughly quadrupled runtime; on MPS it was worse (17.8&times; for a 2&times; batch increase, then
+        an outright OOM at batch 16). Switching to <code>mambapy</code>'s sequential-scan fallback didn't help
+        either &mdash; forward stayed cheap, but backward exploded to nearly 16 minutes at batch 16, an autograd
+        graph roughly 24 Mamba instances &times; 480 timesteps deep.
+      </p>
+      <div class="callout">
+        Neither of <code>mambapy</code>'s two scan modes is viable for this architecture's real depth and
+        sequence length, on CPU or MPS. That's a library-level limitation at this scale, not a hyperparameter
+        to tune around &mdash; and it's the same fused-kernel-vs-pure-PyTorch gap that's now shown up twice in
+        two days. Given the choice between shrinking the architecture (a real deviation from the paper) or
+        waiting for CUDA infrastructure, the call was to stop here rather than compromise it &mdash; resume on
+        the fused-kernel image once it's available for this workload.
+      </div>
+
+      <h2>Also this session</h2>
+      <p>
+        The GitHub-release mirror for CHB-MIT (built for chb01 specifically to dodge PhysioNet's S3 throttling)
+        was generalized to any subject, and chb02&ndash;chb04 were published to it &mdash; chb04 needed a
+        two-part split to fit under GitHub's 2&nbsp;GiB per-asset cap. Extending the matched GRU baseline to
+        chb02 and chb03 surfaced two open threads: chb02 collapses to chance on every fold (likely too few
+        preictal windows per LOSO split to learn from, not yet confirmed against other backbones), and chb03
+        shows a striking split where its earliest four seizures fail near-chance while its last three train
+        well &mdash; flagged, not yet explained.
+      </p>
+
+      <h2>Open items</h2>
+      <p>
+        Kernel and precision still need separating before the <code>1_18_0</code> rescue is attributed to one
+        or the other. chb02's total collapse and chb03's early/late split haven't been checked against
+        <code>dense_edge</code> or <code>dense_edge_mamba</code> to see whether they're GRU-specific or a
+        genuine data-difficulty signal. CG-MambaNet is parked at its paper-faithful hyperparameters until the
+        fused-kernel CUDA image is available for it. And a chb02 seizure-ID off-by-one bug (labels shifted by
+        one file number, same class of bug as an earlier chb01 artifact) was found but not yet fixed.
+      </p>
+    </div>
+  </div>
+  <div id="footer-container"></div>
+</body>
+<script src="../menu-loader.js"></script>
+<script src="../footer-loader.js"></script>
+</html>
