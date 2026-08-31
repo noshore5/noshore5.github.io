@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="resources/icon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy — CoherIQs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .nav-links a { text-decoration: none; }
+    .legal-body { max-width: 760px; margin: 0 auto; text-align: left; }
+    .legal-body p, .legal-body li { font-size: 1rem; line-height: 1.65; color: #ddd; }
+    .legal-body h2 { color: #cccccc; font-size: 1.25rem; margin-top: 2rem; }
+    .legal-body .updated { color: #888; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <div id="menu-container"></div>
+  <div class="container" style="max-width:900px; margin:0 auto;">
+    <h1 style="text-align:center; margin-bottom:0.3em; font-size:2.4em; font-weight:700; color:#cccccc;">Privacy Policy</h1>
+    <div class="legal-body">
+      <p class="updated">Last updated: 31 August 2026</p>
+
+      <p>
+        This Privacy Policy describes how CoherIQs Inc. ("CoherIQs", "we") handles information in
+        connection with this website and the CoherIQs API (the "Service").
+      </p>
+
+      <h2>Information we collect</h2>
+      <ul>
+        <li><strong>Contact information</strong> you provide, such as your name, email address, and
+          organization, when you contact us or request beta access.</li>
+        <li><strong>API request data</strong> submitted to the Service, which may include windows of
+          multi-channel EEG signal data and associated parameters (sampling rate, channel labels).</li>
+        <li><strong>Technical logs</strong> generated automatically, such as IP address, timestamps,
+          request metadata, and error information.</li>
+      </ul>
+
+      <h2>How we use information</h2>
+      <ul>
+        <li>To operate, maintain, and secure the Service.</li>
+        <li>To respond to inquiries and manage beta access.</li>
+        <li>To debug, evaluate, and improve the Service and its models.</li>
+      </ul>
+
+      <h2>Biomedical signal data</h2>
+      <p>
+        EEG data submitted to the API is processed to return a score and is not linked to an
+        identifiable individual unless the submitting party includes identifiers in the request.
+        Callers are responsible for obtaining any consent required to submit such data and for not
+        transmitting direct identifiers unless necessary.
+      </p>
+
+      <h2>Sharing</h2>
+      <p>
+        We do not sell personal information. We share information only with service providers who
+        process it on our behalf (for example, cloud hosting), or where required by law.
+      </p>
+
+      <h2>Retention</h2>
+      <p>
+        We retain information for as long as needed to provide the Service and for legitimate
+        business or legal purposes. You may request deletion of information associated with you or
+        your account by contacting us.
+      </p>
+
+      <h2>Contact</h2>
+      <p>
+        Questions about this policy: <a href="mailto:contact@coheriqs.com" style="color:#7aa5d6;">contact@coheriqs.com</a>.
+      </p>
+    </div>
+  </div>
+  <div id="footer-container"></div>
+</body>
+<script src="menu-loader.js"></script>
+<script src="footer-loader.js"></script>
+</html>
