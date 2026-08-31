@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="resources/icon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API — CoherIQs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .nav-links a { text-decoration: none; }
+    .nav-links a.active { text-decoration: underline; }
+    .api-body { max-width: 800px; margin: 0 auto; text-align: left; }
+    .api-body p { font-size: 1.05rem; line-height: 1.65; color: #ddd; }
+    .api-body h2 { color: #cccccc; font-size: 1.4rem; margin-top: 2.5rem; }
+    .api-body h3 { color: #cccccc; font-size: 1.1rem; margin-top: 1.75rem; }
+    .status-note {
+      display: inline-block;
+      background: rgba(122, 165, 214, 0.12);
+      border: 1px solid rgba(122, 165, 214, 0.4);
+      color: #7aa5d6;
+      border-radius: 8px;
+      padding: 0.5rem 0.9rem;
+      font-size: 0.95rem;
+      margin: 0.5rem 0 1.5rem 0;
+    }
+    .api-body code {
+      background: rgba(255,255,255,0.08);
+      border-radius: 4px;
+      padding: 0.1rem 0.35rem;
+      font-size: 0.92em;
+    }
+    .api-body pre {
+      background: #0d0d0d;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 1.1rem 1.25rem;
+      overflow-x: auto;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      color: #e6e6e6;
+    }
+    .api-body pre code { background: none; padding: 0; }
+    .endpoint {
+      font-family: monospace;
+      font-size: 1rem;
+      color: #fff;
+      background: rgba(255,255,255,0.06);
+      border-left: 3px solid #7aa5d6;
+      padding: 0.5rem 0.9rem;
+      border-radius: 4px;
+      margin: 1.25rem 0 0.75rem 0;
+    }
+  </style>
+</head>
+<body>
+  <div id="menu-container"></div>
+  <div class="container" style="max-width:900px; margin:0 auto;">
+    <h1 style="text-align:center; margin-bottom:0.5em; font-size:2.7em; letter-spacing:0.03em; font-weight:700; color:#cccccc;">API</h1>
+
+    <div class="api-body">
+      <div class="status-note">Private beta &mdash; in development. Contact <a href="mailto:noah@coheriqs.com" style="color:#7aa5d6;">noah@coheriqs.com</a> for access.</div>
+
+      <p>
+        The CoherIQs API accepts a window of multi-channel EEG data and returns a seizure-risk
+        score. Scoring is performed with a graph neural network and a selective state-space model
+        built on wavelet coherence features between channels. The underlying real-time wavelet
+        coherence architecture is described in a peer-reviewed IEEE publication
+        (<a href="literature.html" style="color:#7aa5d6;">ISPA 2025</a>).
+      </p>
+
+      <h2>Base URL</h2>
+      <p><code>https://api.coheriqs.com/v1</code></p>
+
+      <h2>Authentication</h2>
+      <p>
+        All requests require a bearer token, issued per user during the beta:
+      </p>
+      <pre><code>Authorization: Bearer &lt;token&gt;</code></pre>
+
+      <h2>Endpoints</h2>
+
+      <div class="endpoint">POST /v1/score</div>
+      <p>Submit an EEG window and receive a seizure-risk score.</p>
+
+      <h3>Request</h3>
+      <pre><code>{
+  "sampling_rate_hz": 256,
+  "channels": ["Fp1", "Fp2", "F3", "F4", "C3", "C4", "P3", "P4"],
+  "samples": [[ ... ], [ ... ]],        // one array per channel, equal length
+  "window_seconds": 30
+}</code></pre>
+
+      <h3>Response</h3>
+      <pre><code>{
+  "risk": 0.82,                          // 0.0 - 1.0
+  "horizon_seconds": 300,                // prediction horizon
+  "model_version": "dense-edge-ssm-0.3",
+  "window_seconds": 30
+}</code></pre>
+
+      <div class="endpoint">GET /v1/health</div>
+      <p>Service status and current model version.</p>
+      <pre><code>{
+  "status": "ok",
+  "model_version": "dense-edge-ssm-0.3"
+}</code></pre>
+
+      <h2>Notes</h2>
+      <p>
+        Endpoint shapes and the model version are subject to change during the beta. The API is
+        not intended for clinical use.
+      </p>
+    </div>
+  </div>
+  <div id="footer-container"></div>
+</body>
+<script src="menu-loader.js"></script>
+<script src="footer-loader.js"></script>
+</html>
