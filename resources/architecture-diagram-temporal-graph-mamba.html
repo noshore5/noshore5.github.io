@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<title>SparseEvidenceGNNClassifier — temporal_graph_mamba pipeline</title>
+<style>
+  .viz-root {
+    color-scheme: light;
+    --surface-1:      #fcfcfb;
+    --page:           #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --gridline:       #e1e0d9;
+    --border:         rgba(11,11,11,0.10);
+    --blue:           #2a78d6;   /* trainable */
+    --blue-soft:      #eaf2fc;
+    --orange:         #eb6834;   /* aggregation */
+    --orange-soft:    #fdeee7;
+    --aqua:           #1baf7a;   /* data / tensor flow */
+    --aqua-soft:      #e7f7f0;
+    --gray-soft:      #f1f0ec;   /* cached / non-trainable */
+    --green:          #0ca30c;   /* output */
+    --green-soft:     #e8f7e8;
+    --purple:         #8a5cd6;   /* state / sequence model */
+    --purple-soft:    #f1eafb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .viz-root {
+      color-scheme: dark;
+      --surface-1:      #1a1a19;
+      --page:           #0d0d0d;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --gridline:       #2c2c2a;
+      --border:         rgba(255,255,255,0.10);
+      --blue:           #3987e5;
+      --blue-soft:      #17263a;
+      --orange:         #d95926;
+      --orange-soft:    #33221a;
+      --aqua:           #199e70;
+      --aqua-soft:      #142b22;
+      --gray-soft:      #232320;
+      --green:          #0ca30c;
+      --green-soft:     #16241a;
+      --purple:         #a684e0;
+      --purple-soft:    #241c33;
+    }
+  }
+  :root[data-theme="dark"] .viz-root {
+    color-scheme: dark;
+    --surface-1:      #1a1a19;
+    --page:           #0d0d0d;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --gridline:       #2c2c2a;
+    --border:         rgba(255,255,255,0.10);
+    --blue:           #3987e5;
+    --blue-soft:      #17263a;
+    --orange:         #d95926;
+    --orange-soft:    #33221a;
+    --aqua:           #199e70;
+    --aqua-soft:      #142b22;
+    --gray-soft:      #232320;
+    --green:          #0ca30c;
+    --green-soft:     #16241a;
+    --purple:         #a684e0;
+    --purple-soft:    #241c33;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    background: var(--page);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: var(--text-primary);
+  }
+  .viz-root { padding: 28px 16px 40px; }
+  .wrap { max-width: 1100px; margin: 0 auto; }
+
+  .header { margin-bottom: 6px; }
+  .eyebrow {
+    font-size: 12px; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--text-muted); font-weight: 600; margin: 0 0 4px;
+  }
+  h1 { font-size: 21px; margin: 0 0 6px; font-weight: 700; }
+  .sub { font-size: 13.5px; color: var(--text-secondary); margin: 0 0 14px; max-width: 860px; line-height: 1.5; }
+
+  .config-badge {
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 14px; font-size: 12.5px; color: var(--text-secondary);
+    line-height: 1.65; margin-bottom: 18px;
+  }
+  .config-badge b { color: var(--text-primary); font-weight: 600; }
+  .config-badge code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px;
+    background: var(--gray-soft); padding: 1px 5px; border-radius: 4px; color: var(--text-primary);
+  }
+
+  .card {
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px;
+    padding: 8px; overflow: visible;
+  }
+
+  svg { width: 100%; height: auto; display: block; }
+
+  .box rect { stroke-width: 1.4; }
+  .box-title { font-size: 13px; font-weight: 700; fill: var(--text-primary); }
+  .box-body { font-size: 11.3px; fill: var(--text-secondary); }
+  .box-tag {
+    font-size: 9.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+  }
+  .lane-label {
+    font-size: 11.5px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase;
+    fill: var(--text-muted);
+  }
+  .arrow-path { fill: none; stroke: var(--text-muted); stroke-width: 1.6; }
+  .arrow-path.dashed { stroke-dasharray: 4 3; }
+
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 14px 22px; margin-top: 16px;
+    font-size: 12px; color: var(--text-secondary);
+  }
+  .legend .item { display: flex; align-items: center; gap: 7px; }
+  .swatch { width: 13px; height: 13px; border-radius: 3.5px; flex: none; border: 1.4px solid transparent; }
+
+  .foot {
+    margin-top: 16px; font-size: 11.5px; color: var(--text-muted); line-height: 1.6;
+    max-width: 920px;
+  }
+  .foot code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; }
+</style>
+</head>
+<body>
+<div class="viz-root">
+<div class="wrap">
+<div class="header">
+<p class="eyebrow">EEG seizure prediction · Epilepsy pipeline</p>
+<h1>SparseEvidenceGNNCore — forward pass (temporal_graph_mamba pipeline)</h1>
+<p class="sub">
+  The same coherence-graph front end as the dense-edge pipelines, but a genuinely
+  <b>evolving-graph</b> temporal model: <code style="font-family:ui-monospace,monospace;font-size:12px;">event_mode="temporal_graph"</code>,
+  <code style="font-family:ui-monospace,monospace;font-size:12px;">temporal_graph_mode="mamba"</code>. A persistent Mamba state walks the
+  full downsampled sequence. The <code style="font-family:ui-monospace,monospace;font-size:12px;">temporal_graph_aggregate</code> knob
+  decides whether that Mamba runs <b>per node</b> (after collapsing the 253 edges to 23 channels) or
+  <b>per edge</b> (before). One raw EEG epoch in, one set of class logits out.
+</p>
+</div>
+
+<div class="config-badge">
+<b>Canonical shapes (chb01 seizure-prediction, LOSO):</b>
+  n_channels = 23 &nbsp;→&nbsp; E = C(23,2) = <b>253</b> canonical undirected edges (i&lt;j) &nbsp;·&nbsp;
+  8–40 Hz, nfreqs = 8 &nbsp;·&nbsp; 256 Hz, 30 s window → T ≈ 7680 &nbsp;·&nbsp;
+  <code>dense_edge_time_downsample = 16</code> → T′ = 480 into the Mamba &nbsp;·&nbsp;
+  <code>temporal_graph_edge_dim = 8</code>, <code>hidden_dim = 8</code> (= Mamba d_model) &nbsp;·&nbsp;
+  Mamba: d_state 16, expand 2, 1 layer, chunk_size 128 &nbsp;·&nbsp;
+  <code>event_aggregation = "mean"</code> (forced), n_hops = 1 (inactive) &nbsp;·&nbsp;
+  no <code>ChannelSignalEncoder</code> lane (<code>cwt_encoder = False</code>) &nbsp;·&nbsp;
+  SPH 300 s / SOP 900 s, batch 32, 20 epochs.
+</div>
+
+<div class="card">
+<svg viewBox="0 0 1040 1720" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="temporal_graph_mamba pipeline diagram">
+<defs>
+<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+<path d="M0,0 L10,5 L0,10 z" fill="var(--text-muted)"></path>
+</marker>
+<marker id="arrow-orange" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+<path d="M0,0 L10,5 L0,10 z" fill="var(--orange)"></path>
+</marker>
+<marker id="arrow-purple" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+<path d="M0,0 L10,5 L0,10 z" fill="var(--purple)"></path>
+</marker>
+</defs>
+
+<!-- ============ SHARED FRONT END ============ -->
+<g class="box">
+<rect x="200" y="10" width="640" height="58" rx="12" fill="var(--aqua-soft)" stroke="var(--aqua)"></rect>
+<text x="520" y="34" text-anchor="middle" class="box-title">Raw EEG epoch</text>
+<text x="520" y="52" text-anchor="middle" class="box-body">[B, 23, T]  ·  256 Hz, 30 s window, T ≈ 7680</text>
+</g>
+<path class="arrow-path" d="M 520 68 L 520 96" marker-end="url(#arrow)"></path>
+
+<g class="box">
+<rect x="200" y="98" width="640" height="74" rx="12" fill="var(--gray-soft)" stroke="var(--text-muted)"></rect>
+<text x="220" y="120" class="box-tag" fill="var(--text-muted)">non-trainable · per channel</text>
+<text x="220" y="139" class="box-title">Continuous wavelet transform (CWT)</text>
+<text x="220" y="157" class="box-body">Morlet wavelet across 8 log-spaced scales, 8–40 Hz. One complex time–frequency map per channel.</text>
+</g>
+<path class="arrow-path" d="M 520 172 L 520 200" marker-end="url(#arrow)"></path>
+
+<g class="box">
+<rect x="200" y="202" width="640" height="86" rx="12" fill="var(--gray-soft)" stroke="var(--text-muted)"></rect>
+<text x="220" y="224" class="box-tag" fill="var(--text-muted)">non-trainable · per channel-pair (i&lt;j)</text>
+<text x="220" y="243" class="box-title">Cross-wavelet coherence (WCT)</text>
+<text x="220" y="261" class="box-body">Each of the 253 pairs → smoothed, normalized coherence magnitude + relative phase,</text>
+<text x="220" y="276" class="box-body">across frequency and time. The graph is undirected: one edge per pair, signed phase.</text>
+</g>
+<path class="arrow-path" d="M 520 288 L 520 316" marker-end="url(#arrow)"></path>
+
+<g class="box">
+<rect x="200" y="318" width="640" height="86" rx="12" fill="var(--gray-soft)" stroke="var(--text-muted)"></rect>
+<text x="220" y="340" class="box-tag" fill="var(--text-muted)">non-trainable</text>
+<text x="220" y="359" class="box-title">COI mask + surrogate significance</text>
+<text x="220" y="377" class="box-body">Phase-randomized surrogate null → per-(edge, freq) threshold. Stack the 4 planes</text>
+<text x="220" y="392" class="box-body">[coh, sinφ, cosφ, significance], zeroed outside the cone of influence.</text>
+</g>
+<path class="arrow-path" d="M 520 404 L 520 432" marker-end="url(#arrow)"></path>
+
+<g class="box">
+<rect x="200" y="434" width="640" height="74" rx="12" fill="var(--gray-soft)" stroke="var(--text-muted)"></rect>
+<text x="220" y="456" class="box-tag" fill="var(--text-muted)">non-trainable · cached once per trial</text>
+<text x="220" y="475" class="box-title">Smooth + downsample → [B, 4, E, T′, F]</text>
+<text x="220" y="493" class="box-body">Gaussian (5,3), then time ÷16: T ≈ 7680 → T′ = 480.  E = 253,  F = 8.  This tensor is the disk cache.</text>
+</g>
+<path class="arrow-path" d="M 520 508 L 520 536" marker-end="url(#arrow)"></path>
+
+<!-- ============ EDGE PROJECTION + MESSAGE ============ -->
+<g class="box">
+<rect x="200" y="538" width="640" height="84" rx="12" fill="var(--blue-soft)" stroke="var(--blue)"></rect>
+<text x="220" y="560" class="box-tag" fill="var(--blue)">trainable</text>
+<text x="220" y="579" class="box-title">temporal_edge_proj</text>
+<text x="220" y="597" class="box-body">Fold frequency into channels: [B,4,E,T′,F] → [B, E, T′, 4F=32].  Linear(32 → edge_dim = 8) + GELU.</text>
+<text x="220" y="612" class="box-body">This is the only place the 8 frequency bins are mixed — a learned squeeze to an 8-wide neck.</text>
+</g>
+<path class="arrow-path" d="M 520 622 L 520 650" marker-end="url(#arrow)"></path>
+
+<g class="box">
+<rect x="200" y="652" width="640" height="64" rx="12" fill="var(--blue-soft)" stroke="var(--blue)"></rect>
+<text x="220" y="674" class="box-tag" fill="var(--blue)">trainable · shared with every event_mode</text>
+<text x="220" y="693" class="box-title">sparse_message_mlp</text>
+<text x="220" y="709" class="box-body">Linear(8 → hidden_dim = 8) → activation.  Per-edge message sequence  msg : [B, E, T′, 8].</text>
+</g>
+<!-- ============ SPLIT ============ -->
+<text x="520" y="735" text-anchor="middle" class="lane-label" style="text-transform:none; font-size:12px; fill:var(--purple);">temporal_graph_aggregate  —  where the Mamba runs relative to the edge→node collapse</text>
+
+<line x1="520" y1="746" x2="300" y2="786" stroke="var(--text-muted)" stroke-width="1.6" fill="none" marker-end="url(#arrow)"></line>
+<line x1="520" y1="746" x2="740" y2="786" stroke="var(--text-muted)" stroke-width="1.6" fill="none" marker-end="url(#arrow)"></line>
+
+<!-- PRE column (left) -->
+<text x="300" y="800" text-anchor="middle" class="box-tag" fill="var(--text-primary)" style="font-size:12px;">"pre"  (default — the AP 0.674 run)</text>
+
+<g class="box">
+<rect x="70" y="812" width="460" height="96" rx="12" fill="var(--orange-soft)" stroke="var(--orange)"></rect>
+<text x="90" y="833" class="box-tag" fill="var(--orange)">aggregation — first</text>
+<text x="90" y="852" class="box-title" style="font-size:12.5px;">scatter-mean edges → nodes, per timestep</text>
+<text x="90" y="869" class="box-body" style="font-size:10.5px;">msg scattered to each edge's j endpoint (dst_idx), ÷ fixed in-degree.</text>
+<text x="90" y="883" class="box-body" style="font-size:10.5px;">Every timestep collapsed independently.</text>
+<text x="90" y="900" class="box-body" style="font-size:10.5px; fill:var(--text-primary);">node_seq : [B, 23, T′, 8]</text>
+</g>
+<path class="arrow-path" d="M 300 908 L 300 936" marker-end="url(#arrow)"></path>
+
+<g class="box">
+<rect x="70" y="938" width="460" height="104" rx="12" fill="var(--purple-soft)" stroke="var(--purple)"></rect>
+<text x="90" y="959" class="box-tag" fill="var(--purple)">trainable · selective state-space model</text>
+<text x="90" y="978" class="box-title" style="font-size:12.5px;">per-NODE Mamba over T′</text>
+<text x="90" y="995" class="box-body" style="font-size:10.5px;">23 node sequences (nodes folded into batch dim), one shared</text>
+<text x="90" y="1009" class="box-body" style="font-size:10.5px;">Mamba block. n_rows = B·23 ≈ 736. Final state pooled.</text>
+<text x="90" y="1026" class="box-body" style="font-size:10.5px; fill:var(--text-primary);">evidence : [B, 23, 8]</text>
+</g>
+<path class="arrow-path" d="M 300 1042 L 300 1092 L 490 1108" marker-end="url(#arrow)"></path>
+
+<!-- POST column (right) -->
+<text x="740" y="800" text-anchor="middle" class="box-tag" fill="var(--text-primary)" style="font-size:12px;">"post"  (experiment — keeps the full edge graph)</text>
+
+<g class="box">
+<rect x="550" y="812" width="460" height="104" rx="12" fill="var(--purple-soft)" stroke="var(--purple)"></rect>
+<text x="570" y="833" class="box-tag" fill="var(--purple)">trainable · selective state-space model</text>
+<text x="570" y="852" class="box-title" style="font-size:12.5px;">per-EDGE Mamba over T′</text>
+<text x="570" y="869" class="box-body" style="font-size:10.5px;">253 edge sequences — _DenseEdgeMambaTemporal in its</text>
+<text x="570" y="883" class="box-body" style="font-size:10.5px;">original per-edge role. n_rows = B·253 ≈ 8100 ≫ chunk_size,</text>
+<text x="570" y="897" class="box-body" style="font-size:10.5px;">so it gradient-checkpoints (~11× the "pre" Mamba cost).</text>
+<text x="570" y="912" class="box-body" style="font-size:10.5px; fill:var(--text-primary);">edge_summary : [B, 253, 8]</text>
+</g>
+<path class="arrow-path" d="M 740 916 L 740 944" marker-end="url(#arrow)"></path>
+
+<g class="box">
+<rect x="550" y="946" width="460" height="90" rx="12" fill="var(--orange-soft)" stroke="var(--orange)"></rect>
+<text x="570" y="967" class="box-tag" fill="var(--orange)">aggregation — last</text>
+<text x="570" y="986" class="box-title" style="font-size:12.5px;">scatter-mean edges → nodes</text>
+<text x="570" y="1003" class="box-body" style="font-size:10.5px;">Same dst_idx / in-degree divisor as "pre", applied once to the</text>
+<text x="570" y="1017" class="box-body" style="font-size:10.5px;">per-edge summaries instead of per timestep.</text>
+<text x="570" y="1032" class="box-body" style="font-size:10.5px; fill:var(--text-primary);">evidence : [B, 23, 8]</text>
+</g>
+<path class="arrow-path" d="M 740 1036 L 740 1092 L 550 1108" marker-end="url(#arrow)"></path>
+
+<!-- ============ REJOIN ============ -->
+<g class="box">
+<rect x="200" y="1110" width="640" height="52" rx="12" fill="var(--aqua-soft)" stroke="var(--aqua)"></rect>
+<text x="520" y="1131" text-anchor="middle" class="box-title" style="font-size:12.5px;">evidence  :  [B, 23, 8]  — one vector per channel node</text>
+<text x="520" y="1149" text-anchor="middle" class="box-body" style="font-size:10.5px;">identical shape either way; the two orderings differ only in what the Mamba got to see</text>
+</g>
+<path class="arrow-path dashed" d="M 520 1162 L 520 1190" marker-end="url(#arrow)"></path>
+
+<g class="box">
+<rect x="200" y="1192" width="640" height="46" rx="12" fill="var(--gray-soft)" stroke="var(--text-muted)" stroke-dasharray="4 3"></rect>
+<text x="220" y="1213" class="box-tag" fill="var(--text-muted)">inactive at n_hops = 1</text>
+<text x="220" y="1229" class="box-body">_propagate_hops — extra message-passing rounds. Skipped in the canonical config.</text>
+</g>
+<path class="arrow-path" d="M 520 1238 L 520 1266" marker-end="url(#arrow)"></path>
+
+<g class="box">
+<rect x="200" y="1268" width="640" height="64" rx="12" fill="var(--blue-soft)" stroke="var(--blue)"></rect>
+<text x="220" y="1290" class="box-tag" fill="var(--blue)">trainable</text>
+<text x="220" y="1309" class="box-title">Flatten → sparse_classifier</text>
+<text x="220" y="1325" class="box-body">[B, 23, 8] → [B, 184].  Linear(184 → 2) → class logits.</text>
+</g>
+<path class="arrow-path" d="M 520 1332 L 520 1360" marker-end="url(#arrow)"></path>
+
+<g class="box">
+<rect x="200" y="1362" width="640" height="72" rx="12" fill="var(--green-soft)" stroke="var(--green)"></rect>
+<text x="220" y="1384" class="box-tag" fill="var(--green)">output</text>
+<text x="220" y="1403" class="box-title">Class logits [B, 2]  +  event_density (aux)</text>
+<text x="220" y="1420" class="box-body">event_density: constant 1/nfreqs in this mode — kept for API parity, not a real signal here.</text>
+</g>
+
+<!-- ============ SUPPLEMENT ============ -->
+<line x1="20" y1="1470" x2="1020" y2="1470" stroke="var(--gridline)" stroke-width="1"></line>
+<text x="20" y="1493" class="lane-label">the one contrast that matters</text>
+
+<g class="box">
+<rect x="20" y="1502" width="1000" height="200" rx="12" fill="var(--gray-soft)" stroke="var(--text-muted)"></rect>
+<text x="40" y="1524" class="box-tag" fill="var(--text-muted)">pre vs post</text>
+<text x="40" y="1544" class="box-title">Both collapse 253 edges → 23 nodes and run the same Mamba weights — the question is the order</text>
+
+<!-- pre schematic -->
+<text x="150" y="1572" text-anchor="middle" class="box-body" style="font-size:11px; fill:var(--text-primary); font-weight:700;">"pre"</text>
+<text x="150" y="1587" text-anchor="middle" class="box-body" style="font-size:10px;">253 edges/step</text>
+<circle cx="70" cy="1620" r="4" fill="none" stroke="var(--text-muted)"></circle>
+<circle cx="70" cy="1636" r="4" fill="none" stroke="var(--text-muted)"></circle>
+<circle cx="70" cy="1652" r="4" fill="none" stroke="var(--text-muted)"></circle>
+<path class="arrow-path" d="M 78 1636 L 110 1636" marker-end="url(#arrow-orange)"></path>
+<rect x="112" y="1622" width="54" height="28" rx="6" fill="var(--orange-soft)" stroke="var(--orange)"></rect>
+<text x="139" y="1640" text-anchor="middle" style="font-size:9px;" fill="var(--text-primary)">mean → 23</text>
+<path class="arrow-path" d="M 168 1636 L 200 1636" marker-end="url(#arrow-purple)"></path>
+<rect x="202" y="1620" width="60" height="32" rx="6" fill="var(--purple-soft)" stroke="var(--purple)"></rect>
+<text x="232" y="1634" text-anchor="middle" style="font-size:9px;" fill="var(--text-primary)">Mamba</text>
+<text x="232" y="1645" text-anchor="middle" style="font-size:8px;" fill="var(--text-secondary)">×23 nodes</text>
+<text x="150" y="1682" text-anchor="middle" class="box-body" style="font-size:9.5px;">the Mamba only ever sees a 23-node per-timestep average</text>
+
+<line x1="520" y1="1556" x2="520" y2="1690" stroke="var(--gridline)" stroke-width="1"></line>
+
+<!-- post schematic -->
+<text x="660" y="1572" text-anchor="middle" class="box-body" style="font-size:11px; fill:var(--text-primary); font-weight:700;">"post"</text>
+<text x="660" y="1587" text-anchor="middle" class="box-body" style="font-size:10px;">253 full edge sequences</text>
+<circle cx="580" cy="1620" r="4" fill="none" stroke="var(--text-muted)"></circle>
+<circle cx="580" cy="1636" r="4" fill="none" stroke="var(--text-muted)"></circle>
+<circle cx="580" cy="1652" r="4" fill="none" stroke="var(--text-muted)"></circle>
+<path class="arrow-path" d="M 588 1636 L 620 1636" marker-end="url(#arrow-purple)"></path>
+<rect x="622" y="1620" width="64" height="32" rx="6" fill="var(--purple-soft)" stroke="var(--purple)"></rect>
+<text x="654" y="1634" text-anchor="middle" style="font-size:9px;" fill="var(--text-primary)">Mamba</text>
+<text x="654" y="1645" text-anchor="middle" style="font-size:8px;" fill="var(--text-secondary)">×253 edges</text>
+<path class="arrow-path" d="M 688 1636 L 720 1636" marker-end="url(#arrow-orange)"></path>
+<rect x="722" y="1622" width="54" height="28" rx="6" fill="var(--orange-soft)" stroke="var(--orange)"></rect>
+<text x="749" y="1640" text-anchor="middle" style="font-size:9px;" fill="var(--text-primary)">mean → 23</text>
+<text x="690" y="1682" text-anchor="middle" class="box-body" style="font-size:9.5px;">each edge's coherence trajectory gets its own state before any averaging</text>
+</g>
+</svg>
+</div>
+
+<div class="legend">
+<div class="item"><span class="swatch" style="background:var(--blue-soft);border-color:var(--blue);"></span>Trainable module</div>
+<div class="item"><span class="swatch" style="background:var(--purple-soft);border-color:var(--purple);"></span>Selective state-space model (Mamba)</div>
+<div class="item"><span class="swatch" style="background:var(--gray-soft);border-color:var(--text-muted);"></span>Non-trainable / cached</div>
+<div class="item"><span class="swatch" style="background:var(--aqua-soft);border-color:var(--aqua);"></span>Tensor / data flow</div>
+<div class="item"><span class="swatch" style="background:var(--orange-soft);border-color:var(--orange);"></span>Aggregation (scatter-mean to nodes)</div>
+<div class="item"><span class="swatch" style="background:var(--green-soft);border-color:var(--green);"></span>Output</div>
+</div>
+
+<div class="foot">
+  Source: <code>Epilepsy/pipelines/cwt_gnn_classifiers.py</code>
+  (<code>SparseEvidenceGNNCore._temporal_graph_node_states</code>, <code>_DenseEdgeMambaTemporal</code>),
+  wired as <code>--pipeline temporal_graph_mamba</code> in <code>run_pipelines.py</code>.
+  This is a different <code>event_mode</code> from the <code>dense_edge_gru</code> / <code>dense_edge_mamba</code>
+  diagrams: those run the temporal block <em>per edge and pool time away</em>, then aggregate with
+  <code>event_aggregation="concat"</code> and concatenate a <code>ChannelSignalEncoder</code> lane.
+  <code>temporal_graph</code> forces <code>"mean"</code> aggregation, has no channel-encoder lane, and — in
+  <code>"pre"</code> mode — aggregates to nodes <em>before</em> the temporal model so the Mamba integrates a
+  persistent per-node state through the whole sequence. <code>"post"</code> (2026-08-28) is an A/B that moves
+  the aggregation after the Mamba, letting each of the 253 edge coherence trajectories carry its own state.
+  <code>"pre"</code> is the current 6-fold prediction leader on chb01 (mean AP ≈ 0.674, ROC-AUC ≈ 0.94);
+  <code>"post"</code> results pending. Numbers are for the chb01 LOSO config and will differ for other subjects/windows.
+</div>
+</div>
+</div>
+</body>
+</html>
