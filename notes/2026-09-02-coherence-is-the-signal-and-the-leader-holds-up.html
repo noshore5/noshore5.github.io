@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="../resources/icon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coherence is the signal, and the leader holds up — Noah Shore</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .nav-links a { text-decoration: none; }
+    .nav-links a.active { text-decoration: underline; }
+    .post { max-width: 800px; margin: 0 auto 3rem auto; text-align: left; }
+    .post-meta { color: #888; font-size: 0.9rem; margin-bottom: 2rem; text-align: center; }
+    .post h1 { font-size: 1.9rem; text-align: center; color: #eaeaea; margin-bottom: 0.25rem; }
+    .post p { font-size: 1.02rem; line-height: 1.65; color: #ddd; }
+    .post h2 { color: #cccccc; font-size: 1.15rem; margin-top: 2rem; }
+    .post code { background: rgba(255,255,255,0.08); padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.92em; }
+    .callout { background: rgba(42, 42, 42, 0.7); border-left: 4px solid #4a6583; border-radius: 6px; padding: 1rem 1.5rem; margin: 1.5rem 0; color: #ccc; font-size: 0.98rem; }
+    .back-link { display: block; text-align: center; margin-bottom: 2rem; color: #7aa5d6 !important; }
+    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.92rem; }
+    th, td { padding: 0.5rem 0.7rem; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.1); color: #ccc; }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: #eaeaea; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div id="menu-container"></div>
+  <div class="container" style="max-width:900px; margin:0 auto;">
+    <a href="../notes.html" class="back-link">&larr; All notes</a>
+    <div class="post">
+      <h1>Coherence is the signal, and the 0.674 leader holds up under audit</h1>
+      <p class="post-meta">2026-08-28 &ndash; 2026-09-02 &middot; ablations, reproduction, a real memory-leak fix</p>
+
+      <p>
+        With <code>hermitian_ssm</code> spending a week trying to beat the <code>temporal_graph_mamba</code>
+        leader outright, this thread asked a more skeptical pair of questions about the leader itself:
+        is 0.674 actually real, and is the coherence graph doing anything a simpler representation
+        couldn't? Both got clean, direct answers &mdash; and along the way, a genuine memory-leak bug turned
+        out to be responsible for most of the "this run behaves strangely" reports of the last two weeks.
+      </p>
+
+      <h2>Capacity levers on the leader: also negative</h2>
+      <p>
+        Before questioning the representation, we tried the same "give it more to work with" playbook that
+        failed on <code>hermitian_ssm</code>, directly on the leader itself.
+      </p>
+      <table>
+        <tr><th>attempt</th><th>hypothesis</th><th>result</th></tr>
+        <tr><td>wide band (8&ndash;124 Hz vs 8&ndash;40 Hz)</td><td>the narrow band was a disk-budget pick, never swept for accuracy</td><td>fold AP 0.79&rarr;0.31/0.24; the wide band's EMG/line-noise content dilutes the narrow band's real signal through a shared linear mixer &mdash; negative</td></tr>
+        <tr><td>regularization tuning (higher weight decay, dropout)</td><td>reduce false-alarm rate at the fixed decision threshold</td><td>one fold collapsed to AP 0.07 and failed to train at all &mdash; negative</td></tr>
+        <tr><td><code>aggregate="post"</code>: keep the full 253-edge graph through the temporal model instead of pooling to 23 nodes first</td><td>pre-aggregation throws away which channel <em>pair</em> carried a transient</td><td>a real six-fold wash: mean AP 0.639 vs 0.674, but ROC-AUC actually improves to 0.970 &mdash; not adopted (11&times; the compute for a tie), kept as an opt-in fallback</td></tr>
+      </table>
+      <p>
+        The "post" result is worth a specific callout, because a partial run of it looked like a clean
+        regression mid-flight &mdash; one fold came in at 0.41 against a baseline of 0.79 &mdash; and got
+        written up that way before the other five folds finished. The completed six-fold run showed that was
+        just that one fold's normal variance, not a real capacity failure. The lesson stuck: on this dataset,
+        a killed-early partial result is not evidence, it's noise, and every negative verdict below was paid
+        for with a full six-fold run rather than an early kill.
+      </p>
+
+      <h2>The null-baseline test: strip out coherence entirely</h2>
+      <p>
+        The cleanest possible test of "does the coherence graph matter" is to remove it and change nothing
+        else. <code>channel_cwt</code> is exactly that ablation: per-channel wavelet power, no cross-channel
+        information at all, run through the identical temporal block, same hyperparameters, same
+        infrastructure &mdash; the only variable is coherence vs. no coherence.
+      </p>
+      <div class="callout">
+        Two folds in: AP <strong>0.149</strong> and <strong>0.263</strong>, against the leader's 0.79 and 0.83 on
+        the same folds. A roughly 0.6 AP collapse, with training curves that looked perfectly healthy on their
+        own validation split &mdash; the same "trains fine, doesn't transfer" signature seen throughout this
+        project, just far more severe. Killed after two folds; the gap was already conclusive.
+      </div>
+      <p>
+        A follow-up added one round of learned message-passing across all 23&times;22 channel pairs on top of
+        the same per-channel features &mdash; testing whether it's cross-channel information <em>in general</em>
+        that's missing, or the coherence cross-spectrum <em>specifically</em>. Result: dead flat around AP 0.17
+        on every fold, no better than the no-message-passing version. <strong>It's the phase relationship between
+        channels &mdash; not just "knowing about other channels" &mdash; that the model actually needs.</strong>
+      </p>
+
+      <h2>Is 0.674 itself real?</h2>
+      <p>
+        The historical 0.674 number was days old, ran on CPU, and had been stitched together across three
+        separate overnight process restarts &mdash; and a much earlier note had already flagged one fold's AP
+        swinging between 0.29 and 1.00 on config that hadn't changed at all. Before trusting the null-baseline
+        comparison above, we needed a clean, single, same-machine run to compare against.
+      </p>
+      <p>
+        A same-machine reproduction (this time on the Mac's GPU) came back at mean AP <strong>0.644</strong>,
+        with ROC-AUC actually <em>higher</em> than the historical run (0.973 vs. 0.94). The entire 0.03 gap
+        traced to one fold's normal run-to-run variance; every other fold matched or beat the historical
+        number. <strong>0.674 is real</strong> &mdash; not a fluke, not an artifact of the earlier stitched-together
+        run &mdash; and the null-baseline collapse above is measured against a properly validated baseline, not
+        a lucky one.
+      </p>
+
+      <h2>A real bug, hiding in plain sight</h2>
+      <p>
+        While chasing why later folds in these six-fold runs kept getting slower and less stable, we found an
+        actual memory-leak bug: the training loop never released a fold's model, optimizer, and per-batch
+        tensors before starting the next fold, so reference cycles kept everything reachable until the garbage
+        collector happened to run on its own. One affected run climbed to 25&nbsp;GB of resident memory on a
+        16&nbsp;GB machine by fold five &mdash; almost entirely swapped &mdash; and individual folds went from
+        ~50 seconds an epoch to over an hour.
+      </p>
+      <p>
+        This had been quietly blamed on cache size and disk I/O in several earlier notes. It wasn't (or wasn't
+        only) that &mdash; it was Python simply never letting go of the previous fold. An explicit teardown at
+        the end of each fold fixed it: every fold now runs at a flat ~50&ndash;56 seconds regardless of position
+        in the loop.
+      </p>
+
+      <h2>Pinning down the honest error bar</h2>
+      <p>
+        With the leak fixed and a faithful half-size cache format verified bit-for-bit against full precision,
+        the last piece was measuring how much the result actually moves with nothing but random seed changed.
+        A multi-seed, multi-epoch-count sweep (with validation held out, and separately with no validation
+        split at all) converged on the same conclusion from two directions: the six-fold mean sits in a
+        <strong>~0.55&ndash;0.65 band with about &plusmn;0.06 seed-to-seed spread</strong>, almost all of it
+        concentrated in two chronically unstable folds. A 20%-held-out validation split, with its implicit
+        early-stopping, turns out to reach the same operating point as carefully tuning the epoch count by
+        hand &mdash; so it stays in the default configuration rather than being dropped for a marginal training
+        speedup.
+      </p>
+
+      <div class="callout">
+        <strong>Put together: the leader's number is real, coherence specifically (not just cross-channel
+        information) is what's carrying it, and its honest uncertainty is now measured rather than assumed.</strong>
+        That's three separate audits of the same claim, all converging &mdash; and a genuine bug found and
+        fixed as a side effect of taking the audit seriously enough to run it to completion every time.
+      </div>
+    </div>
+  </div>
+  <div id="footer-container"></div>
+</body>
+<script src="../menu-loader.js"></script>
+<script src="../footer-loader.js"></script>
+</html>

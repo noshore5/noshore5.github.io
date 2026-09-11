@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="../resources/icon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A five-seed sweep debunks a near-tie — Noah Shore</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .nav-links a { text-decoration: none; }
+    .nav-links a.active { text-decoration: underline; }
+    .post { max-width: 800px; margin: 0 auto 3rem auto; text-align: left; }
+    .post-meta { color: #888; font-size: 0.9rem; margin-bottom: 2rem; text-align: center; }
+    .post h1 { font-size: 1.9rem; text-align: center; color: #eaeaea; margin-bottom: 0.25rem; }
+    .post p { font-size: 1.02rem; line-height: 1.65; color: #ddd; }
+    .post h2 { color: #cccccc; font-size: 1.15rem; margin-top: 2rem; }
+    .post code { background: rgba(255,255,255,0.08); padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.92em; }
+    .callout { background: rgba(42, 42, 42, 0.7); border-left: 4px solid #4a6583; border-radius: 6px; padding: 1rem 1.5rem; margin: 1.5rem 0; color: #ccc; font-size: 0.98rem; }
+    .back-link { display: block; text-align: center; margin-bottom: 2rem; color: #7aa5d6 !important; }
+    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.92rem; }
+    th, td { padding: 0.5rem 0.7rem; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.1); color: #ccc; }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: #eaeaea; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div id="menu-container"></div>
+  <div class="container" style="max-width:900px; margin:0 auto;">
+    <a href="../notes.html" class="back-link">&larr; All notes</a>
+    <div class="post">
+      <h1>A five-seed sweep turns a "near-tie" into a clear third place &mdash; and the full board, refreshed</h1>
+      <p class="post-meta">2026-08-31 &middot; godoy_tmc, seed variance, model comparison</p>
+
+      <p>
+        A single run of the raw-signal Transformer baseline (<code>godoy_tmc</code>, a reconstruction of
+        Godoy et al.'s TMC-Transformer) landed at mean AP 0.619 &mdash; close enough to the coherence-graph
+        leader's same-machine number (0.644) to read as a near-tie for second place. One run is one seed,
+        though, and this dataset's per-fold spread had already shown up everywhere else in this project.
+        Five seeds later, the near-tie is gone.
+      </p>
+
+      <h2>The sweep</h2>
+      <table>
+        <tr><th>seed</th><th>42</th><th>43</th><th>44</th><th>45</th><th>46</th></tr>
+        <tr><td>6-fold mean AP</td><td><strong>0.619</strong></td><td>0.548</td><td>0.590</td><td>0.550</td><td>0.470</td></tr>
+      </table>
+      <p>
+        <strong>Mean across seeds: 0.556, sample std 0.056.</strong> Seed 42 &mdash; the one originally reported
+        &mdash; sat at the very top of the range, not the center. Nearly all of the spread traces to two folds:
+        one ranges 0.11&ndash;0.55 across seeds, the other 0.37&ndash;0.83. The other four folds are stable
+        (one is perfect on every seed). That's the exact same "two hard folds carry all the variance"
+        structure the coherence-graph leader shows on its own seed sweep &mdash; but where the leader's range
+        is 0.64&ndash;0.67, this model's is 0.47&ndash;0.62, nearly twice as wide relative to its mean.
+      </p>
+      <div class="callout">
+        <strong>The honest number for this baseline is 0.556 &plusmn; 0.056, not 0.619.</strong> That puts it a
+        clear ~0.09 AP behind the coherence-graph leader &mdash; a real gap, not a coin flip &mdash; and it's
+        worth saying plainly that this is also an off-label comparison: the architecture is a
+        <em>detection</em> model from its original paper, reconstructed (not the authors' code), and run here
+        in a <em>prediction</em> setting it wasn't designed for.
+      </div>
+      <p>
+        A follow-up capacity sweep (model width 16 vs. 32 vs. 64, one seed each) found an inverted U with the
+        peak exactly at the paper's own stated width of 32 &mdash; both narrower and wider configurations lost
+        about 0.10 AP, the wider one for the now-familiar reason: it fit its own validation split better and
+        generalized worse to the held-out seizure. The architecture is already at its best known
+        configuration; there's no width left to find.
+      </p>
+
+      <h2>The full board, refreshed</h2>
+      <p>
+        With that correction in hand, here's every prediction pipeline benchmarked under the same
+        chb01, leave-one-seizure-out protocol, ranked by mean average precision. As always: different
+        pipelines ran on different hardware and different seeds, this is not a controlled experiment, and
+        gaps under about 0.05 AP shouldn't be read as more than fold noise.
+      </p>
+      <table>
+        <tr><th>pipeline</th><th>input</th><th>AP</th><th>AUC</th><th>hit rate (raw / smoothed)</th></tr>
+        <tr><td><strong>temporal_graph_mamba "pre"</strong> (leader)</td><td>CWT + coherence graph</td><td><strong>0.644</strong></td><td><strong>0.973</strong></td><td>6/6 / 5/6</td></tr>
+        <tr><td>temporal_graph_mamba "post"</td><td>CWT + coherence graph</td><td>0.639</td><td>0.970</td><td>6/6 / <strong>6/6</strong></td></tr>
+        <tr><td>godoy_tmc (TMC-T)</td><td>raw EEG</td><td>0.556 &plusmn; 0.056</td><td>0.968</td><td>5/6 / 5/6</td></tr>
+        <tr><td>enc-free Mamba (dense-edge)</td><td>CWT + coherence graph</td><td>0.499</td><td>0.953</td><td>6/6 / 5/6</td></tr>
+        <tr><td>DBConformer</td><td>raw EEG</td><td>0.442</td><td>0.952</td><td>6/6 / 5/6</td></tr>
+        <tr><td>hermitian_ssm (eigenvector encoder)</td><td>Hermitian spectral graph</td><td>0.436</td><td>0.947</td><td>6/6 / <strong>6/6</strong></td></tr>
+        <tr><td>SlimSeiz</td><td>raw EEG</td><td>0.430</td><td>0.951</td><td>5/6 / 4/6</td></tr>
+        <tr><td>enc-free GRU (dense-edge)</td><td>CWT + coherence graph</td><td>0.423</td><td>0.944</td><td>6/6 / 5/6</td></tr>
+        <tr><td>CG-MambaNet</td><td>raw EEG</td><td>0.127</td><td>0.797</td><td>6/6 / 3/6</td></tr>
+      </table>
+      <p>
+        Two structural notes on the board. First, the split down the middle is real: every pipeline that
+        consumes this repo's CWT + coherence-graph features outperforms every raw-EEG architecture at a
+        comparable position on the list, echoing the same finding as the null-baseline ablation elsewhere this
+        week &mdash; coherence carries real signal that end-to-end learning on raw channels hasn't recovered on
+        its own here. Second, the two coherence-graph rows near the bottom (enc-free GRU/Mamba) are stale
+        references from before "pre"/"post" existed, run on different hardware entirely &mdash; not current
+        contenders, just historical markers of how far the same feature family has come.
+      </p>
+      <p>
+        A cross-cutting pattern also worth flagging again: fold <code>1_18_0</code> is hard for nearly every
+        raw-EEG model at the fixed decision threshold, while fold <code>1_26_0</code> is hard for almost
+        everyone regardless of input representation. Both keep showing up as the two folds carrying each
+        pipeline's own seed-to-seed variance &mdash; a recurring structural weak point in this six-seizure,
+        one-subject evaluation that no single architecture change here has resolved.
+      </p>
+    </div>
+  </div>
+  <div id="footer-container"></div>
+</body>
+<script src="../menu-loader.js"></script>
+<script src="../footer-loader.js"></script>
+</html>

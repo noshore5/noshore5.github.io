@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="../resources/icon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>hermitian_ssm: built, tuned, closed negative — Noah Shore</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .nav-links a { text-decoration: none; }
+    .nav-links a.active { text-decoration: underline; }
+    .post { max-width: 800px; margin: 0 auto 3rem auto; text-align: left; }
+    .post-meta { color: #888; font-size: 0.9rem; margin-bottom: 2rem; text-align: center; }
+    .post h1 { font-size: 1.9rem; text-align: center; color: #eaeaea; margin-bottom: 0.25rem; }
+    .post p { font-size: 1.02rem; line-height: 1.65; color: #ddd; }
+    .post h2 { color: #cccccc; font-size: 1.15rem; margin-top: 2rem; }
+    .post code { background: rgba(255,255,255,0.08); padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.92em; }
+    .callout { background: rgba(42, 42, 42, 0.7); border-left: 4px solid #4a6583; border-radius: 6px; padding: 1rem 1.5rem; margin: 1.5rem 0; color: #ccc; font-size: 0.98rem; }
+    .back-link { display: block; text-align: center; margin-bottom: 2rem; color: #7aa5d6 !important; }
+    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.92rem; }
+    th, td { padding: 0.5rem 0.7rem; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.1); color: #ccc; }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: #eaeaea; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div id="menu-container"></div>
+  <div class="container" style="max-width:900px; margin:0 auto;">
+    <a href="../notes.html" class="back-link">&larr; All notes</a>
+    <div class="post">
+      <h1>A whole-graph spectral model, tuned every way we could think of, closes negative &mdash; and points somewhere new</h1>
+      <p class="post-meta">2026-08-27 &ndash; 2026-08-30 &middot; hermitian_ssm, Mamba-3, anomaly detection</p>
+
+      <p>
+        Over four days, we built a new pipeline from a design doc, ran it for real, found its bug, tuned it
+        from the worst-performing model in the repo to a competitive one, then spent every remaining lever
+        &mdash; encoder redesigns, a from-scratch complex-diagonal Mamba-3, a mode-count sweep &mdash; trying to
+        close the last gap to the leader. All of it came back negative. That's the useful result: it pins down
+        exactly what's capping this whole family of models, and it isn't representational power.
+      </p>
+
+      <h2>What hermitian_ssm is</h2>
+      <p>
+        Every other coherence-graph pipeline in the repo collapses the 23-channel EEG montage to a
+        253-edge coherence graph and pools it down before the temporal model ever sees it. <code>hermitian_ssm</code>
+        instead builds, at every (frequency, timestep), a full 23&times;23 Hermitian matrix from the
+        cross-spectrum, eigendecomposes it, and feeds the model the top-<code>k</code> eigenpairs directly &mdash;
+        a richer, whole-graph-as-one-token representation, with a Mamba-2 temporal head sitting on top and a
+        documented seam for swapping in Mamba-3 later. Built end-to-end from
+        <code>hermitian_ssm.md</code> across one day, including a from-scratch batched Morlet CWT, a
+        deterministic per-recording spectral cache, and a numerical-validation script checking Hermiticity,
+        real eigenvalues, orthogonality, and phase-gauge invariance against synthetic data.
+      </p>
+      <p>
+        Real CHB-MIT recordings immediately found a bug the synthetic tests couldn't: flatlined electrode
+        segments produce near-zero, near-singular matrices that LAPACK's Hermitian solver refuses to
+        converge on, killing an entire batched call. The fix was a fallback to the general eigensolver for
+        the failing chunk &mdash; a different LAPACK routine with no convergence mode, still exact for
+        Hermitian input once re-sorted and phase-gauged.
+      </p>
+
+      <h2>0.253 &rarr; 0.436: the config fix</h2>
+      <p>
+        The first real six-fold run landed at mean AP <strong>0.253</strong> &mdash; the weakest full-benchmark
+        pipeline in the repo, versus the <code>temporal_graph_mamba</code> leader's 0.674. Diagnosis found the
+        actual problem: the matrix diagonal was raw per-channel power, and power spikes (one recording's
+        largest diagonal entry hit 3210 against a typical value of 14) were dominating the eigendecomposition,
+        pinning the top eigenmode to a single noisy channel instead of genuine cross-channel coupling.
+      </p>
+      <table>
+        <tr><th>change</th><th>0.253 run</th><th>fixed run</th><th>why</th></tr>
+        <tr><td>frequency band</td><td>8&ndash;124 Hz</td><td>8&ndash;40 Hz</td><td>match the other pipelines for a fair comparison</td></tr>
+        <tr><td>matrix diagonal</td><td>power</td><td>zero</td><td>stop the power spikes from dominating the eigenstructure</td></tr>
+        <tr><td>eigenmodes kept (<code>k</code>)</td><td>2</td><td>6</td><td>modes 3&ndash;6 carry real structure once freed from the power floor</td></tr>
+      </table>
+      <p>
+        Config-only, no code changes: mean AP jumped to <strong>0.436</strong>, ROC-AUC to 0.947 (edging out
+        the leader's 0.94), and the event-level hit rate went 6/6 raw and 6/6 smoothed &mdash; better than the
+        leader's 6/6 raw, 5/6 smoothed. It was no longer disqualified. It was, on several axes, arguably a
+        <em>better</em> model. Just not on the metric this project treats as primary.
+      </p>
+
+      <div class="callout">
+        Reading the fold pattern is informative: hermitian wins the two folds where the leader is weak
+        (<code>1_15</code>, <code>1_26</code>) and loses the three where the leader is strong. It's a genuinely
+        <em>different</em> model at this point, not yet a strictly better one.
+      </div>
+
+      <h2>Every remaining lever, tried and closed</h2>
+      <p>
+        With the low-hanging config fix spent, the next question was whether <em>representation</em> or
+        <em>temporal modeling</em> could close the rest of the gap. Four separate attempts, all negative:
+      </p>
+      <table>
+        <tr><th>lever</th><th>hypothesis</th><th>result</th></tr>
+        <tr><td>de-engineered encoders (projector, graph, evolution)</td><td>less hand-built feature engineering generalizes better</td><td>degrades monotonically with how much channel identity the encoder discards &mdash; worst variant near chance</td></tr>
+        <tr><td>a de-engineered "complex" encoder (tied real/imaginary weights)</td><td>3.4&times; fewer parameters, more natural complex inductive bias</td><td>wash-to-slightly-worse, trailing on 2 of 3 folds run</td></tr>
+        <tr><td><code>k</code> 6&rarr;12 (more eigenmodes)</td><td>more modes = more signal</td><td>lost 5 of 6 folds, mean AP 0.390 vs 0.436</td></tr>
+        <tr><td>Mamba-3 (complex-diagonal SSM)</td><td>the phase relationships need a temporal model that can rotate, not just decay</td><td>lost by 0.028 mean AP, worse ROC-AUC and hit-rate too</td></tr>
+      </table>
+      <p>
+        The Mamba-3 piece is worth dwelling on, because it was real, non-trivial engineering, not a quick
+        config flip. Mamba-1/2's state transition is a real exponential decay &mdash; each state channel can
+        accumulate or forget, but never rotate. The eigenvector encoder feeds the model a stream of complex
+        numbers whose <em>phase</em> tracks how the coherence structure evolves, and a real-valued recurrence
+        structurally cannot lock onto a rotating phase relationship the way a complex one can. So we built one:
+        a complex-diagonal selective SSM with a state eigenvalue <code>&lambda; = -exp(a) + i&omega;</code>, giving
+        every channel both a decay rate and its own rotational frequency.
+      </p>
+      <p>
+        The scan itself (<code>h<sub>t</sub> = A<sub>t</sub>h<sub>t-1</sub> + x<sub>t</sub></code>) is
+        associative over the complex numbers exactly the way it is over the reals, so the existing parallel-scan
+        algorithm carries over unchanged &mdash; the real work was a custom autograd backward pass, since the
+        stock implementation doesn't conjugate correctly for complex inputs. Three faster approaches
+        (a cumulative-product closed form, a chunked log-space method) failed outright &mdash; numerical
+        overflow in one case, a non-differentiable kink in another &mdash; before landing on a Blelloch parallel
+        scan with a hand-derived conjugate-correct backward, verified against finite differences in double
+        precision on both the scan alone and the full temporal block.
+      </p>
+      <p>
+        It trained cleanly, gradient-checked correctly, ran at a reasonable ~2&times; the cost of the real-valued
+        version &mdash; and made the held-out result <em>slightly worse</em>. Every fold's internal training
+        curve looked healthy, often healthier than the real-Mamba baseline's. It just didn't transfer to the
+        one held-out seizure per fold any better.
+      </p>
+
+      <h2>The actual ceiling: data, not architecture</h2>
+      <p>
+        Every one of these four attempts shares the same signature: healthy validation metrics, no
+        improvement (often a regression) on the held-out fold. On chb01 leave-one-seizure-out, each fold's
+        positive class is roughly thirty preictal windows &mdash; and every lever tried here adds effective
+        model capacity into that budget. More eigenmodes, richer encoders, a more expressive temporal
+        recurrence: all of it gives the optimizer more ways to fit the training folds' idiosyncrasies instead
+        of the underlying preictal signal.
+      </p>
+      <div class="callout">
+        <strong>hermitian_ssm's ceiling on chb01 is about 0.44 mean AP, and every lever that adds
+        representational power comes back flat-to-negative while the internal validation metrics stay fine.</strong>
+        That's the signature of a data-budget wall, not a modeling gap. The lever this project doesn't
+        control &mdash; more subjects, more seizures &mdash; is the one that would actually move it.
+      </div>
+
+      <h2>A different question: what if we stopped predicting preictal at all?</h2>
+      <p>
+        Every supervised attempt above is capped by the same thirty-window budget for the positive class. The
+        interictal (normal) class has no such shortage. So the last idea of this run flips the task: train only
+        on interictal windows to learn the normal graph-state manifold, then flag departures from it &mdash;
+        no preictal labels, no class balancing, no negative subsampling anywhere in the loss.
+      </p>
+      <p>
+        The model is a next-token predictor over the same eigenvector encoder's token stream: predict each
+        timestep's graph state from the ones before it, and score a window by how badly it violates that
+        prediction. A degraded-config smoke test &mdash; two epochs, a shrunk spectral configuration &mdash;
+        separated preictal from interictal on held-out seizures at <strong>mean ROC-AUC 0.80, mean AP 0.50</strong>.
+        That's a smoke test, not a result, but it's the most encouraging early signal the hermitian direction
+        has produced, and it sidesteps the data-budget wall the last four experiments all hit head-on.
+      </p>
+
+      <h2>Where this leaves things</h2>
+      <p>
+        Encoder variants, temporal-model complexity, and mode count are now closed lines of inquiry for
+        <code>hermitian_ssm</code> &mdash; each spent a real session, each came back negative, and together they
+        make a fairly strong case that this architecture family is done being pushed on capacity. The
+        deliverable candidate that survives from the coherence-graph family is
+        <code>temporal_graph_aggregate="post"</code> (mean AP 0.639, a near-tie with the leader, at higher
+        compute cost) &mdash; and the interictal-anomaly reframe is the one open thread worth a real six-fold
+        run before this direction is set aside.
+      </p>
+    </div>
+  </div>
+  <div id="footer-container"></div>
+</body>
+<script src="../menu-loader.js"></script>
+<script src="../footer-loader.js"></script>
+</html>
