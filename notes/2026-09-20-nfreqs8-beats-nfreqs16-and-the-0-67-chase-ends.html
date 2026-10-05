@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="../resources/icon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>nfreqs=8 beats nfreqs=16, and the chase back to 0.67 ends — Noah Shore</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .nav-links a { text-decoration: none; }
+    .nav-links a.active { text-decoration: underline; }
+    .post { max-width: 800px; margin: 0 auto 3rem auto; text-align: left; }
+    .post-meta { color: #888; font-size: 0.9rem; margin-bottom: 2rem; text-align: center; }
+    .post h1 { font-size: 1.9rem; text-align: center; color: #eaeaea; margin-bottom: 0.25rem; }
+    .post p { font-size: 1.02rem; line-height: 1.65; color: #ddd; }
+    .post h2 { color: #cccccc; font-size: 1.15rem; margin-top: 2rem; }
+    .post code { background: rgba(255,255,255,0.08); padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.92em; }
+    .callout { background: rgba(42, 42, 42, 0.7); border-left: 4px solid #4a6583; border-radius: 6px; padding: 1rem 1.5rem; margin: 1.5rem 0; color: #ccc; font-size: 0.98rem; }
+    .back-link { display: block; text-align: center; margin-bottom: 2rem; color: #7aa5d6 !important; }
+    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.92rem; }
+    th, td { padding: 0.5rem 0.7rem; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.1); color: #ccc; }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: #eaeaea; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div id="menu-container"></div>
+  <div class="container" style="max-width:900px; margin:0 auto;">
+    <a href="../notes.html" class="back-link">&larr; All notes</a>
+    <div class="post">
+      <h1>nfreqs=8 beats nfreqs=16 on every metric, and the chase back to 0.67 ends</h1>
+      <p class="post-meta">2026-09-20 &middot; ablation, complex-native dense-edge, temporal_graph_mamba</p>
+
+      <p>
+        <code>temporal_graph_mamba</code> had just gotten its first verified full 6-fold run at
+        <code>nfreqs=16</code> after nearly a dozen failed spot-GPU attempts, so the obvious next
+        question was whether that frequency resolution was actually buying anything. The same
+        complex-native 2-channel <code>[re, im]</code> edge representation, same
+        <code>--precompute-chunk-size 2</code>, same dense-edge GPU cache, run again with
+        <code>--nfreqs 8</code> instead of 16 &mdash; isolating the frequency-resolution axis from the
+        significance-channel-drop axis that had been muddying comparisons all week.
+      </p>
+
+      <h2>Halving the frequency resolution wins outright</h2>
+      <p>
+        Six folds, same instance (<code>g5.xlarge</code>), same everything else. <code>nfreqs=8</code>
+        didn't just tie <code>nfreqs=16</code> &mdash; it won on every metric that was measured:
+      </p>
+      <table>
+        <tr><th>metric</th><th>nfreqs=16</th><th>nfreqs=8</th></tr>
+        <tr><td>accuracy</td><td>0.8827</td><td>0.9096</td></tr>
+        <tr><td>precision</td><td>0.3873</td><td>0.4674</td></tr>
+        <tr><td>recall</td><td>0.7778</td><td>0.7800</td></tr>
+        <tr><td>f1</td><td>0.4088</td><td>0.5028</td></tr>
+        <tr><td>average precision (AP)</td><td>0.4836</td><td><strong>0.5831</strong></td></tr>
+        <tr><td>roc_auc</td><td>0.9431</td><td><strong>0.9610</strong></td></tr>
+        <tr><td>epoch time</td><td>3.46s</td><td>2.81s</td></tr>
+        <tr><td>event-level hit rate (smoothed)</td><td>5/6</td><td><strong>6/6</strong></td></tr>
+      </table>
+      <p>
+        That's the opposite of what "more frequency resolution should help" predicts, and it's not a
+        cache-starvation artifact &mdash; both configs hit 100% dense-edge cache reuse during training.
+        It's a real accuracy difference between resolutions, and <code>nfreqs=8</code> is also cheaper
+        to run.
+      </p>
+
+      <h2>Working hypothesis: nfreqs=16 overfits</h2>
+      <p>
+        The same fold (<code>1_26</code>), final epoch, told a consistent story on both sides:
+      </p>
+      <table>
+        <tr><th></th><th>nfreqs=16</th><th>nfreqs=8</th></tr>
+        <tr><td>train loss</td><td>0.1195</td><td>0.1539</td></tr>
+        <tr><td>val loss</td><td>0.2349 (~2&times; train)</td><td>0.0768 (&lt; train)</td></tr>
+        <tr><td>train roc_auc</td><td>0.9905</td><td>0.9844</td></tr>
+        <tr><td>val roc_auc</td><td>0.9838 (&lt; train)</td><td>0.9857 (&gt; train)</td></tr>
+      </table>
+      <p>
+        <code>nfreqs=16</code>'s val loss nearly doubling its train loss, with val ROC-AUC trailing
+        train, is a classic overfitting signature; <code>nfreqs=8</code>'s val metrics matching or
+        beating train look like a healthy fit instead. The mechanism is direct: the dense-edge tensor
+        is <code>[channels, E, T, F]</code> with <code>F = nfreqs</code>, feeding straight into
+        <code>temporal_edge_proj</code> and the complex projection, so doubling <code>F</code> doubles
+        that layer's input width and parameter count against the same small LOSO training set &mdash;
+        tens of positive preictal windows per fold. And it buys no new real information: same 8&ndash;40
+        Hz band, just sliced finer, with the finer bins individually noisier. It's the same pattern this
+        repo keeps running into (<code>NEGATIVES.md</code>): added capacity on this dataset size tends
+        to wash or hurt rather than help.
+      </p>
+      <div class="callout">
+        Caveat: this overfitting comparison is a single fold, not the full 6-fold aggregate train/val
+        curves &mdash; worth confirming the same gap holds across all six before treating it as settled,
+        though the aggregate AP already points the same direction.
+      </div>
+
+      <h2>Stop chasing 0.67</h2>
+      <p>
+        This result also closes out a question that had been open since <code>drop_significance</code>
+        was removed: the historical 0.644&ndash;0.674 AP came from the old 4-channel dense-edge stack
+        (<code>[coh, sinφ, cosφ, significance]</code>), and <code>significance</code> turned out to be a
+        deterministic affine rescale of <code>coh</code>, not a real independent test &mdash; correctness
+        grounds for removing it permanently, regardless of the accuracy cost. A dedicated
+        <code>--temporal-graph-edge-coh-affine-rescale</code> flag was built to try to recover that ~0.10
+        AP under <code>complex_native</code> without reintroducing the correctness problem, but measured
+        at both <code>nfreqs=16</code> (0.484&rarr;0.491) and <code>nfreqs=8</code> (0.583&rarr;0.583) it
+        recovers essentially nothing. With <code>nfreqs=8</code> now the clear best config on its own
+        merits, the call is to accept AP&nbsp;&asymp;&nbsp;0.58 as the real current best and stop chasing
+        0.67 &mdash; the honest number for this representation, not a regression to explain away.
+      </p>
+
+      <h2>Auto-push failed again (4th time)</h2>
+      <p>
+        Same <code>could not read deploy key from SSM</code> failure hit again on this run &mdash; the
+        <code>eeg-gpu</code> IAM role's KMS-decrypt fix from earlier in the week hadn't been verified
+        end-to-end yet, and this run confirms it still isn't. Results were recovered manually via
+        <code>eeg-tail.yml</code>'s new results-dump section, same as the previous three occurrences, and
+        the CSVs are committed alongside the session note.
+      </p>
+
+      <div class="callout">
+        <strong>Put together: nfreqs=8 is a strict upgrade over nfreqs=16 &mdash; better on every metric,
+        cheaper to run, and better-behaved on train/val gap &mdash; and the affine-rescale detour that was
+        supposed to close the gap back to 0.67 is confirmed dead.</strong> <code>temporal_graph_mamba</code>'s
+        current best is nfreqs=8, no affine rescale, AP&nbsp;&asymp;&nbsp;0.58, and nobody should re-derive
+        this comparison without a new idea.
+      </div>
+    </div>
+  </div>
+  <div id="footer-container"></div>
+</body>
+<script src="../menu-loader.js"></script>
+<script src="../footer-loader.js"></script>
+</html>
